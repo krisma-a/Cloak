@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { getToken } from 'firebase/app-check'
 import { appCheck, CLOUD_MODEL, ensureSignedIn, getDraftingModel, getRedactionModel } from './firebase'
-import { prepareRedaction, redact } from './ai/redact'
+import { prepareRedaction, redact, type EngineChoice } from './ai/redact'
 import { restore } from './ai/placeholders'
 
 const PROMPT = 'Reply with the single word OK.'
@@ -21,6 +21,7 @@ function SmokeTest() {
   const [lines, setLines] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState(SAMPLE_NOTE)
+  const [engineChoice, setEngineChoice] = useState<EngineChoice>('auto')
   const log = (m: string) => setLines((prev) => [...prev, m])
 
   async function run(label: string, fn: () => Promise<void>) {
@@ -73,11 +74,24 @@ function SmokeTest() {
 
   // Redaction runs only on this laptop. The note text is never sent to the cloud here.
   const redactNote = () =>
-    run('Redact note (on-device only)', async () => {
-      await prepareRedaction((p) => log(`  download ${Math.round(p * 100)}%`))
-      const result = await redact(note)
-      log(`  status: ${result.status}   attempts: ${result.attempts}   ran: ${result.ranOn ?? 'n/a'}`)
-      if (result.error) log(`  error: ${result.error}`)
+    run(`Redact note (on this device, engine: ${engineChoice})`, async () => {
+      let lastTenth = -1
+      const { engine, note: why } = await prepareRedaction((p) => {
+        const tenth = Math.floor(p * 10)
+        if (tenth !== lastTenth) {
+          lastTenth = tenth
+          log(`  loading model ${tenth * 10}%`)
+        }
+      }, engineChoice)
+      log(`  engine: ${engine}`)
+      if (why) log(`  note: ${why}`)
+      const result = await redact(note, { engine })
+      log(`  status: ${result.status}   engine: ${result.engine}   attempts: ${result.attempts}   ran: ${result.ranOn}`)
+      if (result.crossCheck) {
+        log(`  name cross-check: ${result.crossCheck.ran ? `ran, hid ${result.crossCheck.added} item(s) Nano missed` : 'skipped'}`)
+      }
+      if (result.note) log(`  note: ${result.note}`)
+      if (result.needsCarefulReview) log('  review: backup engine used, user must check carefully')
       log(`  counts: ${JSON.stringify(result.counts)}`)
       if (result.leaks.length) {
         log(`  still leaking: ${result.leaks.map((l) => `${l.category} "${l.text}"`).join(', ')}`)
@@ -104,7 +118,19 @@ function SmokeTest() {
         <button disabled={busy} onClick={() => setLines([])}>Clear</button>
       </div>
       <h2 style={{ fontSize: 18, marginTop: 24 }}>Redaction (on-device)</h2>
-      <p>Fake data only. This text is processed by Gemini Nano on this laptop.</p>
+      <p>Fake data only. This text is processed on this device and never sent to the cloud.</p>
+      <label>
+        Engine:{' '}
+        <select
+          value={engineChoice}
+          disabled={busy}
+          onChange={(e) => setEngineChoice(e.target.value as EngineChoice)}
+        >
+          <option value="auto">Auto (Gemini Nano if available, else backup)</option>
+          <option value="browser-model">Backup: in-browser model</option>
+          <option value="rules-only">Backup: rules only</option>
+        </select>
+      </label>
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
