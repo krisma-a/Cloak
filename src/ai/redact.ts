@@ -32,12 +32,19 @@ export const MAX_RETRIES = 2 // later read from Remote Config
 
 export type Engine = 'nano' | 'browser-model' | 'rules-only'
 export type RedactionStatus = 'ok' | 'blocked'
+/**
+ * Who checked for names: "model" (Nano or the in-browser name model), "user" (the user listed
+ * the names or confirmed there are none), or "unchecked" (rules can't find names; drafting is blocked).
+ */
+export type NamesCheck = 'model' | 'user' | 'unchecked'
 
 export interface RedactionResult {
   status: RedactionStatus
   engine: Engine
   /** True for the weaker engines: the review screen should ask for a careful check. */
   needsCarefulReview: boolean
+  /** Whether names were checked, and by whom. "unchecked" blocks drafting (see guard.ts). */
+  names: NamesCheck
   redactedText: string
   map: PlaceholderMap
   /** Leaks still present (empty when status is "ok"). Stays in the browser. */
@@ -198,6 +205,7 @@ async function redactWithNano(text: string, maxRetries: number, knownNames: stri
     status: leaks.length ? 'blocked' : 'ok',
     engine: 'nano',
     needsCarefulReview: false,
+    names: 'model',
     redactedText: current,
     map,
     leaks,
@@ -226,6 +234,7 @@ async function redactWithoutNano(
     status: leaks.length ? 'blocked' : 'ok',
     engine,
     needsCarefulReview: true,
+    names: engine === 'browser-model' ? 'model' : 'unchecked',
     redactedText,
     map,
     leaks,

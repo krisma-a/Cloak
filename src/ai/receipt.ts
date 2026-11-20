@@ -5,7 +5,7 @@
 export const POLICY_VERSION = 'local-1' // later: the Remote Config template version
 
 export interface ReceiptStep {
-  step: 'redaction' | 'cross-check' | 'drafting' | 'restore'
+  step: 'redaction' | 'cross-check' | 'names' | 'drafting' | 'restore'
   ranOn: string // 'on_device' | 'in_browser' | 'rules' | 'in_cloud'
   detail?: string
 }

@@ -7,9 +7,9 @@
 //   4. A receipt records the exact text sent, its SHA-256, the model and where each step ran.
 
 import { CLOUD_MODEL, ensureSignedIn, getDraftingModel } from '../firebase'
-import { findLeaks } from '../rules/rules.ts'
+import { sendBlockReason } from './guard.ts'
 import { generateLogged } from './inference.ts'
-import { restore, sensitiveStrings } from './placeholders.ts'
+import { restore } from './placeholders.ts'
 import { buildReceipt, type CloudReceipt, type ReceiptStep } from './receipt.ts'
 import type { RedactionResult } from './redact.ts'
 import { buildDraftPrompt, checkDraft, TEMPLATES, type TemplateId } from './templates.ts'
@@ -34,12 +34,8 @@ export async function draft(
   options: { approved: boolean },
 ): Promise<DraftResult> {
   // 1. Guard. "Approve & send" is the only way past this point.
-  if (!options.approved) throw new SendBlockedError('Not sent: the user has not approved the redacted text.')
-  if (redaction.status !== 'ok') throw new SendBlockedError('Not sent: redaction is blocked (something still leaks).')
-  const leaks = findLeaks(redaction.redactedText, sensitiveStrings(redaction.map))
-  if (leaks.length) {
-    throw new SendBlockedError(`Not sent: the leak re-check found ${leaks.length} item(s) still visible.`)
-  }
+  const blocked = sendBlockReason(redaction, options.approved)
+  if (blocked) throw new SendBlockedError(blocked)
 
   // 2. Cloud draft from redacted text only.
   await ensureSignedIn()
@@ -54,6 +50,11 @@ export async function draft(
   const steps: ReceiptStep[] = [
     { step: 'redaction', ranOn: redaction.ranOn, detail: `engine: ${redaction.engine}` },
   ]
+  steps.push({
+    step: 'names',
+    ranOn: redaction.names === 'model' ? redaction.ranOn : 'on_device',
+    detail: redaction.names === 'model' ? 'checked by a name model' : 'checked by the user',
+  })
   if (redaction.crossCheck?.ran) {
     steps.push({ step: 'cross-check', ranOn: 'in_browser', detail: `hid ${redaction.crossCheck.added} more` })
   }

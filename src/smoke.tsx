@@ -8,6 +8,7 @@ import { appCheck, CLOUD_MODEL, ensureSignedIn, getDraftingModel, getRedactionMo
 import { prepareRedaction, redact, type EngineChoice, type RedactionResult } from './ai/redact'
 import { restore } from './ai/placeholders'
 import { draft } from './ai/draft'
+import { confirmNoNames, hideNames, splitNames } from './ai/guard'
 import { TEMPLATES, type TemplateId } from './ai/templates'
 
 const PROMPT = 'Reply with the single word OK.'
@@ -26,6 +27,7 @@ function SmokeTest() {
   const [engineChoice, setEngineChoice] = useState<EngineChoice>('auto')
   const [lastRedaction, setLastRedaction] = useState<RedactionResult | null>(null)
   const [templateId, setTemplateId] = useState<TemplateId>('investigation')
+  const [namesInput, setNamesInput] = useState('')
   const log = (m: string) => setLines((prev) => [...prev, m])
 
   async function run(label: string, fn: () => Promise<void>) {
@@ -111,6 +113,22 @@ function SmokeTest() {
       }
     })
 
+  // Rules can't find names, so with the rules-only engine the user lists them (or confirms none).
+  const hideTypedNames = () => {
+    if (!lastRedaction) return
+    const next = hideNames(lastRedaction, splitNames(namesInput))
+    setLastRedaction(next)
+    log('> Hide typed names (on this device)')
+    log(`  status: ${next.status}   counts: ${JSON.stringify(next.counts)}`)
+    log('  --- what the cloud would see now ---')
+    log(`  ${next.redactedText}`)
+  }
+  const confirmNone = () => {
+    if (!lastRedaction) return
+    setLastRedaction(confirmNoNames(lastRedaction))
+    log('> User confirmed there are no names left in the redacted text')
+  }
+
   // Sends ONLY the redacted text (after the guard) to cloud Gemini, then restores locally.
   const draftNote = () =>
     run(`Approve & draft (cloud): ${TEMPLATES[templateId].label}`, async () => {
@@ -175,11 +193,33 @@ function SmokeTest() {
           ))}
         </select>
       </label>
+      {lastRedaction?.names === 'unchecked' && (
+        <div style={{ marginTop: 12, padding: 8, border: '1px solid #c60' }}>
+          <strong>Names have not been checked.</strong> This engine can&apos;t find names. List every
+          person&apos;s name in the note (comma separated), or confirm there are none.
+          <input
+            value={namesInput}
+            onChange={(e) => setNamesInput(e.target.value)}
+            placeholder="Maria Santos, Chidi Okafor"
+            style={{ display: 'block', width: '100%', boxSizing: 'border-box', margin: '8px 0' }}
+          />
+          <button disabled={busy || !splitNames(namesInput).length} onClick={hideTypedNames}>
+            Hide these names
+          </button>{' '}
+          <button disabled={busy} onClick={confirmNone}>There are no names in the text</button>
+        </div>
+      )}
       <div style={{ marginTop: 8 }}>
-        <button disabled={busy || lastRedaction?.status !== 'ok'} onClick={draftNote}>
+        <button
+          disabled={busy || lastRedaction?.status !== 'ok' || lastRedaction.names === 'unchecked'}
+          onClick={draftNote}
+        >
           5. Approve &amp; draft
         </button>{' '}
         {lastRedaction?.status !== 'ok' && <small>Run 4. Redact note first (status must be ok).</small>}
+        {lastRedaction?.status === 'ok' && lastRedaction.names === 'unchecked' && (
+          <small>Check names first (above).</small>
+        )}
       </div>
       <pre style={{ whiteSpace: 'pre-wrap', marginTop: 16 }}>{lines.join('\n')}</pre>
     </main>
