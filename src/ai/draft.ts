@@ -8,6 +8,7 @@
 
 import { CLOUD_MODEL, ensureSignedIn, getDraftingModel } from '../firebase'
 import { findLeaks } from '../rules/rules.ts'
+import { generateLogged } from './inference.ts'
 import { restore, sensitiveStrings } from './placeholders.ts'
 import { buildReceipt, type CloudReceipt, type ReceiptStep } from './receipt.ts'
 import type { RedactionResult } from './redact.ts'
@@ -43,8 +44,7 @@ export async function draft(
   // 2. Cloud draft from redacted text only.
   await ensureSignedIn()
   const prompt = buildDraftPrompt(redaction.redactedText, templateId)
-  const result = await getDraftingModel().generateContent(prompt)
-  const cloudText = result.response.text().trim()
+  const { text: cloudText, source } = await generateLogged('draft', getDraftingModel(), prompt)
 
   // 3. Check and restore on this device.
   const checked = checkDraft(cloudText, redaction.map, templateId)
@@ -58,7 +58,7 @@ export async function draft(
     steps.push({ step: 'cross-check', ranOn: 'in_browser', detail: `hid ${redaction.crossCheck.added} more` })
   }
   steps.push(
-    { step: 'drafting', ranOn: result.response.inferenceSource ?? 'in_cloud', detail: TEMPLATES[templateId].label },
+    { step: 'drafting', ranOn: source === 'unknown' ? 'in_cloud' : source, detail: TEMPLATES[templateId].label },
     { step: 'restore', ranOn: 'on_device' },
   )
   const receipt = await buildReceipt(prompt, CLOUD_MODEL, steps)

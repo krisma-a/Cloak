@@ -13,6 +13,7 @@
 
 import type { GenerativeModel } from 'firebase/ai'
 import { getRedactionModel } from '../firebase'
+import { generateLogged } from './inference.ts'
 import { findLeaks, type Leak } from '../rules/rules.ts'
 import { findNamesAndPlaces, loadBrowserModel } from './browserModel.ts'
 import {
@@ -175,8 +176,8 @@ async function redactWithNano(text: string, maxRetries: number, knownNames: stri
 
   for (let i = 0; i <= maxRetries; i++) {
     attempts++
-    const result = await nanoModel().generateContent(buildPrompt(current, missed)) // throws if Nano fails
-    ;({ text: current, map } = applyEntities(current, parseEntities(result.response.text()), map))
+    const generated = await generateLogged('redact', nanoModel(), buildPrompt(current, missed)) // throws if Nano fails
+    ;({ text: current, map } = applyEntities(current, parseEntities(generated.text), map))
 
     if (i === 0) {
       const names = await namesPromise
