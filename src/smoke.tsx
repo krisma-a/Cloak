@@ -5,8 +5,10 @@ import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { getToken } from 'firebase/app-check'
 import { appCheck, CLOUD_MODEL, ensureSignedIn, getDraftingModel, getRedactionModel } from './firebase'
-import { prepareRedaction, redact, type EngineChoice } from './ai/redact'
+import { prepareRedaction, redact, type EngineChoice, type RedactionResult } from './ai/redact'
 import { restore } from './ai/placeholders'
+import { draft } from './ai/draft'
+import { TEMPLATES, type TemplateId } from './ai/templates'
 
 const PROMPT = 'Reply with the single word OK.'
 
@@ -22,6 +24,8 @@ function SmokeTest() {
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState(SAMPLE_NOTE)
   const [engineChoice, setEngineChoice] = useState<EngineChoice>('auto')
+  const [lastRedaction, setLastRedaction] = useState<RedactionResult | null>(null)
+  const [templateId, setTemplateId] = useState<TemplateId>('investigation')
   const log = (m: string) => setLines((prev) => [...prev, m])
 
   async function run(label: string, fn: () => Promise<void>) {
@@ -86,6 +90,7 @@ function SmokeTest() {
       log(`  engine: ${engine}`)
       if (why) log(`  note: ${why}`)
       const result = await redact(note, { engine })
+      setLastRedaction(result)
       log(`  status: ${result.status}   engine: ${result.engine}   attempts: ${result.attempts}   ran: ${result.ranOn}`)
       if (result.crossCheck) {
         log(`  name cross-check: ${result.crossCheck.ran ? `ran, hid ${result.crossCheck.added} item(s) Nano missed` : 'skipped'}`)
@@ -104,6 +109,22 @@ function SmokeTest() {
         log('  --- restore check (placeholders swapped back, in the browser) ---')
         log(`  ${restore(result.redactedText, result.map)}`)
       }
+    })
+
+  // Sends ONLY the redacted text (after the guard) to cloud Gemini, then restores locally.
+  const draftNote = () =>
+    run(`Approve & draft (cloud): ${TEMPLATES[templateId].label}`, async () => {
+      if (!lastRedaction) throw new Error('Run 4. Redact note first')
+      const result = await draft(lastRedaction, templateId, { approved: true })
+      log('  --- receipt ---')
+      log(`  model: ${result.receipt.model}   policy: ${result.receipt.policyVersion}   sent: ${result.receipt.sentAt}`)
+      log(`  sha256: ${result.receipt.sha256}`)
+      for (const s of result.receipt.steps) log(`  ${s.step}: ${s.ranOn}${s.detail ? ` (${s.detail})` : ''}`)
+      for (const w of result.warnings) log(`  warning: ${w}`)
+      log('  --- draft from the cloud (placeholders) ---')
+      log(result.draftWithPlaceholders)
+      log('  --- final draft (restored on this device) ---')
+      log(result.restoredDraft)
     })
 
   return (
@@ -140,6 +161,25 @@ function SmokeTest() {
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         <button disabled={busy} onClick={redactNote}>4. Redact note</button>
         <button disabled={busy} onClick={() => setNote(SAMPLE_NOTE)}>Reset sample</button>
+      </div>
+      <h2 style={{ fontSize: 18, marginTop: 24 }}>Drafting (cloud, redacted text only)</h2>
+      <label>
+        Template:{' '}
+        <select
+          value={templateId}
+          disabled={busy}
+          onChange={(e) => setTemplateId(e.target.value as TemplateId)}
+        >
+          {Object.values(TEMPLATES).map((t) => (
+            <option key={t.id} value={t.id}>{t.label}</option>
+          ))}
+        </select>
+      </label>
+      <div style={{ marginTop: 8 }}>
+        <button disabled={busy || lastRedaction?.status !== 'ok'} onClick={draftNote}>
+          5. Approve &amp; draft
+        </button>{' '}
+        {lastRedaction?.status !== 'ok' && <small>Run 4. Redact note first (status must be ok).</small>}
       </div>
       <pre style={{ whiteSpace: 'pre-wrap', marginTop: 16 }}>{lines.join('\n')}</pre>
     </main>

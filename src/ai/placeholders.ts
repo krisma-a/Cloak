@@ -153,7 +153,15 @@ export function applyEntities(
   return { text: result, map }
 }
 
-/** Puts the real values back. Runs only in the browser after the cloud draft returns. */
-export function restore(text: string, map: PlaceholderMap): string {
-  return text.replace(/\[[A-Z_]+_\d+\]/g, (placeholder) => map.originals[placeholder] ?? placeholder)
+export const PLACEHOLDER = /\[([A-Z_]+)_\d+\]/g
+
+/**
+ * Puts the real values back. Runs only in the browser after the cloud draft returns.
+ * `withhold` lists prefixes that must NOT be restored (e.g. MEDICAL in a manager email);
+ * those become "[withheld]".
+ */
+export function restore(text: string, map: PlaceholderMap, withhold: string[] = []): string {
+  return text.replace(PLACEHOLDER, (placeholder, prefix: string) =>
+    withhold.includes(prefix) ? '[withheld]' : (map.originals[placeholder] ?? placeholder),
+  )
 }
