@@ -5,7 +5,13 @@ import { initializeApp } from 'firebase/app'
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check'
 import { getAuth, signInAnonymously, type User } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
-import { getAI, getGenerativeModel, GoogleAIBackend, InferenceMode } from 'firebase/ai'
+import {
+  getAI,
+  getGenerativeModel,
+  GoogleAIBackend,
+  InferenceMode,
+  type OnDeviceParams,
+} from 'firebase/ai'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -67,8 +73,9 @@ export const CLOUD_MODEL: string = import.meta.env.VITE_CLOUD_MODEL ?? 'gemini-3
 
 // Redaction: raw text must never leave the laptop, so on-device only.
 // If Gemini Nano is missing, the call fails and the app falls back to Strict mode.
-export function getRedactionModel() {
-  return getGenerativeModel(ai, { mode: InferenceMode.ONLY_ON_DEVICE })
+// onDeviceParams lets callers pass a JSON schema (promptOptions.responseConstraint).
+export function getRedactionModel(onDeviceParams?: OnDeviceParams) {
+  return getGenerativeModel(ai, { mode: InferenceMode.ONLY_ON_DEVICE, onDeviceParams })
 }
 
 // Tagging and tone rewrite: input is already redacted, so cloud fallback is safe.
