@@ -3,7 +3,8 @@
 
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { CLOUD_MODEL, ensureSignedIn, getDraftingModel, getRedactionModel } from './firebase'
+import { getToken } from 'firebase/app-check'
+import { appCheck, CLOUD_MODEL, ensureSignedIn, getDraftingModel, getRedactionModel } from './firebase'
 
 const PROMPT = 'Reply with the single word OK.'
 
@@ -19,14 +20,25 @@ function SmokeTest() {
   async function run(label: string, fn: () => Promise<void>) {
     setBusy(true)
     log(`> ${label}`)
+    const start = performance.now()
     try {
       await fn()
     } catch (e) {
       log(`  FAILED ${describe(e)}`)
     } finally {
+      log(`  took ${((performance.now() - start) / 1000).toFixed(1)} s`)
       setBusy(false)
     }
   }
+
+  // Times the App Check exchange on its own (debug token -> App Check token).
+  // The token itself is never shown.
+  const token = () =>
+    run('Get App Check token (fresh)', async () => {
+      if (!appCheck) throw new Error('App Check is not set up: VITE_RECAPTCHA_SITE_KEY is missing')
+      const result = await getToken(appCheck, true)
+      log(`  OK got a token (${result.token.length} characters)`)
+    })
 
   const signIn = () =>
     run('Sign in anonymously', async () => {
@@ -58,6 +70,7 @@ function SmokeTest() {
       <h1>Cloak smoke test</h1>
       <p>Run these in order. Fake data only.</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button disabled={busy} onClick={token}>0. App Check token</button>
         <button disabled={busy} onClick={signIn}>1. Sign in</button>
         <button disabled={busy} onClick={cloud}>2. Cloud call</button>
         <button disabled={busy} onClick={onDevice}>3. On-device call</button>

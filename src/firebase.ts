@@ -30,14 +30,16 @@ if (import.meta.env.DEV) {
     import.meta.env.VITE_APPCHECK_DEBUG_TOKEN || true
 }
 const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY
-if (recaptchaSiteKey) {
-  initializeAppCheck(app, {
-    // Classic reCAPTCHA v3 keys can no longer be created, so we use Fraud Defense
-    // (formerly reCAPTCHA Enterprise).
-    provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
-    isTokenAutoRefreshEnabled: true,
-  })
-} else {
+// Exported so the smoke test can time token fetches. Undefined when no site key is set.
+export const appCheck = recaptchaSiteKey
+  ? initializeAppCheck(app, {
+      // Classic reCAPTCHA v3 keys can no longer be created, so we use Fraud Defense
+      // (formerly reCAPTCHA Enterprise).
+      provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
+      isTokenAutoRefreshEnabled: true,
+    })
+  : undefined
+if (!appCheck) {
   console.warn('App Check is off: set VITE_RECAPTCHA_SITE_KEY in .env.local')
 }
 
