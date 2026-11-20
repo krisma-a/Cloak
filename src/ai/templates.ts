@@ -1,7 +1,7 @@
 // Draft templates and the checks that run on a draft after the cloud returns it.
 // The cloud only ever sees redacted text with placeholders. Pure functions (no Firebase).
 
-import { PLACEHOLDER, type PlaceholderMap } from './placeholders.ts'
+import { findPlaceholders, type PlaceholderMap } from './placeholders.ts'
 
 export type TemplateId = 'investigation' | 'accommodation' | 'termination'
 
@@ -81,10 +81,10 @@ export function checkDraft(draft: string, map: PlaceholderMap, templateId: Templ
   const withheld: Record<string, number> = {}
   const invented = new Set<string>()
 
-  for (const match of draft.matchAll(PLACEHOLDER)) {
-    const [placeholder, prefix] = match
+  // Same matcher as restore(), so a reformatted "[ medical 1 ]" is withheld and counted too.
+  for (const { placeholder, prefix, known } of findPlaceholders(draft, map)) {
     if (template.withhold.includes(prefix)) withheld[prefix] = (withheld[prefix] ?? 0) + 1
-    else if (map.originals[placeholder] === undefined) invented.add(placeholder)
+    else if (!known) invented.add(placeholder)
   }
 
   for (const [prefix, n] of Object.entries(withheld)) {

@@ -153,15 +153,58 @@ export function applyEntities(
   return { text: result, map }
 }
 
-export const PLACEHOLDER = /\[([A-Z_]+)_\d+\]/g
+// Finds a placeholder the way the model may really write it back, not only the exact
+// "[EMPLOYEE_1]" we sent. Accepts: any letter case, spaces inside the brackets, "_" / "-" / a
+// space before the number, leading zeros ("[EMPLOYEE_01]"), and markdown escapes
+// ("\[EMPLOYEE\_1\]"). Padding is capped ({0,2}) so odd input can't make the match slow.
+// Groups: 1 = prefix, 2 = number.
+const PLACEHOLDER_PATTERN = String.raw`\\?\[\s{0,2}([A-Za-z]+(?:\\?_[A-Za-z]+)*)\s{0,2}(?:\\?_|-|\s)\s{0,2}(\d{1,6})\s{0,2}\\?\]`
+
+export interface PlaceholderMatch {
+  /** The text exactly as the model wrote it, e.g. "[ employee 1 ]". */
+  raw: string
+  /** Canonical form, e.g. "[EMPLOYEE_1]". */
+  placeholder: string
+  /** Canonical prefix, e.g. "EMPLOYEE". */
+  prefix: string
+  /** The map has an original for it. */
+  known: boolean
+  /** The model wrote it in the exact canonical form. */
+  exact: boolean
+}
+
+function describe(raw: string, rawPrefix: string, rawNumber: string, map: PlaceholderMap): PlaceholderMatch {
+  const prefix = rawPrefix.replace(/\\/g, '').toUpperCase()
+  const placeholder = `[${prefix}_${rawNumber.replace(/^0+(?=\d)/, '')}]`
+  return { raw, placeholder, prefix, known: map.originals[placeholder] !== undefined, exact: raw === placeholder }
+}
 
 /**
- * Puts the real values back. Runs only in the browser after the cloud draft returns.
+ * Every placeholder-shaped piece of `text`, in order and including repeats. A reformatted
+ * match that is NOT in the map ("[Table 1]") is ordinary text, so it is left out; an exact
+ * "[EMPLOYEE_9]" that isn't in the map is kept, because that is a placeholder the model invented.
+ */
+export function findPlaceholders(text: string, map: PlaceholderMap): PlaceholderMatch[] {
+  const found: PlaceholderMatch[] = []
+  for (const m of text.matchAll(new RegExp(PLACEHOLDER_PATTERN, 'g'))) {
+    const match = describe(m[0], m[1], m[2], map)
+    if (match.known || match.exact) found.push(match)
+  }
+  return found
+}
+
+/**
+ * Puts the real values back, every time a placeholder appears and however the model
+ * formatted it. Runs only in the browser after the cloud draft returns; reads the in-memory
+ * map and never changes or stores it.
  * `withhold` lists prefixes that must NOT be restored (e.g. MEDICAL in a manager email);
- * those become "[withheld]".
+ * those become "[withheld]". Anything that isn't one of our placeholders is left untouched.
  */
 export function restore(text: string, map: PlaceholderMap, withhold: string[] = []): string {
-  return text.replace(PLACEHOLDER, (placeholder, prefix: string) =>
-    withhold.includes(prefix) ? '[withheld]' : (map.originals[placeholder] ?? placeholder),
-  )
+  return text.replace(new RegExp(PLACEHOLDER_PATTERN, 'g'), (raw, rawPrefix: string, rawNumber: string) => {
+    const match = describe(raw, rawPrefix, rawNumber, map)
+    if (!match.known && !match.exact) return raw
+    if (withhold.includes(match.prefix)) return '[withheld]'
+    return map.originals[match.placeholder] ?? raw
+  })
 }

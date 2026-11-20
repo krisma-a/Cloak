@@ -45,6 +45,57 @@ test('restores originals', () => {
   )
 })
 
+test('restores a placeholder every time it appears', () => {
+  const { map } = applyEntities(note, entities)
+  assert.equal(
+    restore('[EMPLOYEE_1] spoke. Later [EMPLOYEE_1] left; [EMPLOYEE_1]’s manager agreed.', map),
+    'Maria Santos spoke. Later Maria Santos left; Maria Santos’s manager agreed.',
+  )
+})
+
+test('restores placeholders the model reformatted', () => {
+  const { map } = applyEntities(note, entities)
+  const variants = [
+    '[employee_1]',
+    '[Employee_1]',
+    '[ EMPLOYEE_1 ]',
+    '[EMPLOYEE 1]',
+    '[EMPLOYEE-1]',
+    '[EMPLOYEE_01]',
+    '\\[EMPLOYEE\\_1\\]', // markdown-escaped
+    '**[EMPLOYEE_1]**',
+  ]
+  for (const variant of variants) {
+    assert.equal(restore(`Dear ${variant}.`, map).replace(/\*/g, ''), 'Dear Maria Santos.', variant)
+  }
+  // Several different placeholders, mixed formats, in one draft.
+  assert.equal(
+    restore('[employee 1] told [EMPLOYEE_2] about [ Medical_1 ] and [email-1].', map),
+    'Maria Santos told Chidi Okafor about diabetes and maria@example.com.',
+  )
+})
+
+test('leaves look-alikes and unknown placeholders alone', () => {
+  const { map } = applyEntities(note, entities)
+  const text = 'See [Table 1] and [Note 2]. Witness [EMPLOYEE_9] and [pet 1] agreed.'
+  assert.equal(restore(text, map), text)
+})
+
+test('withholds reformatted placeholders too', () => {
+  const { map } = applyEntities(note, entities)
+  assert.equal(
+    restore('Re: [medical 1], [ MEDICAL_01 ], [MEDICAL_1].', map, ['MEDICAL']),
+    'Re: [withheld], [withheld], [withheld].',
+  )
+})
+
+test('restoring never changes the map', () => {
+  const { map } = applyEntities(note, entities)
+  const before = structuredClone(map)
+  restore('[EMPLOYEE_1] [employee 2] [MEDICAL_1]', map, ['MEDICAL'])
+  assert.deepEqual(map, before)
+})
+
 test('stores the note’s own casing, not the model’s', () => {
   const { map } = applyEntities('Hi Maria Santos.', [{ text: 'maria santos', category: 'PERSON' }])
   assert.equal(map.originals['[EMPLOYEE_1]'], 'Maria Santos')

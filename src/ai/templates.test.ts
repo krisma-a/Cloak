@@ -34,6 +34,21 @@ test('HR file drafts restore everything', () => {
   assert.equal(restore(draft, map), 'Maria Santos reported type 2 diabetes; salary $68,500.')
 })
 
+test('manager emails withhold a diagnosis even if the model reformats the placeholder', () => {
+  const draft = 'Hi, [employee 1] has [ Medical_01 ] and needs a break.'
+  const checked = checkDraft(draft, map, 'accommodation')
+  assert.match(checked.warnings.join(' '), /Withheld 1 MEDICAL/)
+  assert.equal(
+    restore(checked.text, map, ['MEDICAL', 'DOB', 'SALARY', 'ID']),
+    'Hi, Maria Santos has [withheld] and needs a break.',
+  )
+})
+
+test('does not flag ordinary bracketed text as invented placeholders', () => {
+  const checked = checkDraft('See [Table 1] and [EMPLOYEE 1].', map, 'investigation')
+  assert.deepEqual(checked.warnings, [])
+})
+
 test('reports placeholders the model invented', () => {
   const checked = checkDraft('Witness [EMPLOYEE_7] agreed.', map, 'investigation')
   assert.match(checked.warnings.join(' '), /\[EMPLOYEE_7\]/)
