@@ -1,0 +1,3677 @@
+{
+  "meta": {
+    "set": "A",
+    "seed": 1130,
+    "count": 60,
+    "warning": "SYNTHETIC DATA. Every name, number and detail is made up. Do not add real case notes here."
+  },
+  "notes": [
+    {
+      "id": "A001",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 24-433. Termination review for Gregory \"Grge\" Ashby (employee no. 31354), the only Filipino worker on Line 3 packaging. He had 3 unexcused absences since November. Recommended by Khalid Haddad. Severance offered: USD 65,000.00. He had a leave request on file for celiac disease, so legal should review first. He is 53 years old. He does not want his manager told yet. Last day to be confirmed after review of Policy 2.1.",
+      "planted": [
+        {
+          "text": "Gregory \"Grge\" Ashby",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "31354",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "the only Filipino worker on Line 3 packaging",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Khalid Haddad",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "USD 65,000.00",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "celiac disease",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "53 years old",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        }
+      ],
+      "keep": [
+        "Case 24-433",
+        "Policy 2.1"
+      ],
+      "features": [
+        "culture:anglo",
+        "culture:arab",
+        "indirect-id",
+        "nickname",
+        "typo"
+      ]
+    },
+    {
+      "id": "A002",
+      "scenario": "investigation",
+      "style": "prose",
+      "text": "Case 24-786. On Apr 17, Ramon \"Mon\" Abueva told HR that his supervisor, Agnieszka Wójcik, left him out of the Apr 19 planning meeting on purpose. Witness: Xiu-ying Wang, the sole forklift lead at the Building C annex. He is the longest-serving CNC machinist in cold storage. He works with the night warehouse crew. Personal email mon22@example.com, phone 555.555.0151. Salary: ₹8 lakh. He is aged 36. HR received the report because he came in person. Next: interview Ms. Wójcik and Ms. Wang; review Policy 6.4.",
+      "planted": [
+        {
+          "text": "Agnieszka Wójcik",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Ramon \"Mon\" Abueva",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Xiu-ying Wang",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the sole forklift lead at the Building C annex",
+          "type": "ROLE",
+          "entity": "role:wit"
+        },
+        {
+          "text": "the longest-serving CNC machinist in cold storage",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "the night warehouse crew",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "mon22@example.com",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "555.555.0151",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "₹8 lakh",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "aged 36",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        },
+        {
+          "text": "Wójcik",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Wang",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 24-786",
+        "Apr 19",
+        "Apr 17",
+        "Policy 6.4"
+      ],
+      "features": [
+        "culture:chinese",
+        "culture:eastern-european",
+        "culture:filipino",
+        "indirect-id",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A003",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 25-350. Termination review for Hoàng Văn Lộc (E74438), the only weekend-shift dispatcher. He did not meet the targets in the performance plan. Recommended by Kimberly \"Kimmie\" Whitaker. Severance offered: 90k. Send the letter to 4349 Camia St., Apt 17, Houston and loc.hoang@example.net. The employee has not been told who else is being interviewed. Last day to be confirmed after review of Policy 8.1.",
+      "planted": [
+        {
+          "text": "Hoàng Văn Lộc",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E74438",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "the only weekend-shift dispatcher",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Kimberly \"Kimmie\" Whitaker",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "90k",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "4349 Camia St., Apt 17, Houston",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "loc.hoang@example.net",
+          "type": "EMAIL",
+          "entity": "email:1"
+        }
+      ],
+      "keep": [
+        "Case 25-350",
+        "Policy 8.1"
+      ],
+      "features": [
+        "culture:anglo",
+        "culture:vietnamese",
+        "indirect-id",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A004",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 24-385. Layla Aziz (badge #23158) asked for a later start time because of asthma. The doctor's note from Dr. Gallegos dated Nov 22 supports the request. Rodrigo Ceballos is her manager and should only hear about the restrictions. She is the only woman claims adjuster on the night warehouse crew. Home address on file: 3299 Mabini St., #305, Fresno. Cell: 555.555.0121. Salary: $34.5K. HR received the report because she came in person. Interactive process meeting set for Apr 15; see Policy 4.5 on accommodation.",
+      "planted": [
+        {
+          "text": "Layla Aziz",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "23158",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "asthma",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Gallegos",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Rodrigo Ceballos",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the only woman claims adjuster on the night warehouse crew",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "3299 Mabini St., #305, Fresno",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "555.555.0121",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "$34.5K",
+          "type": "SALARY",
+          "entity": "salary:1"
+        }
+      ],
+      "keep": [
+        "Case 24-385",
+        "Nov 22",
+        "Apr 15",
+        "Policy 4.5"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:latino",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A005",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 26-822. Đào Văn Quân (EMP-10450) asked for a stool at the packing station because of HIV-positive status. The doctor's note from Dr. Linwood dated Aug 27 supports the request. Agnieszka \"Aga\" Zielinski is his manager and should only hear about the restrictions. He is the new hire from Guadalajara. He works with the Building C loading dock. Personal email quan12@example.org, phone 555.555.0114. Current pay is one hundred forty thousand dollars. The employee has not been told who else is being interviewed. Interactive process meeting set for May 18; see Policy 8.1 on accommodation.",
+      "planted": [
+        {
+          "text": "Đào Văn Quân",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-10450",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "HIV-positive status",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Linwood",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Agnieszka \"Aga\" Zielinski",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the new hire from Guadalajara",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "the Building C loading dock",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "quan12@example.org",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "555.555.0114",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "one hundred forty thousand dollars",
+          "type": "SALARY",
+          "entity": "salary:1"
+        }
+      ],
+      "keep": [
+        "Case 26-822",
+        "Aug 27",
+        "May 18",
+        "Policy 8.1"
+      ],
+      "features": [
+        "culture:anglo",
+        "culture:eastern-european",
+        "culture:vietnamese",
+        "indirect-id",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A006",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 26-548. Yetunde \"Yetty\" Okonkwo (EMP-89978) asked for a stool at the packing station because of hypertension. The doctor's note from Dr. Aziz dated Apr 3 supports the request. Mr. Ocampo was told only the work restrictions. She works with the Building C loading dock. She can be reached at yetty98@example.org or 555-555-0192. DOB: 09/28/1993. She does not want her manager told yet. Interactive process meeting set for Jun 3; see Policy 3.5 on accommodation.",
+      "planted": [
+        {
+          "text": "Yetunde \"Yetty\" Okonkwo",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-89978",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "hypertension",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Aziz",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Ocampo",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the Building C loading dock",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "yetty98@example.org",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "555-555-0192",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "09/28/1993",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        }
+      ],
+      "keep": [
+        "Case 26-548",
+        "Apr 3",
+        "Jun 3",
+        "Policy 3.5"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:filipino",
+        "culture:nigerian",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A007",
+      "scenario": "accommodation",
+      "style": "bullets",
+      "text": "Case 25-760 notes:\n- Rajesh Dhillon (badge #67729) asked for remote work two days a week because of epiepsy.\n- The doctor's note from Dr. Ojo dated May 14 supports the request.\n- Ms. Okafor was told only the work restrictions.\n- He is the only weekend-shift line cook.\n- Home address on file: 4852 Orchard Ln, Lagos. Cell: +1 555 555 0111.\n- Payroll shows pay of ₦230,000.\n- He was born 23 November 1998.\n- Payroll has SSN 935588931.\n- HR received the report because he came in person.\n- Interactive process meeting set for Nov 14; see Policy 3.5 on accommodation.",
+      "planted": [
+        {
+          "text": "Rajesh Dhillon",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "67729",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "epiepsy",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Ojo",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Okafor",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the only weekend-shift line cook",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "4852 Orchard Ln, Lagos",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "+1 555 555 0111",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "₦230,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "23 November 1998",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        },
+        {
+          "text": "935588931",
+          "type": "OTHER_ID",
+          "entity": "ssn:1"
+        }
+      ],
+      "keep": [
+        "Case 25-760",
+        "May 14",
+        "Nov 14",
+        "Policy 3.5"
+      ],
+      "features": [
+        "culture:nigerian",
+        "culture:south-asian",
+        "indirect-id",
+        "typo"
+      ]
+    },
+    {
+      "id": "A008",
+      "scenario": "investigation",
+      "style": "prose",
+      "text": "Case 25-734. On May 22, Eun-ji Yoon told HR that Mr. Kag sent her unwelcome messages after hours. A coworker, Lynn, was nearby and heard it. She works with the Line 3 packaging team. She told HR she earns PHP 75,000 and is paid late some months. HR was told about gestational diabetes. She does not want her manager told yet. Next: interview Mr. Kang and Ms. Linh; review Policy 8.4.",
+      "planted": [
+        {
+          "text": "Kag",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Eun-ji Yoon",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Lynn",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the Line 3 packaging team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "PHP 75,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "gestational diabetes",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Kang",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Linh",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 25-734",
+        "May 22",
+        "Policy 8.4"
+      ],
+      "features": [
+        "culture:korean",
+        "culture:vietnamese",
+        "nickname",
+        "typo"
+      ]
+    },
+    {
+      "id": "A009",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 26-351. Accommodation request from Joselito Magsaysay: an ergonomic keyboard. He explained he is dealing with sickle cell disease. The doctor's note from Dr. Ashby dated Sep 12 supports the request. Ms. Haddad was told only the work restrictions. He is the only woman on Line 3 packaging. Mailing address is 738 Orchard Ln, Lagos. He told HR he earns ₱65,000/month and is paid late some months. The employee has not been told who else is being interviewed. Interactive process meeting set for Mar 9; see Policy 7.3 on accommodation.",
+      "planted": [
+        {
+          "text": "Joselito Magsaysay",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "sickle cell disease",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Ashby",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Haddad",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the only woman on Line 3 packaging",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "738 Orchard Ln, Lagos",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "₱65,000/month",
+          "type": "SALARY",
+          "entity": "salary:1"
+        }
+      ],
+      "keep": [
+        "Case 26-351",
+        "Sep 12",
+        "Mar 9",
+        "Policy 7.3"
+      ],
+      "features": [
+        "culture:anglo",
+        "culture:arab",
+        "culture:filipino",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A010",
+      "scenario": "investigation",
+      "style": "prose",
+      "text": "Case 24-411. On Sep 20, Xiu-ying Liu told HR that Layla Haddad did not pay her overtime for the last three pay periods. Witness: Dao Thi Thao, the sole forklift lead at the Building C annex. She works with the Cebu branch. Current pay is 5.5k/mo. She disclosed chemotherapy and asked for some flexibility. The employee asked that this stay confidentail. Next: interview Ms. Haddad and Thao; review Policy 7.6.",
+      "planted": [
+        {
+          "text": "Layla Haddad",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Xiu-ying Liu",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Dao Thi Thao",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the sole forklift lead at the Building C annex",
+          "type": "ROLE",
+          "entity": "role:wit"
+        },
+        {
+          "text": "the Cebu branch",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "5.5k/mo",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "chemotherapy",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Haddad",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Thao",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 24-411",
+        "Sep 20",
+        "Policy 7.6"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:chinese",
+        "culture:vietnamese",
+        "indirect-id",
+        "prose-typo"
+      ]
+    },
+    {
+      "id": "A011",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 26-957. Accommodation request from Priyanka \"Pri\" Bhatt: a later start time. She explained she is dealing with a torn ACL (surgery scheduled). The doctor's note from Dr. Zielinski dated Jul 7 supports the request. Mr. Kang was told only the work restrictions. She works with the weekend dispatch team. Mailing address is 777 Rizal Ave., Apt 4B, Tulsa. Current pay is £29,000. She does not want her manager told yet. Interactive process meeting set for Jul 4; see Policy 9.2 on accomodation.",
+      "planted": [
+        {
+          "text": "Priyanka \"Pri\" Bhatt",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "a torn ACL (surgery scheduled)",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Zielinski",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Kang",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the weekend dispatch team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "777 Rizal Ave., Apt 4B, Tulsa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "£29,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        }
+      ],
+      "keep": [
+        "Case 26-957",
+        "Jul 7",
+        "Jul 4",
+        "Policy 9.2"
+      ],
+      "features": [
+        "culture:eastern-european",
+        "culture:korean",
+        "culture:south-asian",
+        "nickname",
+        "prose-typo"
+      ]
+    },
+    {
+      "id": "A012",
+      "scenario": "termination",
+      "style": "terse",
+      "text": "Case 25-226 - Termination review for Samira Aziz (EE no. 60922), the new hire from Guadalajara. She had 6 unexcused absences since May. Recommended by Soo-jin Baek. Severance offered: $108000. She works w/ the night warehouse crew. She had a leave request on file for ADHD, so legal should review first. Send the letter to 2740 Banyan Ct, Apt 4B, Mesa and samira72@example.net. Payroll shows pay of $1,200/wk. The EE has not been told who else is being interviewed. Last day to be confirmed after review of Policy 9.3.",
+      "planted": [
+        {
+          "text": "Samira Aziz",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "60922",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "the new hire from Guadalajara",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Soo-jin Baek",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "$108000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "the night warehouse crew",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "ADHD",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "2740 Banyan Ct, Apt 4B, Mesa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "samira72@example.net",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "$1,200/wk",
+          "type": "SALARY",
+          "entity": "salary:2"
+        }
+      ],
+      "keep": [
+        "Case 25-226",
+        "Policy 9.3"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:korean",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A013",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 26-538. Termination review for Agnieszka Kowalczyk (E74905), the only Spanish-speaking CNC machinist in Building C. She falsified timecards on Apr 12. Recommended by Ramon Lacson. Severance offered: $28.50/hr. She had a leave request on file for Crohn's disease, so legal should review first. HR received the report because she came in person. Last day to be confirmed after review of Policy 9.6.",
+      "planted": [
+        {
+          "text": "Agnieszka Kowalczyk",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E74905",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "the only Spanish-speaking CNC machinist in Building C",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Ramon Lacson",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "$28.50/hr",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "Crohn's disease",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        }
+      ],
+      "keep": [
+        "Case 26-538",
+        "Apr 12",
+        "Policy 9.6"
+      ],
+      "features": [
+        "culture:eastern-european",
+        "culture:filipino",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A014",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 25-250. Accommodation request from Joaaquín \"Quino\" Zamora: a later start time. He explained he is dealing with type 2 diabetes. The doctor's note from Dr. Yoon dated Oct 17 supports the request. Lương Thị Hạnh is his manager and should only hear about the restrictions. Salary: $84,500. SSN on file: 921-74-1578. The employee has not been told who else is being interviewed. Interactive process meeting set for Nov 28; see Policy 3.6 on accommodation.",
+      "planted": [
+        {
+          "text": "Joaaquín \"Quino\" Zamora",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "type 2 diabetes",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Yoon",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Lương Thị Hạnh",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "$84,500",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "921-74-1578",
+          "type": "OTHER_ID",
+          "entity": "ssn:1"
+        }
+      ],
+      "keep": [
+        "Case 25-250",
+        "Oct 17",
+        "Nov 28",
+        "Policy 3.6"
+      ],
+      "features": [
+        "culture:korean",
+        "culture:latino",
+        "culture:vietnamese",
+        "nickname",
+        "typo"
+      ]
+    },
+    {
+      "id": "A015",
+      "scenario": "termination",
+      "style": "terse",
+      "text": "Case 26-634 - Galegos, Rodrigo (EE no. 51102) is being considered for termination. His position is being eliminated in the restructuring. Recommended by Samira Khoury. Severance offered: ₱38,000/month. He had a leave request on file for sertraline 50 mg daily, so legal should review first. Work permit no. A06513524 expires next year. The EE asked that this stay confidential. Last day to be confirmed after review of Policy 6.5.",
+      "planted": [
+        {
+          "text": "Galegos, Rodrigo",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "51102",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Samira Khoury",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "₱38,000/month",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "sertraline 50 mg daily",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "A06513524",
+          "type": "OTHER_ID",
+          "entity": "permit:1"
+        }
+      ],
+      "keep": [
+        "Case 26-634",
+        "Policy 6.5"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:latino",
+        "typo"
+      ]
+    },
+    {
+      "id": "A016",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 24-862. Accommodation request from Gurpreet \"Preet\" Siddiqui: a short break every 2 hours. He explained he is dealing with PTSD. The doctor's note from Dr. Hoang dated Aug 12 supports the request. Min-jun oYon is his manager and should only hear about the restrictions. Mailing address is 2798 Banyan Ct, Quezon City. He is aged 38. The employee asked that this stay confidential. Interactive process meeting set for Jun 11; see Policy 5.1 on accommodation.",
+      "planted": [
+        {
+          "text": "Gurpreet \"Preet\" Siddiqui",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "PTSD",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Hoang",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Min-jun oYon",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "2798 Banyan Ct, Quezon City",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "aged 38",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        }
+      ],
+      "keep": [
+        "Case 24-862",
+        "Aug 12",
+        "Jun 11",
+        "Policy 5.1"
+      ],
+      "features": [
+        "culture:korean",
+        "culture:south-asian",
+        "culture:vietnamese",
+        "nickname",
+        "typo"
+      ]
+    },
+    {
+      "id": "A017",
+      "scenario": "investigation",
+      "style": "terse",
+      "text": "Case 25-494 - The newest line cook in Building C told HR that Mr. Paredes made comments about his family leave in front of the crew. Intake record: Dhillon, Gurpreet (badge #86418). Katarzyna Wojcik (the Line 3 packaging team) says she saw part of it. He is the newest line cook in Building C. He can be reached at gdhillon@example.com or (555) 555-0192. Salary: 131.5k. HR was told about a herniated disc. He was born 20 September 1976. The EE has not been told who else is being interviewed. Next: interview Mr. Paredes and Kasia; review Policy 4.4.",
+      "planted": [
+        {
+          "text": "Paredes",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "The newest line cook in Building C",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Dhillon, Gurpreet",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "86418",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Katarzyna Wojcik",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the Line 3 packaging team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the newest line cook in Building C",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "gdhillon@example.com",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "(555) 555-0192",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "131.5k",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "a herniated disc",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "20 September 1976",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        },
+        {
+          "text": "Kasia",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 25-494",
+        "Policy 4.4"
+      ],
+      "features": [
+        "culture:eastern-european",
+        "culture:latino",
+        "culture:south-asian",
+        "indirect-id",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A018",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 24-578. Jesús Rivas (EMP-73918) asked for a parking space near the entrance because of bipolar II disorder. The doctor's note from Dr. Kang dated Oct 16 supports the request. Mr. Hoang was told only the work restrictions. He works with the Tulsa depot. Payroll shows pay of $92500. The employee asked that this stay confidential. Interactive process meeting set for Dec 4; see Policy 6.1 on accommodation.",
+      "planted": [
+        {
+          "text": "Jesús Rivas",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-73918",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "bipolar II disorder",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Kang",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Hoang",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the Tulsa depot",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "$92500",
+          "type": "SALARY",
+          "entity": "salary:1"
+        }
+      ],
+      "keep": [
+        "Case 24-578",
+        "Oct 16",
+        "Dec 4",
+        "Policy 6.1"
+      ],
+      "features": [
+        "culture:korean",
+        "culture:latino",
+        "culture:vietnamese"
+      ]
+    },
+    {
+      "id": "A019",
+      "scenario": "investigation",
+      "style": "bullets",
+      "text": "Case 25-874 notes:\n- Employee: OKAFOR, CHIDINMA\n- On May 15, Chi told HR that her supervisor, Khalid Khoury, did not pay her overtiem for the last three pay periods.\n- Suresh Mukherjee (the cold-storage unit) says he saw part of it.\n- She is the only Filipino ICU nurse at the Tulsa depot.\n- Payroll shows pay of $48.50/hr.\n- HR received the report because she came in person.\n- Next: interview Mr. Khoury and Mr. Mukhereje; review Policy 3.3.",
+      "planted": [
+        {
+          "text": "OKAFOR, CHIDINMA",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Khalid Khoury",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Chi",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Suresh Mukherjee",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the cold-storage unit",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the only Filipino ICU nurse at the Tulsa depot",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "$48.50/hr",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "Khoury",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Mukhereje",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 25-874",
+        "May 15",
+        "Policy 3.3"
+      ],
+      "features": [
+        "caps",
+        "culture:arab",
+        "culture:nigerian",
+        "culture:south-asian",
+        "indirect-id",
+        "nickname",
+        "prose-typo",
+        "typo"
+      ]
+    },
+    {
+      "id": "A020",
+      "scenario": "investigation",
+      "style": "bullets",
+      "text": "Case 25-672 notes:\n- Employee: OJO, FOLASADE\n- Ojo (E51423) reported that her supervisor, Jocelyn Lacson, kept assigning her the closing shift without notice.\n- Sandeep Dhillon (the Cebu branch) says he saw part of it.\n- She is the sole delivery driver at the Building C annex.\n- Salary: PHP 50,000.\n- HR was told about post-partum depression.\n- HR received the report because she came in person.\n- Next: interview Ms. Lacson and S. Dhillon; review Policy 7.5.",
+      "planted": [
+        {
+          "text": "OJO, FOLASADE",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Jocelyn Lacson",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Ojo",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E51423",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Sandeep Dhillon",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the Cebu branch",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the sole delivery driver at the Building C annex",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "PHP 50,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "post-partum depression",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Lacson",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "S. Dhillon",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 25-672",
+        "Policy 7.5"
+      ],
+      "features": [
+        "caps",
+        "culture:filipino",
+        "culture:nigerian",
+        "culture:south-asian",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A021",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 26-114. The only Spanish speaker on the weekend dock team requested a reduced lifting limit. Diagnosis in the note: migraines. Name on the form: Liu, Wei. The doctor's note from Dr. Mukherjee dated Nov 24 supports the request. Ms. Dương was told only the work restrictions. He is the only Spanish speaker on the weekend dock team. He works with the night warehouse crew. Payroll shows pay of 10.2k/mo. SSN 926 82 5303 was used for the I-9. The employee asked that this stay confidential. Interactive process meeting set for Nov 26; see Policy 3.4 on accommodation.",
+      "planted": [
+        {
+          "text": "The only Spanish speaker on the weekend dock team",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "migraines",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Liu, Wei",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Mukherjee",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Dương",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the only Spanish speaker on the weekend dock team",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "the night warehouse crew",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "10.2k/mo",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "926 82 5303",
+          "type": "OTHER_ID",
+          "entity": "ssn:1"
+        }
+      ],
+      "keep": [
+        "Case 26-114",
+        "Nov 24",
+        "Nov 26",
+        "Policy 3.4"
+      ],
+      "features": [
+        "culture:chinese",
+        "culture:south-asian",
+        "culture:vietnamese",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A022",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 24-126. Seung-ho Kang (badge #94475) asked for an ergonomic keyboard because of stage II breast cancer. The doctor's note from Dr. Zielinski dated Jun 15 supports the request. Francisco Ceballos is his manager and should only hear about the restrictions. He is the only swing-shift CNC machinist. He works with the weekend dispatch team. Passport no. P7784107 was copied for the file. The employee has not been told who else is being interviewed. Interactive process meeting set for Nov 11; see Policy 6.6 on accommodation.",
+      "planted": [
+        {
+          "text": "Seung-ho Kang",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "94475",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "stage II breast cancer",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Zielinski",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Francisco Ceballos",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the only swing-shift CNC machinist",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "the weekend dispatch team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "P7784107",
+          "type": "OTHER_ID",
+          "entity": "passport:1"
+        }
+      ],
+      "keep": [
+        "Case 24-126",
+        "Jun 15",
+        "Nov 11",
+        "Policy 6.6"
+      ],
+      "features": [
+        "culture:eastern-european",
+        "culture:korean",
+        "culture:latino",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A023",
+      "scenario": "accommodation",
+      "style": "bullets",
+      "text": "Case 24-913 notes:\n- Accommodation request from Mykola Kowalczyk: a short break every 2 hours. He explained he is dealing with pregnancy (due in March).\n- The doctor's note from Dr. Wag dated Jul 28 supports the request.\n- Obinna ze is his manager and should only hear about the restrictions.\n- He works with the weekend dispatch team.\n- Salary: $900/wk.\n- He does not want his manager told yet.\n- Interactive process meeting set for Aug 17; see Policy 1.5 on accommodation.",
+      "planted": [
+        {
+          "text": "Mykola Kowalczyk",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "pregnancy (due in March)",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Wag",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Obinna ze",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the weekend dispatch team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "$900/wk",
+          "type": "SALARY",
+          "entity": "salary:1"
+        }
+      ],
+      "keep": [
+        "Case 24-913",
+        "Jul 28",
+        "Aug 17",
+        "Policy 1.5"
+      ],
+      "features": [
+        "culture:chinese",
+        "culture:eastern-european",
+        "culture:nigerian",
+        "typo"
+      ]
+    },
+    {
+      "id": "A024",
+      "scenario": "investigation",
+      "style": "terse",
+      "text": "Case 25-321 - On Apr 6, Aileen Ocampo told HR that Yan Liu sent her unwelcome messages after hours. Mykola Nowak (the weekend dispatch team) says he saw part of it. She is the youngest forklift lead on the night warehouse crew. Personal email aocampo@example.net, phone +63 917 000 0129. Payroll shows pay of USD 147,500.00. The EE asked that this stay confidential. Next: interview Ms. Liu and Nowak; review Policy 5.1.",
+      "planted": [
+        {
+          "text": "Yan Liu",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Aileen Ocampo",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Mykola Nowak",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the weekend dispatch team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the youngest forklift lead on the night warehouse crew",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "aocampo@example.net",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "+63 917 000 0129",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "USD 147,500.00",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "Liu",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Nowak",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 25-321",
+        "Apr 6",
+        "Policy 5.1"
+      ],
+      "features": [
+        "culture:chinese",
+        "culture:eastern-european",
+        "culture:filipino",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A025",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 26-905. Eze, Segun (employee no. 32581) is being considered for termination. His position is being eliminated in the restructuring. Recommended by Joaquín \"Quino\" Gallegos. Severance offered: $105.5K. He works with the cold-storage unit. He had a leave request on file for multiple sclerosis, so legal should review first. The employee has not been told who else is being interviewed. Last day to be confirmed after review of Policy 8.3.",
+      "planted": [
+        {
+          "text": "Eze, Segun",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "32581",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Joaquín \"Quino\" Gallegos",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "$105.5K",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "the cold-storage unit",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "multiple sclerosis",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        }
+      ],
+      "keep": [
+        "Case 26-905",
+        "Policy 8.3"
+      ],
+      "features": [
+        "culture:latino",
+        "culture:nigerian",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A026",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 26-956. Termination review for Eun-ji Baek (E40307), the new hire from Guadalajara. She falsified timecards on Nov 27. Recommended by Francisco Ceballos. Severance offered: ₦610,000. She works with the Tulsa depot. Salary: ₹6 lakh. She does not want her manager told yet. Last day to be confirmed after review of Policy 3.6.",
+      "planted": [
+        {
+          "text": "Eun-ji Baek",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E40307",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "the new hire from Guadalajara",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Francisco Ceballos",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "₦610,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "the Tulsa depot",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "₹6 lakh",
+          "type": "SALARY",
+          "entity": "salary:2"
+        }
+      ],
+      "keep": [
+        "Case 26-956",
+        "Nov 27",
+        "Policy 3.6"
+      ],
+      "features": [
+        "culture:korean",
+        "culture:latino",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A027",
+      "scenario": "investigation",
+      "style": "terse",
+      "text": "Case 24-605 - Yetunde \"Yetty\" Nwosu (EMP-87450) reported that Ms. Khoury cut her hours after she raised a safety concern. Wei Wang (the Cebu branch) says he saw part of it. She is the sole pharmacy technician at the Building C annex. Personal email yetty92@example.com, phone 555-555-0115. She does not want her mgr told yet. Next: interview Ms. Khoury and Wei Wang; review Policy 3.1.",
+      "planted": [
+        {
+          "text": "Khoury",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Yetunde \"Yetty\" Nwosu",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-87450",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Wei Wang",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the Cebu branch",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the sole pharmacy technician at the Building C annex",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "yetty92@example.com",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "555-555-0115",
+          "type": "PHONE",
+          "entity": "phone:1"
+        }
+      ],
+      "keep": [
+        "Case 24-605",
+        "Policy 3.1"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:chinese",
+        "culture:nigerian",
+        "indirect-id",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A028",
+      "scenario": "investigation",
+      "style": "bullets",
+      "text": "Case 25-929 notes:\n- Joselito \"Lito\" Evangelista (E25918) reported that his supervisor, Rajesh Iyer, sent him unwelcome messages after hours.\n- Witness: Tammy Hargrove, the new hire from Chennai.\n- Mailing address is 4226 Orchard Ln, Fresno.\n- Payroll shows pay of sixty-four thousand dollars.\n- Medical info on file: carpal tunnel syndrome.\n- Work permit no. A66177081 expires next year.\n- The employee asked that this stay confidential.\n- Next: interview Mr. Iyer and Tammy Hargrove; review Policy 8.5.",
+      "planted": [
+        {
+          "text": "Rajesh Iyer",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Joselito \"Lito\" Evangelista",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E25918",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Tammy Hargrove",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the new hire from Chennai",
+          "type": "ROLE",
+          "entity": "role:wit"
+        },
+        {
+          "text": "4226 Orchard Ln, Fresno",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "sixty-four thousand dollars",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "carpal tunnel syndrome",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "A66177081",
+          "type": "OTHER_ID",
+          "entity": "permit:1"
+        },
+        {
+          "text": "Iyer",
+          "type": "PERSON",
+          "entity": "person:sup"
+        }
+      ],
+      "keep": [
+        "Case 25-929",
+        "Policy 8.5"
+      ],
+      "features": [
+        "culture:anglo",
+        "culture:filipino",
+        "culture:south-asian",
+        "indirect-id",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A029",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 25-110. Phan, Quân (EMP-33247) is being considered for termination. He had 7 unexcused absences since July. Recommended by Ramon Evangelista. Severance offered: $50,000. He had a leave request on file for major depressive disorder, so legal should review first. Send the letter to 2554 Rizal Ave., Unit 12, Fresno and quan50@example.com. The employee asked that this stay confidential. Last day to be confirmed after review of Policy 4.3.",
+      "planted": [
+        {
+          "text": "Phan, Quân",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-33247",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Ramon Evangelista",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "$50,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "major depressive disorder",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "2554 Rizal Ave., Unit 12, Fresno",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "quan50@example.com",
+          "type": "EMAIL",
+          "entity": "email:1"
+        }
+      ],
+      "keep": [
+        "Case 25-110",
+        "Policy 4.3"
+      ],
+      "features": [
+        "culture:filipino",
+        "culture:vietnamese"
+      ]
+    },
+    {
+      "id": "A030",
+      "scenario": "accommodation",
+      "style": "terse",
+      "text": "Case 26-877 - Accommodation request from Xiu-ying Yang: remote work two days a week. She explained she is dealing w/ chronic kidney disease (dialysis three times a week). The doctor's note from Dr. Haddad dated Jun 27 supports the request. Mr. Ceballos was told only the work restrictions. She can be reached at xiuying71@example.org or +86 138 000 0158. Salary: £47,000. The EE has not been told who else is being interviewed. Interactive process mtg set for Feb 9; see Policy 4.5 on accommodation.",
+      "planted": [
+        {
+          "text": "Xiu-ying Yang",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "chronic kidney disease (dialysis three times a week)",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Haddad",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Ceballos",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "xiuying71@example.org",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "+86 138 000 0158",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "£47,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        }
+      ],
+      "keep": [
+        "Case 26-877",
+        "Jun 27",
+        "Feb 9",
+        "Policy 4.5"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:chinese",
+        "culture:latino"
+      ]
+    },
+    {
+      "id": "A031",
+      "scenario": "accommodation",
+      "style": "bullets",
+      "text": "Case 24-924 notes:\n- Accommodation request from Phan Thi Hanh: an ergonomic keyboard. She explained she is dealing with sciatica.\n- The doctor's note from Dr. Olawale dated Jan 24 supports the request.\n- Anjali Dhillon is her manager and should only hear about the restrictions.\n- She is the only Spanish speaker on the night warehouse crew.\n- She works with the Tulsa depot.\n- Home address on file: 4455 Ashgrove Dr, Tulsa. Cell: +84 90 000 0167.\n- She told HR she earns ₹10.5 lakh and is paid late some months.\n- She does not want her manager told yet.\n- Interactive process meeting set for May 4; see Policy 3.5 on accommodation.",
+      "planted": [
+        {
+          "text": "Phan Thi Hanh",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "sciatica",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Olawale",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Anjali Dhillon",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the only Spanish speaker on the night warehouse crew",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "the Tulsa depot",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "4455 Ashgrove Dr, Tulsa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "+84 90 000 0167",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "₹10.5 lakh",
+          "type": "SALARY",
+          "entity": "salary:1"
+        }
+      ],
+      "keep": [
+        "Case 24-924",
+        "Jan 24",
+        "May 4",
+        "Policy 3.5"
+      ],
+      "features": [
+        "culture:nigerian",
+        "culture:south-asian",
+        "culture:vietnamese",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A032",
+      "scenario": "investigation",
+      "style": "prose",
+      "text": "Case 26-777. Lưương Thị Linh (employee no. 60647) reported that Cristina Magsaysay made comments about her family leave in front of the crew. Jericho Dela Cruz (the night warehouse crew) says he saw part of it. Mailing address is 2241 Unity Blvd, Houston. Salary: 8.9k/mo. HR recieved the report because she came in person. Next: interview Ms. Magsaysay and Jek; review Policy 8.5.",
+      "planted": [
+        {
+          "text": "Cristina Magsaysay",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Lưương Thị Linh",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "60647",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Jericho Dela Cruz",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the night warehouse crew",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "2241 Unity Blvd, Houston",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "8.9k/mo",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "Magsaysay",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Jek",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 26-777",
+        "Policy 8.5"
+      ],
+      "features": [
+        "culture:filipino",
+        "culture:vietnamese",
+        "nickname",
+        "prose-typo",
+        "typo"
+      ]
+    },
+    {
+      "id": "A033",
+      "scenario": "termination",
+      "style": "bullets",
+      "text": "Case 26-604 notes:\n- Employee: DHILLON, KAVITHA\n- Dhilllon, Kavitha (badge #84263) is being considered for termination.\n- Her position is being eliminated in the restructuring.\n- Recommended by Gregory Whitaker.\n- Severance offered: 51k.\n- She works with the weekend dispatch team.\n- She had a leave request on file for an insulin pump, so legal should review first.\n- Salary: £32,000.\n- HR received the report because she came in person.\n- Last day to be confirmed after review of Policy 5.5.",
+      "planted": [
+        {
+          "text": "DHILLON, KAVITHA",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Dhilllon, Kavitha",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "84263",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Gregory Whitaker",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "51k",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "the weekend dispatch team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "an insulin pump",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "£32,000",
+          "type": "SALARY",
+          "entity": "salary:2"
+        }
+      ],
+      "keep": [
+        "Case 26-604",
+        "Policy 5.5"
+      ],
+      "features": [
+        "caps",
+        "culture:anglo",
+        "culture:south-asian",
+        "typo"
+      ]
+    },
+    {
+      "id": "A034",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 25-591. The newest loan officer on the weekend loading dock requested a later start time. Diagnosis in the note: generalized anxiety dsorder. Name on the form: Dimaculangan, Cristina. The doctor's note from Dr. Duong dated Jul 8 supports the request. Mr. Siddiqui was told only the work restrictions. She can be reached at cdimaculangan@example.org or 555.555.0135. Current pay is $44.50/hr. The employee asked that this stay confidential. Interactive process meeting set for Sep 2; see Policy 2.2 on accommodation.",
+      "planted": [
+        {
+          "text": "The newest loan officer on the weekend loading dock",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "generalized anxiety dsorder",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Dimaculangan, Cristina",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Duong",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Siddiqui",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "cdimaculangan@example.org",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "555.555.0135",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "$44.50/hr",
+          "type": "SALARY",
+          "entity": "salary:1"
+        }
+      ],
+      "keep": [
+        "Case 25-591",
+        "Jul 8",
+        "Sep 2",
+        "Policy 2.2"
+      ],
+      "features": [
+        "culture:filipino",
+        "culture:south-asian",
+        "culture:vietnamese",
+        "indirect-id",
+        "typo"
+      ]
+    },
+    {
+      "id": "A035",
+      "scenario": "investigation",
+      "style": "bullets",
+      "text": "Case 25-594 notes:\n- Ifeanyi Ojo (EMP-95691) reported that his supervisor, Layla Aziz, mocked his accent in the Jan 18 team meeting.\n- Rui LLiu (the Cebu branch) says he saw part of it.\n- He is the only weekend-shift ICU nurse.\n- Personal email iojo@example.net, phone +234 803 000 0151.\n- The employee has not been told who else is being interviewed.\n- Next: interview Ms. Aiz and Liu; review Policy 8.6.",
+      "planted": [
+        {
+          "text": "Layla Aziz",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Ifeanyi Ojo",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-95691",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Rui LLiu",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the Cebu branch",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the only weekend-shift ICU nurse",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "iojo@example.net",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "+234 803 000 0151",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "Aiz",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Liu",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 25-594",
+        "Jan 18",
+        "Policy 8.6"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:chinese",
+        "culture:nigerian",
+        "indirect-id",
+        "typo"
+      ]
+    },
+    {
+      "id": "A036",
+      "scenario": "investigation",
+      "style": "terse",
+      "text": "Case 25-546 - Priyanka Banerjee (badge #44300) reported that Mr. Tuan cut her hours after she raised a safety concern. Mykola Nwak (the weekend dispatch team) says he saw part of it. She works w/ the weekend dispatch team. Home address on file: 4808 Harbor View Way, San Jose. Cell: +91 98 000 0192. She told HR she earns $134,000 and is paid late some months. HR received the report b/c she came in person. Next: interview Mr. Tuan and Mykola Nowak; review Policy 9.1.",
+      "planted": [
+        {
+          "text": "Tuan",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Priyanka Banerjee",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "44300",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Mykola Nwak",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the weekend dispatch team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "4808 Harbor View Way, San Jose",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "+91 98 000 0192",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "$134,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "Mykola Nowak",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 25-546",
+        "Policy 9.1"
+      ],
+      "features": [
+        "culture:eastern-european",
+        "culture:south-asian",
+        "culture:vietnamese",
+        "typo"
+      ]
+    },
+    {
+      "id": "A037",
+      "scenario": "investigation",
+      "style": "terse",
+      "text": "Case 26-577 - The only Vietnamese-speaking lab technician in the ICU told HR that Katarzyna \"Kasia\" Kowalczyk left him out of the Aug 20 planning mtg on purpose. Intake record: Escobedo, Jesús (EE no. 84420). Cristina Magsaysay (the Tulsa depot) says she saw part of it. He is the only Vietnamese-speaking lab technician in the ICU. He works w/ the weekend dispatch team. Mailing address is 3229 Orchard Ln, Houston. Payroll shows pay of PHP 63,000. He does not want his mgr told yet. Next: interview Ms. Kowalczyk and Tina; review Policy 8.1.",
+      "planted": [
+        {
+          "text": "Katarzyna \"Kasia\" Kowalczyk",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "The only Vietnamese-speaking lab technician in the ICU",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Escobedo, Jesús",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "84420",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Cristina Magsaysay",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the Tulsa depot",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the only Vietnamese-speaking lab technician in the ICU",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "the weekend dispatch team",
+          "type": "DEPARTMENT",
+          "entity": "dept:2"
+        },
+        {
+          "text": "3229 Orchard Ln, Houston",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "PHP 63,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "Kowalczyk",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Tina",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 26-577",
+        "Aug 20",
+        "Policy 8.1"
+      ],
+      "features": [
+        "culture:eastern-european",
+        "culture:filipino",
+        "culture:latino",
+        "indirect-id",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A038",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 25-821. Evangelista, Aileen (E49374) is being considered for termination. She did not meet the targets in the performance plan. Recommended by Samira Haddad. Severance offered: $1,550/wk. Send the letter to 244 Orchard Ln, Apt 4B, Houston and aevangelista@example.com. DOB: 12/02/1961. The employee asked that this stay confidential. Last day to be confirmed after review of Policy 6.6.",
+      "planted": [
+        {
+          "text": "Evangelista, Aileen",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E49374",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Samira Haddad",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "$1,550/wk",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "244 Orchard Ln, Apt 4B, Houston",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "aevangelista@example.com",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "12/02/1961",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        }
+      ],
+      "keep": [
+        "Case 25-821",
+        "Policy 6.6"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:filipino"
+      ]
+    },
+    {
+      "id": "A039",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 25-570. Nguyễn, Thảo (badge #44682) is being considered for termination. She did not meet the targets in the performance plan. Recommended by Ramon \"Mon\" Lacson. Severance offered: ₦420,000. Send the letter to 3827 Ashgrove Dr, Apt 4B, Mesa and tnguyen@example.org. HR received the report because she came in person. Last day to be confirmed after review of Policy 1.3.",
+      "planted": [
+        {
+          "text": "Nguyễn, Thảo",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "44682",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Ramon \"Mon\" Lacson",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "₦420,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "3827 Ashgrove Dr, Apt 4B, Mesa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "tnguyen@example.org",
+          "type": "EMAIL",
+          "entity": "email:1"
+        }
+      ],
+      "keep": [
+        "Case 25-570",
+        "Policy 1.3"
+      ],
+      "features": [
+        "culture:filipino",
+        "culture:vietnamese",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A040",
+      "scenario": "investigation",
+      "style": "prose",
+      "text": "Case 24-145. Kimberly Whitaker (EMP-57442) reported that her supervisor, Jess \"Chuy\" Escobedo, cut her hours after she raised a safety concern. Bogdan Kowalczyk (the Tulsa depot) says he saw part of it. She works with the Building C loading dock. Medical info on file: lupus. She is 23 years old. She does not want her manager told yet. Next: interview Mr. Escobedo and Bogdan; review Policy 5.1.",
+      "planted": [
+        {
+          "text": "Jess \"Chuy\" Escobedo",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Kimberly Whitaker",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-57442",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Bogdan Kowalczyk",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the Tulsa depot",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the Building C loading dock",
+          "type": "DEPARTMENT",
+          "entity": "dept:2"
+        },
+        {
+          "text": "lupus",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "23 years old",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        },
+        {
+          "text": "Escobedo",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Bogdan",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 24-145",
+        "Policy 5.1"
+      ],
+      "features": [
+        "culture:anglo",
+        "culture:eastern-european",
+        "culture:latino",
+        "nickname",
+        "typo"
+      ]
+    },
+    {
+      "id": "A041",
+      "scenario": "accommodation",
+      "style": "bullets",
+      "text": "Case 25-399 notes:\n- Employee: ESCOBEDO, FRANCISCO\n- Mr. Escobedo (E88927) asked for a reduced lifting limit because of stage II breast cancer.\n- The doctor's note from Dr. Hernandez dated Jul 8 supports the request.\n- Obinna Abubakar is his manager and should only hear about the restrictions.\n- He works with the cold-storage unit.\n- He can be reached at paco64@example.com or (555) 555-0151.\n- Current pay is ₱29,000/month.\n- He is aged 46.\n- He does not want his manager told yet.\n- Interactive process meeting set for Sep 7; see Policy 2.1 on accommodation.",
+      "planted": [
+        {
+          "text": "ESCOBEDO, FRANCISCO",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Escobedo",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E88927",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "stage II breast cancer",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Hernandez",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Obinna Abubakar",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the cold-storage unit",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "paco64@example.com",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "(555) 555-0151",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "₱29,000/month",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "aged 46",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        }
+      ],
+      "keep": [
+        "Case 25-399",
+        "Jul 8",
+        "Sep 7",
+        "Policy 2.1"
+      ],
+      "features": [
+        "caps",
+        "culture:latino",
+        "culture:nigerian"
+      ]
+    },
+    {
+      "id": "A042",
+      "scenario": "accommodation",
+      "style": "prose",
+      "text": "Case 26-441. Chukwuemeka Abubakar (employee no. 13417) asked for a parking space near the entrance becuase of chemotherapy. The doctor's note from Dr. Ocapmo dated May 16 supports the request. Sunita Siddiqui is his manager and should only hear about the restrictions. He told HR he earns eighty-eight thousand dollars and is paid late some months. DOB: 12/21/1963. The employee has not been told who else is being interviewed. Interactive process meeting set for Jul 3; see Policy 1.4 on accommodation.",
+      "planted": [
+        {
+          "text": "Chukwuemeka Abubakar",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "13417",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "chemotherapy",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Ocapmo",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Sunita Siddiqui",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "eighty-eight thousand dollars",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "12/21/1963",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        }
+      ],
+      "keep": [
+        "Case 26-441",
+        "May 16",
+        "Jul 3",
+        "Policy 1.4"
+      ],
+      "features": [
+        "culture:filipino",
+        "culture:nigerian",
+        "culture:south-asian",
+        "prose-typo",
+        "typo"
+      ]
+    },
+    {
+      "id": "A043",
+      "scenario": "accommodation",
+      "style": "bullets",
+      "text": "Case 26-229 notes:\n- The only Nigerian-born ICU nurse in cold storage requested a reduced lifting limit. Diagnosis in the note: PTSD. Name on the form: Phan, Thao.\n- The doctor's note from Dr. Gallegos dated Apr 1 supports the request.\n- Mr. Dhillon was told only the work restrictions.\n- She works with the Line 3 packaging team.\n- Mailing address is 2382 Rizal Ave., #305, Mesa.\n- She does not want her manager told yet.\n- Interactive process meeting set for Sep 16; see Policy 5.6 on accommodation.",
+      "planted": [
+        {
+          "text": "The only Nigerian-born ICU nurse in cold storage",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "PTSD",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Phan, Thao",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Gallegos",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Dhillon",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the Line 3 packaging team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "2382 Rizal Ave., #305, Mesa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        }
+      ],
+      "keep": [
+        "Case 26-229",
+        "Apr 1",
+        "Sep 16",
+        "Policy 5.6"
+      ],
+      "features": [
+        "culture:latino",
+        "culture:south-asian",
+        "culture:vietnamese",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A044",
+      "scenario": "termination",
+      "style": "bullets",
+      "text": "Case 26-290 notes:\n- Termination review for Rowena Magsaysay (badge #28532), the youngest payroll analyst at the Tulsa depot.\n- She did not meet the targets in the performance plan.\n- Recommended by Joselito Evangelista.\n- Severance offered: $111K.\n- She had a leave request on file for gestational diabetes, so legal should review first.\n- Send the letter to 1964 Ashgrove Dr, #305, Tulsa and rowena.magsaysay@example.com.\n- She is 28 years old.\n- The employee has not been told who else is being interviewed.\n- Last day to be confirmed after review of Policy 4.2.",
+      "planted": [
+        {
+          "text": "Rowena Magsaysay",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "28532",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "the youngest payroll analyst at the Tulsa depot",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Joselito Evangelista",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "$111K",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "gestational diabetes",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "1964 Ashgrove Dr, #305, Tulsa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "rowena.magsaysay@example.com",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "28 years old",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        }
+      ],
+      "keep": [
+        "Case 26-290",
+        "Policy 4.2"
+      ],
+      "features": [
+        "culture:filipino",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A045",
+      "scenario": "termination",
+      "style": "terse",
+      "text": "Case 26-270 - Olawale, Chidinma (E33535) is being considered for termination. She did not meet the targets in the performance plan. Recommended by Lynn. Severance offered: USD 83,500.00. She had a leave request on file for asthma, so legal should review first. Payroll shows pay of $67500. The EE asked that this stay confidential. Last day to be confirmed after review of Policy 4.2.",
+      "planted": [
+        {
+          "text": "Olawale, Chidinma",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E33535",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Lynn",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "USD 83,500.00",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "asthma",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "$67500",
+          "type": "SALARY",
+          "entity": "salary:2"
+        }
+      ],
+      "keep": [
+        "Case 26-270",
+        "Policy 4.2"
+      ],
+      "features": [
+        "culture:nigerian",
+        "culture:vietnamese",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A046",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 26-350. Villanueva, Aileen (employee no. 21602) is being considered for termination. She did not meet the targets in the performance plan. Recommended by Tammy Linwood. Severance offered: PHP 37,000. She had a leave request on file for major depressiive disorder, so legal should review first. Passport no. P3225803 was copied for the file. The employee asked that this stay confidential. Last day to be confirmed after review of Policy 5.1.",
+      "planted": [
+        {
+          "text": "Villanueva, Aileen",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "21602",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Tammy Linwood",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "PHP 37,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "major depressiive disorder",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "P3225803",
+          "type": "OTHER_ID",
+          "entity": "passport:1"
+        }
+      ],
+      "keep": [
+        "Case 26-350",
+        "Policy 5.1"
+      ],
+      "features": [
+        "culture:anglo",
+        "culture:filipino",
+        "typo"
+      ]
+    },
+    {
+      "id": "A047",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 25-679. Gallegos, Joaquín (EMP-92962) is being considered for termination. He had 7 unexcused absences since May. Recommended by Phan Văn Lộc. Severance offered: USD 57,500.00. Send the letter to 556 Rizal Ave., Tulsa and quino51@example.com. Salary: $1,575/wk. The employee has not been told who else is being interviewed. Last day to be confirmed after review of Policy 9.2.",
+      "planted": [
+        {
+          "text": "Gallegos, Joaquín",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-92962",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Phan Văn Lộc",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "USD 57,500.00",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "556 Rizal Ave., Tulsa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "quino51@example.com",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "$1,575/wk",
+          "type": "SALARY",
+          "entity": "salary:2"
+        }
+      ],
+      "keep": [
+        "Case 25-679",
+        "Policy 9.2"
+      ],
+      "features": [
+        "culture:latino",
+        "culture:vietnamese"
+      ]
+    },
+    {
+      "id": "A048",
+      "scenario": "accommodation",
+      "style": "terse",
+      "text": "Case 26-530 - Sunita Mukherjee (E44700) asked for a stool at the packing station b/c of post-partum depression. The doctor's note from Dr. Hoang dated Mar 27 supports the request. Ify is her mgr and should only hear about the restrictions. She is the only woman on Line 3 packaging. Home address on file: 87 Camia St., #305, Houston. Cell: (555) 555-0131. Payroll shows pay of 62k. She does not want her mgr told yet. Interactive process mtg set for Jun 15; see Policy 4.5 on accommodation.",
+      "planted": [
+        {
+          "text": "Sunita Mukherjee",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E44700",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "post-partum depression",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Hoang",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Ify",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the only woman on Line 3 packaging",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "87 Camia St., #305, Houston",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "(555) 555-0131",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "62k",
+          "type": "SALARY",
+          "entity": "salary:1"
+        }
+      ],
+      "keep": [
+        "Case 26-530",
+        "Mar 27",
+        "Jun 15",
+        "Policy 4.5"
+      ],
+      "features": [
+        "culture:nigerian",
+        "culture:south-asian",
+        "culture:vietnamese",
+        "indirect-id",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A049",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 25-139. Termination review for Hoàng Thị Linh (badge #61106), the new hire from Chennai. She did not meet the targets in the performance plan. Recommended by Nguyen Van Loc. Severance offered: one hundred four thousand five hundred dollars. She had a leave request on file for epilepsy, so legal should review first. She told HR she earns ₦180,000 and is paid late some months. She does not want her manager told yet. Last day to be confirmed after review of Policy 7.2.",
+      "planted": [
+        {
+          "text": "Hoàng Thị Linh",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "61106",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "the new hire from Chennai",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Nguyen Van Loc",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "one hundred four thousand five hundred dollars",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "epilepsy",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "₦180,000",
+          "type": "SALARY",
+          "entity": "salary:2"
+        }
+      ],
+      "keep": [
+        "Case 25-139",
+        "Policy 7.2"
+      ],
+      "features": [
+        "culture:vietnamese",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A050",
+      "scenario": "investigation",
+      "style": "terse",
+      "text": "Case 24-160 - Mykola Zielinski (EMP-92297) reported that Rui Wang cut his hours after he raised a safety concern. Yan Yang (the night warehouse crew) says she saw part of it. He is the sole loan officer at the Cebu branch. He works w/ the Cebu branch. He can be reached at mzielinski@example.org or (555) 555-0157. HR was told about an insulin pump. He was born 14 January 1960. SSN on file: 939-96-9222. The EE asked that this stay confidentail. Next: interview Mr. Wang and Yan; review Policy 4.5.",
+      "planted": [
+        {
+          "text": "Rui Wang",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Mykola Zielinski",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-92297",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Yan Yang",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the night warehouse crew",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the sole loan officer at the Cebu branch",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "the Cebu branch",
+          "type": "DEPARTMENT",
+          "entity": "dept:2"
+        },
+        {
+          "text": "mzielinski@example.org",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "(555) 555-0157",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "an insulin pump",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "14 January 1960",
+          "type": "DATE_OF_BIRTH",
+          "entity": "dob:1"
+        },
+        {
+          "text": "939-96-9222",
+          "type": "OTHER_ID",
+          "entity": "ssn:1"
+        },
+        {
+          "text": "Wang",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Yan",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 24-160",
+        "Policy 4.5"
+      ],
+      "features": [
+        "culture:chinese",
+        "culture:eastern-european",
+        "indirect-id",
+        "prose-typo"
+      ]
+    },
+    {
+      "id": "A051",
+      "scenario": "termination",
+      "style": "bullets",
+      "text": "Case 24-361 notes:\n- Employee: KHOURY, OMAR\n- Termination review for Omar (employee no. 69287), the only early-morning-shift delivery driver.\n- He falsified timecards on Apr 19.\n- Recommended by Min-jun Park.\n- Severance offered: ₹7 lakh.\n- He works with the night warehouse crew.\n- The employee has not been told who else is being interviewed.\n- Last day to be confirmed after review of Policy 6.4.",
+      "planted": [
+        {
+          "text": "KHOURY, OMAR",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Omar",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "69287",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "the only early-morning-shift delivery driver",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Min-jun Park",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "₹7 lakh",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "the night warehouse crew",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        }
+      ],
+      "keep": [
+        "Case 24-361",
+        "Apr 19",
+        "Policy 6.4"
+      ],
+      "features": [
+        "caps",
+        "culture:arab",
+        "culture:korean",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A052",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 26-145. Hargrove, Tammy (employee no. 16068) is being considered for termination. She did not meet the targets in the performence plan. Recommended by Min-jun Kang. Severance offered: 9.9k/mo. She works with the Building C loading dock. She had a leave request on file for chronic kidney disease (dialysis three times a week), so legal should review first. She does not want her manager told yet. Last day to be confirmed after review of Policy 1.2.",
+      "planted": [
+        {
+          "text": "Hargrove, Tammy",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "16068",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Min-jun Kang",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "9.9k/mo",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "the Building C loading dock",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "chronic kidney disease (dialysis three times a week)",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        }
+      ],
+      "keep": [
+        "Case 26-145",
+        "Policy 1.2"
+      ],
+      "features": [
+        "culture:anglo",
+        "culture:korean",
+        "prose-typo"
+      ]
+    },
+    {
+      "id": "A053",
+      "scenario": "accommodation",
+      "style": "bullets",
+      "text": "Case 24-346 notes:\n- The new hire from Guadalajara requested a later start time. Diagnosis in the note: sciaitca. Name on the form: Hadddad, Layla.\n- The doctor's note from Dr. Kowalczyk dated Sep 11 supports the request.\n- Katarzyna \"Kasia\" Wójcik is her manager and should only hear about the restrictions.\n- She is the new hire from Guadalajara.\n- Home address on file: 4368 Unity Blvd, #305, Cebu City. Cell: 555-555-0152.\n- She told HR she earns ₱46,000/month and is paid late some months.\n- SSN 976 27 2314 was used for the I-9.\n- She does not want her manager told yet.\n- Interactive process meeting set for Nov 10; see Policy 6.6 on accommodation.",
+      "planted": [
+        {
+          "text": "The new hire from Guadalajara",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "sciaitca",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "Hadddad, Layla",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Kowalczyk",
+          "type": "PERSON",
+          "entity": "person:doc"
+        },
+        {
+          "text": "Katarzyna \"Kasia\" Wójcik",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "the new hire from Guadalajara",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "4368 Unity Blvd, #305, Cebu City",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "555-555-0152",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "₱46,000/month",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "976 27 2314",
+          "type": "OTHER_ID",
+          "entity": "ssn:1"
+        }
+      ],
+      "keep": [
+        "Case 24-346",
+        "Sep 11",
+        "Nov 10",
+        "Policy 6.6"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:eastern-european",
+        "indirect-id",
+        "nickname",
+        "typo"
+      ]
+    },
+    {
+      "id": "A054",
+      "scenario": "investigation",
+      "style": "prose",
+      "text": "Case 24-550. Joaquín \"Quino\" Ceballos (EMP-90697) reported that Eun-ji Baek mocked his accent in the Apr 6 team meeting. Dương Văn Quân (the Tulsa depot) says he saw part of it. Home address on file: 675 Camia St., Apt 17, Mesa. Cell: 555-555-0132. Payroll shows pay of $49.5K. The employee asked that this stay confidential. Next: interview Ms. Baek and Quân; review Policy 3.4.",
+      "planted": [
+        {
+          "text": "Eun-ji Baek",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Joaquín \"Quino\" Ceballos",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-90697",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Dương Văn Quân",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the Tulsa depot",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "675 Camia St., Apt 17, Mesa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "555-555-0132",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "$49.5K",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "Baek",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Quân",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 24-550",
+        "Apr 6",
+        "Policy 3.4"
+      ],
+      "features": [
+        "culture:korean",
+        "culture:latino",
+        "culture:vietnamese",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A055",
+      "scenario": "investigation",
+      "style": "prose",
+      "text": "Case 26-988. Altagracia Gallegos (badge #97798) reported that Xiu-ying Yang cut her hours after she raised a safety concern. Mykolla Zielinski (the Line 3 packaging team) says he saw part of it. She works with the Building C loading dock. Mailing address is 2808 Rizal Ave., Tulsa. Payroll shows pay of $149,000. She does not want her manager told yet. Next: interview Ms. Yang and Mykola; review Policy 9.6.",
+      "planted": [
+        {
+          "text": "Xiu-ying Yang",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Altagracia Gallegos",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "97798",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Mykolla Zielinski",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the Line 3 packaging team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the Building C loading dock",
+          "type": "DEPARTMENT",
+          "entity": "dept:2"
+        },
+        {
+          "text": "2808 Rizal Ave., Tulsa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "$149,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "Yang",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Mykola",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 26-988",
+        "Policy 9.6"
+      ],
+      "features": [
+        "culture:chinese",
+        "culture:eastern-european",
+        "culture:latino",
+        "typo"
+      ]
+    },
+    {
+      "id": "A056",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 26-298. Termination review for Tammy Hargrove (E73182), the oldest claims adjuster on the night warehouse crew. Her position is being eliminated in the restructuring. Recommended by Anjali \"Anju\" Venkataraman. Severance offered: $15.00/hr. Send the letter to 3681 Harbor View Way, #305, Lagos and tammy67@example.net. She told HR she earns $40000 and is paid late some months. The employee asked that this stay confidential. Last day to be confirmed after review of Policy 4.1.",
+      "planted": [
+        {
+          "text": "Tammy Hargrove",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E73182",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "the oldest claims adjuster on the night warehouse crew",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Anjali \"Anju\" Venkataraman",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "$15.00/hr",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "3681 Harbor View Way, #305, Lagos",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "tammy67@example.net",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "$40000",
+          "type": "SALARY",
+          "entity": "salary:2"
+        }
+      ],
+      "keep": [
+        "Case 26-298",
+        "Policy 4.1"
+      ],
+      "features": [
+        "culture:anglo",
+        "culture:south-asian",
+        "indirect-id",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A057",
+      "scenario": "investigation",
+      "style": "prose",
+      "text": "Case 24-747. The only Spanish-speaking pharmacy technician on Line 3 told HR that Ms. Khoury cut her hours after she raised a safety concern. Intake record: Kang, Eun-ji (badge #58349). A coworker, Raj, was nearby and heard it. She works with the weekend dispatch team. Mailing address is 3407 Harbor View Way, Houston. HR was told about hypertension. She does not want her manager told yet. Next: interview Ms. Khoury and Raj; review Policy 2.1.",
+      "planted": [
+        {
+          "text": "Khoury",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "The only Spanish-speaking pharmacy technician on Line 3",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Kang, Eun-ji",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "58349",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Raj",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the weekend dispatch team",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "3407 Harbor View Way, Houston",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "hypertension",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        }
+      ],
+      "keep": [
+        "Case 24-747",
+        "Policy 2.1"
+      ],
+      "features": [
+        "culture:arab",
+        "culture:korean",
+        "culture:south-asian",
+        "indirect-id",
+        "nickname"
+      ]
+    },
+    {
+      "id": "A058",
+      "scenario": "investigation",
+      "style": "prose",
+      "text": "Case 24-575. On Sep 25, Xiu-ying Wang told HR that Maria \"Lupiita\" Barragan did not pay her overtime for the last three pay periods. Witness: Sandy, the sole receiving clerk at the Cebu branch. Mailing address is 167 Harbor View Way, Mesa. The employe has not been told who else is being interviewed. Next: interview Ms. Barragan and Sandy; review Policy 7.5.",
+      "planted": [
+        {
+          "text": "Maria \"Lupiita\" Barragan",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "Xiu-ying Wang",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "Sandy",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the sole receiving clerk at the Cebu branch",
+          "type": "ROLE",
+          "entity": "role:wit"
+        },
+        {
+          "text": "167 Harbor View Way, Mesa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "Barragan",
+          "type": "PERSON",
+          "entity": "person:sup"
+        }
+      ],
+      "keep": [
+        "Case 24-575",
+        "Sep 25",
+        "Policy 7.5"
+      ],
+      "features": [
+        "culture:chinese",
+        "culture:latino",
+        "culture:south-asian",
+        "indirect-id",
+        "nickname",
+        "prose-typo",
+        "typo"
+      ]
+    },
+    {
+      "id": "A059",
+      "scenario": "investigation",
+      "style": "prose",
+      "text": "Case 26-353. The only Spanish speaker on Line 3 packaging told HR that Ms. Escobedo mocked his accent in the Oct 24 team meeting. Intake record: Zielinski, Bogdan (EMP-37041). Chidinma Olawale (the Tulsa depot) says she saw part of it. He is the only Spanish speaker on Line 3 packaging. He works with the cold-storage unit. Home address on file: 1901 Orchard Ln, Mesa. Cell: 555.555.0139. Salary: £40,000. Payroll has SSN 980895264. HR received the report because he came in person. Next: interview Ms. Escobedo and Ms. Olawale; review Policy 5.2.",
+      "planted": [
+        {
+          "text": "Escobedo",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "The only Spanish speaker on Line 3 packaging",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "Zielinski, Bogdan",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "EMP-37041",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Chidinma Olawale",
+          "type": "PERSON",
+          "entity": "person:wit"
+        },
+        {
+          "text": "the Tulsa depot",
+          "type": "DEPARTMENT",
+          "entity": "dept:1"
+        },
+        {
+          "text": "the only Spanish speaker on Line 3 packaging",
+          "type": "ROLE",
+          "entity": "role:emp"
+        },
+        {
+          "text": "the cold-storage unit",
+          "type": "DEPARTMENT",
+          "entity": "dept:2"
+        },
+        {
+          "text": "1901 Orchard Ln, Mesa",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "555.555.0139",
+          "type": "PHONE",
+          "entity": "phone:1"
+        },
+        {
+          "text": "£40,000",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "980895264",
+          "type": "OTHER_ID",
+          "entity": "ssn:1"
+        },
+        {
+          "text": "Olawale",
+          "type": "PERSON",
+          "entity": "person:wit"
+        }
+      ],
+      "keep": [
+        "Case 26-353",
+        "Oct 24",
+        "Policy 5.2"
+      ],
+      "features": [
+        "culture:eastern-european",
+        "culture:latino",
+        "culture:nigerian",
+        "indirect-id"
+      ]
+    },
+    {
+      "id": "A060",
+      "scenario": "termination",
+      "style": "prose",
+      "text": "Case 26-328. Bhatt, Kavitha (E30457) is being considered for termination. She did not meet the targets in the performance plan. Recommended by Joaquín \"Quino\" Rivas. Severance offered: forty-seven thousand five hundred dollars. She had a leave request on file for celiac disease, so legal should review first. Send the letter to 4163 Calle Luna, #305, Houston and kavi36@example.net. Current pay is ₹8 lakh. SSN on file: 930-33-7474. The employee asked that this stay confidential. Last day to be confirmed after review of Policy 3.2.",
+      "planted": [
+        {
+          "text": "Bhatt, Kavitha",
+          "type": "PERSON",
+          "entity": "person:emp"
+        },
+        {
+          "text": "E30457",
+          "type": "EMPLOYEE_ID",
+          "entity": "empid:1"
+        },
+        {
+          "text": "Joaquín \"Quino\" Rivas",
+          "type": "PERSON",
+          "entity": "person:sup"
+        },
+        {
+          "text": "forty-seven thousand five hundred dollars",
+          "type": "SALARY",
+          "entity": "salary:1"
+        },
+        {
+          "text": "celiac disease",
+          "type": "MEDICAL",
+          "entity": "medical:1"
+        },
+        {
+          "text": "4163 Calle Luna, #305, Houston",
+          "type": "ADDRESS",
+          "entity": "address:1"
+        },
+        {
+          "text": "kavi36@example.net",
+          "type": "EMAIL",
+          "entity": "email:1"
+        },
+        {
+          "text": "₹8 lakh",
+          "type": "SALARY",
+          "entity": "salary:2"
+        },
+        {
+          "text": "930-33-7474",
+          "type": "OTHER_ID",
+          "entity": "ssn:1"
+        }
+      ],
+      "keep": [
+        "Case 26-328",
+        "Policy 3.2"
+      ],
+      "features": [
+        "culture:latino",
+        "culture:south-asian",
+        "nickname"
+      ]
+    }
+  ]
+}
