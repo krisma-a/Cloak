@@ -123,7 +123,7 @@ test("11. a relative's condition and the employee's own stay separate", () => {
     ["his son's autism diagnosis", 'FAMILY_MEDICAL'],
     ['migraines', 'MEDICAL'],
   ])
-  assert.equal(r.text, '[EMPLOYEE_1] said [FAMILY_MEDICAL_1] means frequent school calls. [EMPLOYEE_1] also has [MEDICAL_1].')
+  assert.equal(r.text, '[EMPLOYEE_1] said [FAMILY_MEDICAL_1] means frequent school calls. [EMPLOYEE_1] also has [MEDICAL_DETAIL_1].')
   assert.deepEqual(r.leaks, [])
 })
 
@@ -137,7 +137,7 @@ test('12. manager emails and termination letters never get family medical detail
   assert.match(checked.warnings.join(' '), /Withheld 1 FAMILY_MEDICAL/)
   assert.equal(restore(checked.text, r.map, TEMPLATES.accommodation.withhold), 'Please approve the schedule change for Grace ([withheld]).')
   for (const t of Object.values(TEMPLATES)) {
-    if (t.withhold.includes('MEDICAL')) assert.ok(t.withhold.includes('FAMILY_MEDICAL'), `${t.id} must withhold FAMILY_MEDICAL`)
+    if (t.withhold.includes('MEDICAL_DETAIL')) assert.ok(t.withhold.includes('FAMILY_MEDICAL'), `${t.id} must withhold FAMILY_MEDICAL`)
   }
 })
 

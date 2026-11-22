@@ -35,7 +35,9 @@ const PREFIX: Record<Category, string> = {
   EMAIL: 'EMAIL',
   PHONE: 'PHONE',
   ADDRESS: 'ADDRESS',
-  MEDICAL: 'MEDICAL',
+  // The original diagnosis/condition stays in the in-memory map under [MEDICAL_DETAIL_n]. Only the
+  // placeholder can reach the cloud, never the value (see restrictionPrompt.ts).
+  MEDICAL: 'MEDICAL_DETAIL',
   SALARY: 'SALARY',
   DATE_OF_BIRTH: 'DOB',
   ROLE: 'ROLE',
@@ -46,6 +48,9 @@ const PREFIX: Record<Category, string> = {
   FAMILY_MEDICAL: 'FAMILY_MEDICAL',
   OTHER_ID: 'ID',
 }
+
+/** Health placeholders: never restored in manager or employee drafts, never shown to the cloud as text. */
+export const HEALTH_PREFIXES = ['MEDICAL_DETAIL', 'FAMILY_MEDICAL'] as const
 
 export interface PlaceholderMap {
   /** "[EMPLOYEE_1]" -> "Maria Santos" (used to restore) */
@@ -235,7 +240,9 @@ export function applyEntities(
 // space before the number, leading zeros ("[EMPLOYEE_01]"), and markdown escapes
 // ("\[EMPLOYEE\_1\]"). Padding is capped ({0,2}) so odd input can't make the match slow.
 // Groups: 1 = prefix, 2 = number.
-const PLACEHOLDER_PATTERN = String.raw`\\?\[\s{0,2}([A-Za-z]+(?:\\?_[A-Za-z]+)*)\s{0,2}(?:\\?_|-|\s)\s{0,2}(\d{1,6})\s{0,2}\\?\]`
+// A multi-word prefix ("MEDICAL_DETAIL", "FAMILY_MEDICAL") may come back as "Medical Detail" or
+// "medical-detail" too; a look-alike that is not in the map is still left alone (see `known`).
+const PLACEHOLDER_PATTERN = String.raw`\\?\[\s{0,2}([A-Za-z]+(?:(?:\\?_|-|\s{1,2})[A-Za-z]+)*)\s{0,2}(?:\\?_|-|\s)\s{0,2}(\d{1,6})\s{0,2}\\?\]`
 
 export interface PlaceholderMatch {
   /** The text exactly as the model wrote it, e.g. "[ employee 1 ]". */
@@ -251,7 +258,7 @@ export interface PlaceholderMatch {
 }
 
 function describe(raw: string, rawPrefix: string, rawNumber: string, map: PlaceholderMap): PlaceholderMatch {
-  const prefix = rawPrefix.replace(/\\/g, '').toUpperCase()
+  const prefix = rawPrefix.replace(/\\/g, '').replace(/[\s-]+/g, '_').toUpperCase()
   const placeholder = `[${prefix}_${rawNumber.replace(/^0+(?=\d)/, '')}]`
   return { raw, placeholder, prefix, known: map.originals[placeholder] !== undefined, exact: raw === placeholder }
 }
@@ -277,13 +284,20 @@ export function findPlaceholders(text: string, map: PlaceholderMap): Placeholder
  * `withhold` lists prefixes that must NOT be restored (e.g. MEDICAL in a manager email);
  * those become "[withheld]". Anything that isn't one of our placeholders is left untouched.
  * A phrase (role, team, tenure, medical) that starts a sentence gets a capital first letter.
+ * `only` limits restoring to those prefixes; every other placeholder stays as written.
  */
-export function restore(text: string, map: PlaceholderMap, withhold: string[] = []): string {
+export function restore(
+  text: string,
+  map: PlaceholderMap,
+  withhold: readonly string[] = [],
+  only?: readonly string[],
+): string {
   return text.replace(
     new RegExp(PLACEHOLDER_PATTERN, 'g'),
     (raw: string, rawPrefix: string, rawNumber: string, offset: number, whole: string) => {
       const match = describe(raw, rawPrefix, rawNumber, map)
       if (!match.known && !match.exact) return raw
+      if (only && !only.includes(match.prefix)) return raw
       if (withhold.includes(match.prefix)) return '[withheld]'
       const original = map.originals[match.placeholder]
       if (original === undefined) return raw

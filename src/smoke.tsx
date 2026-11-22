@@ -9,6 +9,8 @@ import { prepareRedaction, redact, type EngineChoice, type RedactionResult } fro
 import { restore } from './ai/placeholders'
 import { draft } from './ai/draft'
 import { confirmNoNames, hideNames, splitNames } from './ai/guard'
+import { deriveRestrictions } from './ai/restrict'
+import { accommodationBlockReason } from './ai/restrictionPrompt'
 import { TEMPLATES, type TemplateId } from './ai/templates'
 
 const PROMPT = 'Reply with the single word OK.'
@@ -28,7 +30,17 @@ function SmokeTest() {
   const [lastRedaction, setLastRedaction] = useState<RedactionResult | null>(null)
   const [templateId, setTemplateId] = useState<TemplateId>('investigation')
   const [namesInput, setNamesInput] = useState('')
+  const [restrictionsText, setRestrictionsText] = useState('')
+  const [employee, setEmployee] = useState('')
   const log = (m: string) => setLines((prev) => [...prev, m])
+
+  // Manager emails use ONLY these restrictions (one per line, edited and approved by the user).
+  const employees = Object.entries(lastRedaction?.map.originals ?? {}).filter(([p]) => p.startsWith('[EMPLOYEE_'))
+  const restrictionLines = restrictionsText.split('\n').map((l) => l.trim()).filter(Boolean)
+  const needsRestrictions = TEMPLATES[templateId].input === 'restrictions'
+  const planProblem = lastRedaction
+    ? accommodationBlockReason({ employee, restrictions: restrictionLines }, lastRedaction.map, lastRedaction.redactedText)
+    : 'Run 4. Redact note first.'
 
   async function run(label: string, fn: () => Promise<void>) {
     setBusy(true)
@@ -93,6 +105,9 @@ function SmokeTest() {
       if (why) log(`  note: ${why}`)
       const result = await redact(note, { engine })
       setLastRedaction(result)
+      setRestrictionsText('')
+      const people = Object.keys(result.map.originals).filter((p) => p.startsWith('[EMPLOYEE_'))
+      setEmployee(people.length === 1 ? people[0] : '')
       log(`  status: ${result.status}   engine: ${result.engine}   attempts: ${result.attempts}   ran: ${result.ranOn}`)
       if (result.crossCheck) {
         log(`  name cross-check: ${result.crossCheck.ran ? `ran, hid ${result.crossCheck.added} item(s) Nano missed` : 'skipped'}`)
@@ -129,11 +144,31 @@ function SmokeTest() {
     log('> User confirmed there are no names left in the redacted text')
   }
 
+  // Gemini Nano (on this device) suggests work restrictions; the original health details stay
+  // in the map as [MEDICAL_DETAIL_n]. Nothing here is sent to the cloud.
+  const findRestrictions = () =>
+    run('Find work restrictions (on this device)', async () => {
+      if (!lastRedaction) throw new Error('Run 4. Redact note first')
+      const result = await deriveRestrictions(lastRedaction, (p) => log(`  loading model ${Math.round(p * 100)}%`))
+      if (result.note) log(`  note: ${result.note}`)
+      log(`  source: ${result.source}   suggested: ${result.items.length}   rejected by checks: ${result.dropped}`)
+      for (const r of result.items) log(`  ${r.kind}: ${r.text}`)
+      setRestrictionsText(result.items.map((r) => r.text).join('\n'))
+    })
+
   // Sends ONLY the redacted text (after the guard) to cloud Gemini, then restores locally.
+  // A manager email sends only the approved restrictions instead of the notes.
   const draftNote = () =>
     run(`Approve & draft (cloud): ${TEMPLATES[templateId].label}`, async () => {
       if (!lastRedaction) throw new Error('Run 4. Redact note first')
-      const result = await draft(lastRedaction, templateId, { approved: true })
+      const result = await draft(lastRedaction, templateId, {
+        approved: true,
+        accommodation: needsRestrictions ? { employee, restrictions: restrictionLines } : undefined,
+      })
+      if (needsRestrictions) {
+        log('  --- what the cloud received (restrictions only) ---')
+        log(result.receipt.sentText)
+      }
       log('  --- receipt ---')
       log(`  model: ${result.receipt.model}   policy: ${result.receipt.policyVersion}   sent: ${result.receipt.sentAt}`)
       log(`  sha256: ${result.receipt.sha256}`)
@@ -209,9 +244,38 @@ function SmokeTest() {
           <button disabled={busy} onClick={confirmNone}>There are no names in the text</button>
         </div>
       )}
+      {needsRestrictions && lastRedaction?.status === 'ok' && (
+        <div style={{ marginTop: 12, padding: 8, border: '1px solid #06c' }}>
+          <strong>Work restrictions for the manager.</strong> The email uses only these lines. No
+          diagnosis and none of the case notes are sent. Edit them, then approve.
+          <div style={{ margin: '8px 0' }}>
+            <button disabled={busy} onClick={findRestrictions}>4b. Find work restrictions (Gemini Nano)</button>
+          </div>
+          <label>
+            Employee:{' '}
+            <select value={employee} disabled={busy} onChange={(e) => setEmployee(e.target.value)}>
+              <option value="">Choose…</option>
+              {employees.map(([p, name]) => (
+                <option key={p} value={p}>{p} = {name}</option>
+              ))}
+            </select>
+          </label>
+          <textarea
+            value={restrictionsText}
+            onChange={(e) => setRestrictionsText(e.target.value)}
+            rows={4}
+            placeholder="One restriction per line, e.g. a short break every 2 hours"
+            style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', marginTop: 8 }}
+          />
+          {planProblem && <small>{planProblem}</small>}
+        </div>
+      )}
       <div style={{ marginTop: 8 }}>
         <button
-          disabled={busy || lastRedaction?.status !== 'ok' || lastRedaction.names === 'unchecked'}
+          disabled={
+            busy || lastRedaction?.status !== 'ok' || lastRedaction.names === 'unchecked' ||
+            (needsRestrictions && planProblem !== null)
+          }
           onClick={draftNote}
         >
           5. Approve &amp; draft

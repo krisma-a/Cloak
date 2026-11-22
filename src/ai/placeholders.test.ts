@@ -21,7 +21,7 @@ test('replaces entities with consistent placeholders', () => {
   const { text } = applyEntities(note, entities)
   assert.equal(
     text,
-    '[EMPLOYEE_1] met [EMPLOYEE_2]. Later, [EMPLOYEE_1] emailed [EMAIL_1] about [MEDICAL_1].',
+    '[EMPLOYEE_1] met [EMPLOYEE_2]. Later, [EMPLOYEE_1] emailed [EMAIL_1] about [MEDICAL_DETAIL_1].',
   )
 })
 
@@ -40,7 +40,7 @@ test('keeps placeholders when called again with more entities', () => {
 test('restores originals', () => {
   const { map } = applyEntities(note, entities)
   assert.equal(
-    restore('Dear [EMPLOYEE_1], re: [MEDICAL_1].', map),
+    restore('Dear [EMPLOYEE_1], re: [MEDICAL_DETAIL_1].', map),
     'Dear Maria Santos, re: diabetes.',
   )
 })
@@ -70,9 +70,24 @@ test('restores placeholders the model reformatted', () => {
   }
   // Several different placeholders, mixed formats, in one draft.
   assert.equal(
-    restore('[employee 1] told [EMPLOYEE_2] about [ Medical_1 ] and [email-1].', map),
+    restore('[employee 1] told [EMPLOYEE_2] about [ Medical Detail 1 ] and [email-1].', map),
     'Maria Santos told Chidi Okafor about diabetes and maria@example.com.',
   )
+})
+
+test('multi-word prefixes come back in any spacing, and withholding still catches them', () => {
+  const { map } = applyEntities('Arjun said his son\'s autism diagnosis hurts. Arjun has migraines.', [
+    { text: 'Arjun', category: 'PERSON' },
+    { text: "his son's autism diagnosis", category: 'FAMILY_MEDICAL' },
+    { text: 'migraines', category: 'MEDICAL' },
+  ])
+  const draft = '[Family Medical 1] / [family-medical_1] / [Medical Detail 1] / [MEDICAL DETAIL_01] / \\[MEDICAL\\_DETAIL\\_1\\]'
+  assert.equal(
+    restore(draft, map, ['FAMILY_MEDICAL', 'MEDICAL_DETAIL']),
+    '[withheld] / [withheld] / [withheld] / [withheld] / [withheld]',
+  )
+  assert.equal(restore('Re: [Medical Detail 1]', map), 'Re: migraines')
+  assert.equal(restore('[Medical Detail 9] [Medical Report 1]', map), '[Medical Detail 9] [Medical Report 1]')
 })
 
 test('leaves look-alikes and unknown placeholders alone', () => {
@@ -84,7 +99,7 @@ test('leaves look-alikes and unknown placeholders alone', () => {
 test('withholds reformatted placeholders too', () => {
   const { map } = applyEntities(note, entities)
   assert.equal(
-    restore('Re: [medical 1], [ MEDICAL_01 ], [MEDICAL_1].', map, ['MEDICAL']),
+    restore('Re: [medical detail 1], [ MEDICAL_DETAIL_01 ], [MEDICAL_DETAIL_1].', map, ['MEDICAL_DETAIL']),
     'Re: [withheld], [withheld], [withheld].',
   )
 })
@@ -92,7 +107,7 @@ test('withholds reformatted placeholders too', () => {
 test('restoring never changes the map', () => {
   const { map } = applyEntities(note, entities)
   const before = structuredClone(map)
-  restore('[EMPLOYEE_1] [employee 2] [MEDICAL_1]', map, ['MEDICAL'])
+  restore('[EMPLOYEE_1] [employee 2] [MEDICAL_DETAIL_1]', map, ['MEDICAL_DETAIL'])
   assert.deepEqual(map, before)
 })
 
@@ -150,5 +165,5 @@ test('a one-word team keeps its article, so the same word elsewhere stays visibl
 
 test('counts placeholders by type without content', () => {
   const { map } = applyEntities(note, entities)
-  assert.deepEqual(countByPrefix(map), { EMPLOYEE: 2, EMAIL: 1, MEDICAL: 1 })
+  assert.deepEqual(countByPrefix(map), { EMPLOYEE: 2, EMAIL: 1, MEDICAL_DETAIL: 1 })
 })

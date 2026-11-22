@@ -84,7 +84,7 @@ const NANO_CREATE_OPTIONS = {
 }
 
 /** True if this browser exposes Chrome's built-in model and the device can run it. */
-async function nanoSupported(): Promise<boolean> {
+export async function nanoSupported(): Promise<boolean> {
   const lm = (globalThis as { LanguageModel?: { availability: (o: object) => Promise<string> } })
     .LanguageModel
   if (!lm) return false
