@@ -1,122 +1,253 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useRef, useState } from 'react'
+import { TEMPLATES } from './ai/templates.ts'
+import { DEMO_MODE, redactNotes, SendBlockedError, suggestRestrictions, writeDraft } from './workspace/ai.ts'
+import { LoadingCard, Stepper } from './workspace/components.tsx'
+import type { StepInfo } from './workspace/components.tsx'
+import { makeLabeler, outgoing } from './workspace/review.ts'
+import { StepGenerate } from './workspace/StepGenerate.tsx'
+import { StepPaste } from './workspace/StepPaste.tsx'
+import { StepResult } from './workspace/StepResult.tsx'
+import { StepReview } from './workspace/StepReview.tsx'
+import type { DraftResult, RedactionResult, StepId, TemplateId } from './workspace/types.ts'
+import './workspace/workspace.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const STEPS: StepInfo[] = [
+  { id: 'paste', label: 'Paste notes' },
+  { id: 'review', label: 'Check details' },
+  { id: 'generate', label: 'Write draft' },
+  { id: 'result', label: 'Your draft' },
+]
+
+type Busy = 'hiding' | 'writing' | null
+
+export default function App() {
+  const [step, setStep] = useState<StepId>('paste')
+  const [busy, setBusy] = useState<Busy>(null)
+  const [progress, setProgress] = useState<number | null>(null)
+  const lastPercent = useRef(-1)
+
+  // Everything below lives in this tab's memory only. Nothing is saved, logged or sent
+  // until "Write the draft".
+  const [notes, setNotes] = useState('')
+  const [templateId, setTemplateId] = useState<TemplateId>('investigation')
+  const [base, setBase] = useState<RedactionResult | null>(null) // every detail still a placeholder
+  const [kept, setKept] = useState<string[]>([]) // details the person left visible
+  const [employee, setEmployee] = useState('')
+  const [restrictionsText, setRestrictionsText] = useState('')
+  const [suggesting, setSuggesting] = useState(false)
+  const [suggestNote, setSuggestNote] = useState<string | null>(null)
+  const [confirmed, setConfirmed] = useState(false)
+  const [draftResult, setDraftResult] = useState<DraftResult | null>(null)
+
+  const [pasteError, setPasteError] = useState<string | null>(null)
+  const [writeError, setWriteError] = useState<string | null>(null)
+  const [blockedMessage, setBlockedMessage] = useState<string | null>(null)
+
+  // Move keyboard focus to the new screen so screen readers announce it.
+  const mainRef = useRef<HTMLElement>(null)
+  const firstRender = useRef(true)
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    mainRef.current?.focus()
+  }, [step, busy])
+
+  async function hidePrivateDetails() {
+    setBusy('hiding')
+    setPasteError(null)
+    setProgress(null)
+    lastPercent.current = -1
+    try {
+      const result = await redactNotes(notes, (fraction) => {
+        const percent = Math.round(fraction * 100)
+        if (percent !== lastPercent.current) {
+          lastPercent.current = percent
+          setProgress(fraction)
+        }
+      })
+      setBase(result)
+      setKept([])
+      setEmployee('')
+      setRestrictionsText('')
+      setSuggestNote(null)
+      setStep('review')
+    } catch {
+      setPasteError('Something went wrong on this laptop. Your notes are still here. Please try again.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  function continueToGenerate() {
+    if (!base) return
+    const people = Object.keys(outgoing(base, kept).map.originals).filter((p) => p.startsWith('[EMPLOYEE_'))
+    setEmployee(people.length === 1 ? (people[0] ?? '') : '')
+    setConfirmed(false)
+    setBlockedMessage(null)
+    setWriteError(null)
+    setStep('generate')
+  }
+
+  async function findRestrictions() {
+    if (!base) return
+    setSuggesting(true)
+    setSuggestNote(null)
+    try {
+      const found = await suggestRestrictions(outgoing(base, kept))
+      if (found.items.length > 0) setRestrictionsText(found.items.map((item) => item.text).join('\n'))
+      setSuggestNote(
+        found.items.length > 0
+          ? 'Suggestions added. Please edit them.'
+          : (found.note ?? 'No suggestions. Type the restrictions yourself.'),
+      )
+    } catch {
+      setSuggestNote('We couldn’t suggest any. Type the restrictions yourself.')
+    } finally {
+      setSuggesting(false)
+    }
+  }
+
+  // "Write the draft" is the only thing that sends anything to the cloud.
+  async function writeTheDraft() {
+    if (!base) return
+    const restrictions = restrictionsText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+    setBusy('writing')
+    setBlockedMessage(null)
+    setWriteError(null)
+    try {
+      const result = await writeDraft(outgoing(base, kept), templateId, {
+        approved: true,
+        accommodation: TEMPLATES[templateId].input === 'restrictions' ? { employee, restrictions } : undefined,
+      })
+      setDraftResult(result)
+      setStep('result')
+    } catch (error) {
+      if (error instanceof SendBlockedError) {
+        setBlockedMessage(error.message)
+      } else {
+        setWriteError('We couldn’t write the draft just now. Your notes are safe on this laptop. Please try again.')
+      }
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  // Going back drops the draft, because the details it was based on may change.
+  function goTo(target: StepId) {
+    if (busy) return
+    setBlockedMessage(null)
+    setWriteError(null)
+    setDraftResult(null)
+    setStep(target)
+  }
+
+  function startOver() {
+    setNotes('')
+    setTemplateId('investigation')
+    setBase(null)
+    setKept([])
+    setEmployee('')
+    setRestrictionsText('')
+    setSuggestNote(null)
+    setConfirmed(false)
+    setDraftResult(null)
+    setPasteError(null)
+    setWriteError(null)
+    setBlockedMessage(null)
+    setStep('paste')
+  }
+
+  const result = base ? outgoing(base, kept) : null
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="cloak-app">
+      <div className="shell">
+        <header className="top">
+          <h1 className="brand">
+            Cloak <span>Case workspace</span>
+          </h1>
+          {DEMO_MODE && (
+            <span className="demo-tag" title="The screens use placeholder AI. Nothing is sent anywhere.">
+              Demo mode
+            </span>
+          )}
+        </header>
 
-      <div className="ticks"></div>
+        <Stepper steps={STEPS} current={step} onGo={goTo} locked={busy !== null} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <main ref={mainRef} tabIndex={-1}>
+          {busy === 'hiding' && (
+            <LoadingCard
+              title="Hiding details on this laptop…"
+              note="Your notes aren’t leaving this computer."
+              checks={['Reading your notes', 'Finding names and private details', 'Swapping in labels']}
+              progress={progress}
+            />
+          )}
+          {busy === 'writing' && (
+            <LoadingCard
+              title="Writing your draft in the cloud…"
+              note="Only the hidden version is being sent."
+              checks={['Sending the hidden version', 'Waiting for the draft', 'Putting real names back on this laptop']}
+            />
+          )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+          {busy === null && step === 'paste' && (
+            <StepPaste
+              notes={notes}
+              onNotesChange={setNotes}
+              templateId={templateId}
+              onTemplateChange={setTemplateId}
+              onContinue={hidePrivateDetails}
+              error={pasteError}
+            />
+          )}
+
+          {busy === null && step === 'review' && base && (
+            <StepReview
+              base={base}
+              kept={kept}
+              onChange={(next) => {
+                setBase(next.base)
+                setKept(next.kept)
+              }}
+              onBack={() => goTo('paste')}
+              onContinue={continueToGenerate}
+            />
+          )}
+
+          {busy === null && step === 'generate' && base && result && (
+            <StepGenerate
+              result={result}
+              label={makeLabeler(base.map)}
+              templateId={templateId}
+              keptCount={kept.length}
+              employee={employee}
+              onEmployeeChange={setEmployee}
+              restrictionsText={restrictionsText}
+              onRestrictionsChange={setRestrictionsText}
+              onSuggest={findRestrictions}
+              suggesting={suggesting}
+              suggestNote={suggestNote}
+              confirmed={confirmed}
+              onConfirmedChange={setConfirmed}
+              blockedMessage={blockedMessage}
+              error={writeError}
+              onBack={() => goTo('review')}
+              onWrite={writeTheDraft}
+            />
+          )}
+
+          {busy === null && step === 'result' && draftResult && (
+            <StepResult result={draftResult} onStartOver={startOver} />
+          )}
+        </main>
+      </div>
+    </div>
   )
 }
-
-export default App
