@@ -31,18 +31,19 @@ Do not reach legal conclusions.`,
     label: 'Accommodation email to manager',
     audience: 'manager',
     // 29 CFR 1630.14: managers may learn work restrictions, not diagnoses.
-    withhold: ['MEDICAL', 'DOB', 'SALARY', 'ID'],
+    withhold: ['MEDICAL', 'FAMILY_MEDICAL', 'DOB', 'SALARY', 'ID'],
     instructions: `Write a short email from HR to the employee's manager about a workplace accommodation.
 Include ONLY the work restrictions or adjustments needed and practical next steps for the team.
-NEVER mention or hint at any diagnosis, condition, symptom, medication or treatment.
-NEVER use any [MEDICAL_...], [DOB_...], [SALARY_...] or [ID_...] placeholder.
+NEVER mention or hint at any diagnosis, condition, symptom, medication or treatment,
+including a family member's.
+NEVER use any [MEDICAL_...], [FAMILY_MEDICAL_...], [DOB_...], [SALARY_...] or [ID_...] placeholder.
 Remind the manager to keep this confidential.`,
   },
   termination: {
     id: 'termination',
     label: 'Termination letter (employee)',
     audience: 'employee',
-    withhold: ['MEDICAL'],
+    withhold: ['MEDICAL', 'FAMILY_MEDICAL'],
     instructions: `Write a respectful, factual termination letter to the employee.
 State the reason only as supported by the notes, the effective date and next steps
 (final pay, returning company property, benefits contact).

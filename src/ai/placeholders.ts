@@ -16,6 +16,8 @@ export const CATEGORIES = [
   'DATE_OF_BIRTH',
   'ROLE',
   'DEPARTMENT',
+  'TENURE',
+  'FAMILY_MEDICAL',
   'OTHER_ID',
 ] as const
 
@@ -38,6 +40,10 @@ const PREFIX: Record<Category, string> = {
   DATE_OF_BIRTH: 'DOB',
   ROLE: 'ROLE',
   DEPARTMENT: 'DEPT',
+  TENURE: 'TENURE',
+  // Its own prefix (not MEDICAL) so the cloud never mistakes a relative's condition for the
+  // employee's. Every template that withholds MEDICAL must withhold this too (see templates.ts).
+  FAMILY_MEDICAL: 'FAMILY_MEDICAL',
   OTHER_ID: 'ID',
 }
 
@@ -103,6 +109,30 @@ export function filterEntities(text: string, entities: Entity[]): Entity[] {
   })
 }
 
+// "the only Filipino nurse in the ICU" -> role "the only Filipino nurse" + group "the ICU".
+// Splits on the first in/on/at/within. The group must start with an article or a capital
+// ("in charge of nights" is not a group), so a bad split keeps the whole phrase as one ROLE.
+const ROLE_THEN_GROUP = /^(.{3,}?)\s+(?:in|on|at|within)\s+(.{2,60})$/i
+const GROUP_START = /^(?:(?:the|our|their|his|her|a|an)\s|\p{Lu})/u
+const LEADING_ARTICLE = /^(?:the|our|a|an)\s+/i
+
+/**
+ * Turns one ROLE or TENURE phrase that includes its team into two entities, so the text reads
+ * "[ROLE_1] in [DEPT_1]" (or "[TENURE_1] in [DEPT_1]") and each part is reused on its own.
+ * Other entities pass through.
+ */
+export function splitRoleAndGroup(entities: Entity[]): Entity[] {
+  return entities.flatMap((e): Entity[] => {
+    if (e.category !== 'ROLE' && e.category !== 'TENURE') return [e]
+    const m = e.text.trim().match(ROLE_THEN_GROUP)
+    if (!m || !GROUP_START.test(m[2]) || MONTH_DAY.test(m[2]) || EVENT_WORD.test(m[2])) return [e]
+    return [
+      { text: m[1], category: e.category },
+      { text: m[2], category: 'DEPARTMENT' },
+    ]
+  })
+}
+
 /**
  * Replaces each entity found in `text` with a placeholder. Entities the model invented
  * (not actually in the text) are ignored. Returns new text and an updated copy of the map.
@@ -120,7 +150,7 @@ export function applyEntities(
   // Keep only entities that really appear in the text, stored with the note's own
   // spelling and casing (the model may return "oct 3" for "Oct 3").
   const valid: Entity[] = []
-  for (const e of filterEntities(text, entities)) {
+  for (const e of filterEntities(text, splitRoleAndGroup(entities))) {
     const value = e.text.trim()
     if (!isUsable(value) || !PREFIX[e.category]) continue
     const found = text.match(wholeWordRegex(value))
@@ -144,12 +174,30 @@ export function applyEntities(
         if (partKey.length >= 3 && !map.lookup[partKey]) map.lookup[partKey] = placeholder
       }
     }
+
+    // "the Reno warehouse" also hides a later "Reno warehouse" (same placeholder). Skipped for a
+    // bare one-word lowercase noun ("warehouse"), which would hide ordinary words.
+    if (entity.category === 'DEPARTMENT') {
+      const bare = entity.text.replace(LEADING_ARTICLE, '')
+      const bareKey = bare.toLowerCase()
+      if (bare !== entity.text && bare.length >= 3 && (/\s/.test(bare) || /^\p{Lu}/u.test(bare)) && !map.lookup[bareKey]) {
+        map.lookup[bareKey] = placeholder
+      }
+    }
   }
 
   // Replace, longest strings first.
   let result = text
   const keys = Object.keys(map.lookup).sort((a, b) => b.length - a.length)
   for (const key of keys) result = result.replace(wholeWordRegex(key), map.lookup[key])
+
+  // Forget placeholders made in this call that ended up nowhere in the text (a department that
+  // sat inside a longer phrase), so counts and the map only describe what is really hidden.
+  for (const placeholder of Object.keys(map.originals)) {
+    if (previous.originals[placeholder] !== undefined || result.includes(placeholder)) continue
+    delete map.originals[placeholder]
+    for (const [key, value] of Object.entries(map.lookup)) if (value === placeholder) delete map.lookup[key]
+  }
   return { text: result, map }
 }
 

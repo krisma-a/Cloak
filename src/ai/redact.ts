@@ -16,16 +16,8 @@ import { getRedactionModel } from '../firebase'
 import { generateLogged } from './inference.ts'
 import { findLeaks, type Leak } from '../rules/rules.ts'
 import { findNamesAndPlaces, loadBrowserModel } from './browserModel.ts'
-import {
-  applyEntities,
-  CATEGORIES,
-  countByPrefix,
-  emptyMap,
-  sensitiveStrings,
-  type Category,
-  type Entity,
-  type PlaceholderMap,
-} from './placeholders.ts'
+import { applyEntities, countByPrefix, emptyMap, sensitiveStrings, type PlaceholderMap } from './placeholders.ts'
+import { buildPrompt, ENTITY_SCHEMA, parseEntities } from './redactPrompt.ts'
 import { medicalTerms, ruleEntities } from './ruleEntities.ts'
 
 export const MAX_RETRIES = 2 // later read from Remote Config
@@ -76,73 +68,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 // ---------------------------------------------------------------------------------------------
 // Gemini Nano engine
 
-// JSON schema Nano must follow (Chrome Prompt API responseConstraint).
-const ENTITY_SCHEMA = {
-  type: 'object',
-  properties: {
-    entities: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          text: { type: 'string' },
-          category: { type: 'string', enum: [...CATEGORIES] },
-        },
-        required: ['text', 'category'],
-      },
-    },
-  },
-  required: ['entities'],
-}
-
-const INSTRUCTIONS = `You find personal information in HR case notes so it can be hidden.
-Return JSON: {"entities":[{"text":"...","category":"..."}]}.
-Copy each "text" exactly as it appears in the notes.
-Categories:
-- PERSON: any person's name, including first names alone, nicknames and initials.
-- EMPLOYEE_ID: employee or badge numbers.
-- EMAIL, PHONE, ADDRESS: contact details.
-- MEDICAL: diagnoses, conditions, disabilities, medications, pregnancy, treatments.
-- SALARY: pay, wages, bonuses or other money amounts tied to a person.
-- DATE_OF_BIRTH: birth dates or exact ages.
-- ROLE: a whole phrase that singles out one person. Always include these. Examples:
-  "the only woman on the night warehouse crew", "the only Filipino nurse in the ICU",
-  "the youngest engineer", "the new hire from Lagos". Copy the full phrase, including the team.
-- DEPARTMENT: a team, unit or site name that narrows down who someone is, e.g.
-  "the night warehouse crew", "Cebu branch". Never meetings, calls or other events.
-- OTHER_ID: SSN, passport, tax or any other ID number.
-Ignore placeholders in square brackets like [EMPLOYEE_1]; they are already hidden.
-Do not include job duties, policies or dates of events.`
-
-function buildPrompt(text: string, missed: string[]): string {
-  const hint = missed.length
-    ? `\nYour last answer missed these. Include each one with the right category: ${missed
-        .map((m) => JSON.stringify(m))
-        .join(', ')}\n`
-    : ''
-  return `${INSTRUCTIONS}\n${hint}\nNotes:\n<<<\n${text}\n>>>`
-}
-
-function parseEntities(raw: string): Entity[] {
-  let data: unknown
-  try {
-    data = JSON.parse(raw)
-  } catch {
-    const match = raw.match(/\{[\s\S]*\}/) // tolerate stray text around the JSON
-    if (!match) return []
-    try {
-      data = JSON.parse(match[0])
-    } catch {
-      return []
-    }
-  }
-  const list = (data as { entities?: unknown })?.entities
-  if (!Array.isArray(list)) return []
-  return list.filter(
-    (e): e is Entity =>
-      typeof e?.text === 'string' && CATEGORIES.includes(e?.category as Category),
-  )
-}
+// Prompt, JSON schema and reply parsing live in redactPrompt.ts (pure, tested in Node).
 
 let model: GenerativeModel | undefined
 function nanoModel(): GenerativeModel {
