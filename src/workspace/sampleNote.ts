@@ -1,0 +1,2 @@
+// FAKE case note for trying the workspace. Every name, number and detail here is made up.
+export const SAMPLE_NOTE = `Case 24-117. Maria Santos (EMP-40912) reported that her supervisor, Chidi Okafor, mocked her accent in the Oct 3 team meeting. Maria can be reached at maria.santos@example.com or (555) 201-7788. She has type 2 diabetes and needs a short break every 2 hours. Salary: $68,500. Witness: Nguyen Thi Lan, the only woman on the night warehouse crew. SSN on file: 123-45-6789.`
