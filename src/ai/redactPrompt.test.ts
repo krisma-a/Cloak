@@ -18,13 +18,13 @@ function run(note: string, found: Array<[string, Category]>) {
 
 // --- Unique role + team ----------------------------------------------------------------------
 
-test('1. unique role and its site become [ROLE_1] in [DEPT_1]', () => {
+test('1. unique role and its site become [ROLE_1] in the [DEPT_1]', () => {
   const r = run('Rosa Dela Cruz is the only night-shift forklift lead in the Reno warehouse.', [
     ['Rosa Dela Cruz', 'PERSON'],
     ['the only night-shift forklift lead', 'ROLE'],
     ['the Reno warehouse', 'DEPARTMENT'],
   ])
-  assert.equal(r.text, '[EMPLOYEE_1] is [ROLE_1] in [DEPT_1].')
+  assert.equal(r.text, '[EMPLOYEE_1] is [ROLE_1] in the [DEPT_1].')
   assert.deepEqual(r.leaks, [])
 })
 
@@ -33,7 +33,7 @@ test('2. "only person of a group" sent as one phrase is still split into role an
     ['Ngozi', 'PERSON'],
     ['the only woman on the night warehouse crew', 'ROLE'],
   ])
-  assert.equal(r.text, '[EMPLOYEE_1] is [ROLE_1] on [DEPT_1].')
+  assert.equal(r.text, '[EMPLOYEE_1] is [ROLE_1] on the [DEPT_1].')
   assert.deepEqual(r.leaks, [])
 })
 
@@ -43,7 +43,7 @@ test('3. whole phrase plus its team from the model gives one DEPT, not two', () 
     ['the only Vietnamese nurse in the ICU', 'ROLE'],
     ['the ICU', 'DEPARTMENT'],
   ])
-  assert.equal(r.text, '[EMPLOYEE_1], [ROLE_1] in [DEPT_1], filed the complaint.')
+  assert.equal(r.text, '[EMPLOYEE_1], [ROLE_1] in the [DEPT_1], filed the complaint.')
   assert.deepEqual(r.counts, { EMPLOYEE: 1, ROLE: 1, DEPT: 1 })
 })
 
@@ -53,8 +53,9 @@ test('4. the team named again without "the" gets the same placeholder', () => {
     ['the sole payroll analyst', 'ROLE'],
     ['the Cebu branch', 'DEPARTMENT'],
   ])
-  assert.equal(r.text, '[EMPLOYEE_1] is [ROLE_1] at [DEPT_1]. [DEPT_1] staff report to him.')
+  assert.equal(r.text, '[EMPLOYEE_1] is [ROLE_1] at the [DEPT_1]. [DEPT_1] staff report to him.')
   assert.deepEqual(r.leaks, [])
+  assert.equal(restore(r.text, r.map), 'Luis is the sole payroll analyst at the Cebu branch. Cebu branch staff report to him.')
 })
 
 test('5. a role mentioned twice keeps one placeholder', () => {
@@ -71,7 +72,7 @@ test('6. a title only one person holds is hidden with its site', () => {
   const r = run('The plant manager at the Tulsa site approved the schedule.', [
     ['The plant manager at the Tulsa site', 'ROLE'],
   ])
-  assert.equal(r.text, '[ROLE_1] at [DEPT_1] approved the schedule.')
+  assert.equal(r.text, '[ROLE_1] at the [DEPT_1] approved the schedule.')
   assert.equal(restore(r.text, r.map), 'The plant manager at the Tulsa site approved the schedule.')
 })
 
@@ -92,7 +93,7 @@ test('8. tenure sent as one phrase with its team is split too', () => {
     ['Chidi', 'PERSON'],
     ['the longest-serving driver at the Lagos depot', 'TENURE'],
   ])
-  assert.equal(r.text, '[EMPLOYEE_1] is [TENURE_1] at [DEPT_1].')
+  assert.equal(r.text, '[EMPLOYEE_1] is [TENURE_1] at the [DEPT_1].')
 })
 
 test('9. a start year is not mistaken for a team, and "member of" stays one phrase', () => {
@@ -147,7 +148,7 @@ test('13. a meeting labeled as a department stays visible; the role is still hid
     ['the only contractor on the HVAC crew', 'ROLE'],
     ['the Oct 3 team meeting', 'DEPARTMENT'],
   ])
-  assert.equal(r.text, 'After the Oct 3 team meeting, [ROLE_1] on [DEPT_1] was sent home.')
+  assert.equal(r.text, 'After the Oct 3 team meeting, [ROLE_1] on the [DEPT_1] was sent home.')
 })
 
 test('14. "in charge of" is not a team, so the phrase stays whole and no stray DEPT is kept', () => {

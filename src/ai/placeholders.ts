@@ -117,6 +117,45 @@ const GROUP_START = /^(?:(?:the|our|their|his|her|a|an)\s|\p{Lu})/u
 const LEADING_ARTICLE = /^(?:the|our|a|an)\s+/i
 
 /**
+ * "the Reno warehouse" -> "Reno warehouse": the article stays in the text ("in the [DEPT_1]"),
+ * so a later "Reno warehouse" gets the same placeholder and restoring never adds or drops "the".
+ * A bare one-word lowercase noun ("the warehouse") keeps its article, so we don't hide every
+ * ordinary "warehouse" in the note.
+ */
+function withoutArticle(team: string): string {
+  const bare = team.replace(LEADING_ARTICLE, '')
+  return bare !== team && bare.length >= 3 && (/\s/.test(bare) || /^\p{Lu}/u.test(bare)) ? bare : team
+}
+
+// Phrases whose first letter depends on where they sit ("The only woman..." / "...the only
+// woman"). Names, IDs and emails keep their spelling everywhere.
+const SENTENCE_CASE: ReadonlySet<Category> = new Set(['ROLE', 'DEPARTMENT', 'TENURE', 'MEDICAL', 'FAMILY_MEDICAL'])
+const SENTENCE_CASE_PREFIXES: ReadonlySet<string> = new Set([...SENTENCE_CASE].map((c) => PREFIX[c]))
+const LEADING_DETERMINER = /^(?:The|A|An|Our|Their|His|Her|My|This|That)\b/
+
+/** True if `index` starts a sentence, a line or a bullet. */
+function atSentenceStart(text: string, index: number): boolean {
+  const before = text.slice(0, index)
+  return /^\s*(?:[-*•]\s+)?$/.test(before) || /(?:[.!?]["')\]]?\s+|\n\s*(?:[-*•]\s+)?)$/.test(before.slice(-12))
+}
+
+/**
+ * The note's own spelling of `value`. For phrases, prefer a mid-sentence occurrence so a
+ * capital that only comes from starting a sentence isn't stored ("Night crew leads..." later
+ * restored mid-sentence as "the Night crew"). If every occurrence starts a sentence, a leading
+ * "The"/"A"/... is stored in lower case; restore() capitalizes it again at a sentence start.
+ */
+function noteSpelling(text: string, value: string, category: Category): string | undefined {
+  const matches = [...text.matchAll(wholeWordRegex(value))]
+  if (!matches.length) return undefined
+  if (!SENTENCE_CASE.has(category)) return matches[0][0]
+  const mid = matches.find((m) => !atSentenceStart(text, m.index))
+  if (mid) return mid[0]
+  const first = matches[0][0]
+  return LEADING_DETERMINER.test(first) ? first[0].toLowerCase() + first.slice(1) : first
+}
+
+/**
  * Turns one ROLE or TENURE phrase that includes its team into two entities, so the text reads
  * "[ROLE_1] in [DEPT_1]" (or "[TENURE_1] in [DEPT_1]") and each part is reused on its own.
  * Other entities pass through.
@@ -151,10 +190,10 @@ export function applyEntities(
   // spelling and casing (the model may return "oct 3" for "Oct 3").
   const valid: Entity[] = []
   for (const e of filterEntities(text, splitRoleAndGroup(entities))) {
-    const value = e.text.trim()
+    const value = e.category === 'DEPARTMENT' ? withoutArticle(e.text.trim()) : e.text.trim()
     if (!isUsable(value) || !PREFIX[e.category]) continue
-    const found = text.match(wholeWordRegex(value))
-    if (found) valid.push({ category: e.category, text: found[0] })
+    const spelling = noteSpelling(text, value, e.category)
+    if (spelling) valid.push({ category: e.category, text: spelling })
   }
   // Assign placeholders. Longest first so "Maria Santos" wins over "Maria".
   valid.sort((a, b) => b.text.length - a.text.length)
@@ -172,16 +211,6 @@ export function applyEntities(
       for (const part of entity.text.split(/\s+/)) {
         const partKey = part.toLowerCase().replace(/[^\p{L}\p{N}'-]/gu, '')
         if (partKey.length >= 3 && !map.lookup[partKey]) map.lookup[partKey] = placeholder
-      }
-    }
-
-    // "the Reno warehouse" also hides a later "Reno warehouse" (same placeholder). Skipped for a
-    // bare one-word lowercase noun ("warehouse"), which would hide ordinary words.
-    if (entity.category === 'DEPARTMENT') {
-      const bare = entity.text.replace(LEADING_ARTICLE, '')
-      const bareKey = bare.toLowerCase()
-      if (bare !== entity.text && bare.length >= 3 && (/\s/.test(bare) || /^\p{Lu}/u.test(bare)) && !map.lookup[bareKey]) {
-        map.lookup[bareKey] = placeholder
       }
     }
   }
@@ -247,12 +276,20 @@ export function findPlaceholders(text: string, map: PlaceholderMap): Placeholder
  * map and never changes or stores it.
  * `withhold` lists prefixes that must NOT be restored (e.g. MEDICAL in a manager email);
  * those become "[withheld]". Anything that isn't one of our placeholders is left untouched.
+ * A phrase (role, team, tenure, medical) that starts a sentence gets a capital first letter.
  */
 export function restore(text: string, map: PlaceholderMap, withhold: string[] = []): string {
-  return text.replace(new RegExp(PLACEHOLDER_PATTERN, 'g'), (raw, rawPrefix: string, rawNumber: string) => {
-    const match = describe(raw, rawPrefix, rawNumber, map)
-    if (!match.known && !match.exact) return raw
-    if (withhold.includes(match.prefix)) return '[withheld]'
-    return map.originals[match.placeholder] ?? raw
-  })
+  return text.replace(
+    new RegExp(PLACEHOLDER_PATTERN, 'g'),
+    (raw: string, rawPrefix: string, rawNumber: string, offset: number, whole: string) => {
+      const match = describe(raw, rawPrefix, rawNumber, map)
+      if (!match.known && !match.exact) return raw
+      if (withhold.includes(match.prefix)) return '[withheld]'
+      const original = map.originals[match.placeholder]
+      if (original === undefined) return raw
+      return SENTENCE_CASE_PREFIXES.has(match.prefix) && atSentenceStart(whole, offset)
+        ? original[0].toUpperCase() + original.slice(1)
+        : original
+    },
+  )
 }

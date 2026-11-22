@@ -122,6 +122,32 @@ test('keeps events visible but hides real team names', () => {
   assert.equal(dept('Cebu branch'), true)
 })
 
+test('restores a team in the note\'s own words (no added "the", same capitals)', () => {
+  const note = 'Joy is the only woman on the night warehouse crew. Night warehouse crew leads say she trained everyone.'
+  const { text, map } = applyEntities(note, [
+    { text: 'Joy', category: 'PERSON' },
+    { text: 'the only woman on the night warehouse crew', category: 'ROLE' },
+  ])
+  assert.equal(text, '[EMPLOYEE_1] is [ROLE_1] on the [DEPT_1]. [DEPT_1] leads say she trained everyone.')
+  assert.equal(restore(text, map), note)
+})
+
+test('a phrase is capitalized only where a sentence, line or bullet starts', () => {
+  const { map } = applyEntities('The only contractor was sent home.', [{ text: 'The only contractor', category: 'ROLE' }])
+  assert.equal(map.originals['[ROLE_1]'], 'the only contractor')
+  assert.equal(
+    restore('HR spoke with [ROLE_1]. [ROLE_1] agreed.\n- [ROLE_1] signed.', map),
+    'HR spoke with the only contractor. The only contractor agreed.\n- The only contractor signed.',
+  )
+})
+
+test('a one-word team keeps its article, so the same word elsewhere stays visible', () => {
+  const { text } = applyEntities('She works in the warehouse. Every warehouse has a first-aid kit.', [
+    { text: 'the warehouse', category: 'DEPARTMENT' },
+  ])
+  assert.equal(text, 'She works in [DEPT_1]. Every warehouse has a first-aid kit.')
+})
+
 test('counts placeholders by type without content', () => {
   const { map } = applyEntities(note, entities)
   assert.deepEqual(countByPrefix(map), { EMPLOYEE: 2, EMAIL: 1, MEDICAL: 1 })
