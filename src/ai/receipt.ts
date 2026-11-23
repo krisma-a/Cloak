@@ -31,12 +31,13 @@ export async function buildReceipt(
   model: string,
   steps: ReceiptStep[],
   sentAt = new Date(),
+  policyVersion = POLICY_VERSION,
 ): Promise<CloudReceipt> {
   return {
     sentText,
     sha256: await sha256Hex(sentText),
     model,
-    policyVersion: POLICY_VERSION,
+    policyVersion,
     sentAt: sentAt.toISOString(),
     steps,
   }

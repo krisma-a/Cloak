@@ -71,6 +71,12 @@ enforced in `redactionBlockReason()` (guard.ts), so it covers drafting, tagging 
 `remoteconfig.template.json`; demo steps: `docs/DEMO-REMOTE-CONFIG.md`. Tests that change a setting must
 `resetPolicy()` afterwards.
 
+**Local receipts.** `receiptLog.ts` (pure) wraps every model call (`draft()`, `tagCaseType()`, `rewriteTone()`)
+in `recordedCall()`: a `pending` receipt (exact sent text, SHA-256, model, settings fingerprint, time) is written
+BEFORE the call, then finished with the call's `inferenceSource`. If the receipt can't be saved, the call is not
+made (`SendBlockedError`). Stored only in IndexedDB via `receiptStore.ts`, never in localStorage, Firestore or logs.
+The web SDK does not expose the Remote Config template version, so receipts carry a fingerprint of the four values.
+
 **Health details invariant.** `HEALTH_PREFIXES` (`MEDICAL_DETAIL`, `FAMILY_MEDICAL`) are withheld
 (`[withheld]`) in **every** template (29 CFR 1630.14(c)(1): medical info stays out of case files and
 manager emails). If you add a health-related category, add its prefix to `HEALTH_PREFIXES`. The
