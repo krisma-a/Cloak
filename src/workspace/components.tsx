@@ -68,10 +68,20 @@ interface LoadingCardProps {
   progress?: number | null
   /** What the download is, shown before the percentage: "Downloading the private AI (first time only)…". */
   progressLabel?: string
+  /** A way out of a long download: a button and a line explaining what happens. Shown only while downloading. */
+  skip?: { label: string; hint: string; onClick: () => void }
 }
 
 /** Shown while hiding details (on this laptop) and while writing the draft (in the cloud). */
-export function LoadingCard({ title, note, checks, where, progress = null, progressLabel = 'Getting ready…' }: LoadingCardProps) {
+export function LoadingCard({
+  title,
+  note,
+  checks,
+  where,
+  progress = null,
+  progressLabel = 'Getting ready…',
+  skip,
+}: LoadingCardProps) {
   const percent = progress === null ? null : Math.round(progress * 100)
   const downloading = percent !== null && percent > 0 && percent < 100
 
@@ -93,6 +103,14 @@ export function LoadingCard({ title, note, checks, where, progress = null, progr
           <span className="sr-only">
             {progressLabel} {Math.floor(percent / 10) * 10}%
           </span>
+        </div>
+      )}
+      {downloading && skip && (
+        <div className="skip">
+          <button type="button" className="btn btn-quiet" onClick={skip.onClick}>
+            {skip.label}
+          </button>
+          <p className="hint">{skip.hint}</p>
         </div>
       )}
       {/* The ticks are for the work itself, so they wait until the one-time download is over. */}

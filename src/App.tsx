@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { TEMPLATES } from './ai/templates.ts'
 import { DEMO_MODE, privateAiSupported, redactNotes, SendBlockedError, suggestRestrictions, writeDraft } from './workspace/ai.ts'
-import { downloadLabel, INITIAL_AI_STATE, nextAiState, PILL_HELP, PILL_TEXT } from './workspace/aiStatus.ts'
+import {
+  downloadLabel,
+  INITIAL_AI_STATE,
+  nextAiState,
+  pillHelp,
+  PILL_TEXT,
+  SKIP_HINT,
+  SKIP_LABEL,
+} from './workspace/aiStatus.ts'
 import type { AiEvent, AiState } from './workspace/aiStatus.ts'
 import { LoadingCard, Stepper } from './workspace/components.tsx'
 import type { StepInfo } from './workspace/components.tsx'
@@ -36,6 +44,7 @@ export default function App() {
   // What the header pill and the "Hiding details" card say about the AI on this laptop (see aiStatus.ts).
   const [ai, setAi] = useState<AiState>(INITIAL_AI_STATE)
   const reportAi = (event: AiEvent) => setAi((state) => nextAiState(state, event))
+  const skipRef = useRef<AbortController | null>(null) // "Use simpler checks for now" aborts this
 
   // Everything below lives in this tab's memory only. Nothing is saved, logged or sent
   // until "Write the draft".
@@ -98,6 +107,8 @@ export default function App() {
     setPasteError(null)
     setProgress(null)
     lastPercent.current = -1
+    const skip = new AbortController()
+    skipRef.current = skip
     try {
       const result = await redactNotes(
         notes,
@@ -112,6 +123,8 @@ export default function App() {
         {
           onStage: (stage) => reportAi({ type: 'stage', stage }),
           onEngine: (engine) => reportAi({ type: 'engine', engine }),
+          skipDownload: skip.signal,
+          onBackgroundDone: (engine) => reportAi({ type: 'background-done', engine }),
         },
       )
       reportAi({ type: 'engine', engine: result.engine }) // the engine that really ran, in case Nano failed on the way
@@ -127,6 +140,15 @@ export default function App() {
     } finally {
       setBusy(null)
     }
+  }
+
+  // The one-time download can take a while. This stops the wait: the notes are checked with the simpler engine
+  // now, and the private AI keeps downloading for next time.
+  function skipDownload() {
+    setProgress(null)
+    lastPercent.current = -1
+    reportAi({ type: 'skip' })
+    skipRef.current?.abort()
   }
 
   function continueToGenerate() {
@@ -232,8 +254,8 @@ export default function App() {
           <span className="ai-slot" role="status">
             {!onStartScreens && ai.mode !== null && (
               <span
-                className={`ai-pill is-${ai.mode}`}
-                title={`${PILL_HELP[ai.mode]}${DEMO_MODE ? ' Drafts are still placeholders in this build, and nothing is sent anywhere.' : ''}`}
+                className={`ai-pill is-${ai.mode}${ai.mode === 'simpler' && ai.background ? ' is-background' : ''}`}
+                title={`${pillHelp(ai)}${DEMO_MODE ? ' Drafts are still placeholders in this build, and nothing is sent anywhere.' : ''}`}
               >
                 {PILL_TEXT[ai.mode]}
               </span>
@@ -252,6 +274,7 @@ export default function App() {
               where="laptop"
               progress={progress}
               progressLabel={downloadLabel(ai.stage)}
+              skip={ai.mode === 'downloading' ? { label: SKIP_LABEL, hint: SKIP_HINT, onClick: skipDownload } : undefined}
             />
           )}
           {busy === 'writing' && (

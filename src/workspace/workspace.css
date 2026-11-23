@@ -121,7 +121,8 @@
   color: var(--text-2);
 }
 
-.cloak-app .ai-pill.is-downloading::before {
+.cloak-app .ai-pill.is-downloading::before,
+.cloak-app .ai-pill.is-background::before {
   width: 12px;
   height: 12px;
   border: 2px solid #d6ccbf;
@@ -705,7 +706,7 @@
 .cloak-app .progress {
   display: grid;
   gap: 6px;
-  max-width: 320px;
+  max-width: 440px;
   margin: -8px auto 20px;
   font-size: 14px;
   color: var(--text-2);
@@ -1223,7 +1224,8 @@
 @media (prefers-reduced-motion: reduce) {
   .cloak-app .loading-ring,
   .cloak-app .check-spin,
-  .cloak-app .ai-pill.is-downloading::before {
+  .cloak-app .ai-pill.is-downloading::before,
+  .cloak-app .ai-pill.is-background::before {
     animation-duration: 3s;
   }
 
@@ -1494,6 +1496,16 @@
 
 .cloak-app .loading .where {
   margin-bottom: 20px;
+}
+
+/* "Use simpler checks for now": a way out of a long first-time download. */
+.cloak-app .loading .skip {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.cloak-app .loading .skip .hint {
+  margin: 10px 0 0;
 }
 
 /* Review: the notes and the form on the left, what was hidden on the right. */

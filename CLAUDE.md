@@ -115,7 +115,10 @@ and drafting are still the placeholders from `fakeAi.ts` (`DEMO_MODE = true`: no
 starts the Nano download after a click). `aiStatus.ts` (pure, tested) turns what it reports (which model is loading,
 download progress, which engine is ready) into the header pill ("Private AI ready" / "Downloading private AI…" /
 "Simpler checks") and the loading card's label. Progress arrives only while Chrome is really downloading; a model already on
-the laptop goes straight to "ready". `review.ts` holds the review screen's pure logic: `base` is the
+the laptop goes straight to "ready". The first-time Nano download is about 4 GB, so the loading card offers "Use simpler
+checks for now": `redactNotes()` then stops waiting, checks with the backup engine, and lets the Nano download finish in the
+background (`nanoInBackground`; later checks use the simpler engine until it ends, because Chrome reports progress to the
+first caller only). The pill shows a spinner cue meanwhile, then "Private AI ready", and the next check uses Nano. `review.ts` holds the review screen's pure logic: `base` is the
 redaction with every detail still a placeholder, `kept` is what the user chose to leave visible, and what
 is sent is `outgoing(base, kept)`, not `base`.
 
