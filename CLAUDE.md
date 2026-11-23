@@ -29,7 +29,7 @@ end in `.ts`. `tsconfig.app.json` excludes `*.test.ts`, so `tsc -b` does **not**
 
 Cloud and on-device calls need `.env.local` (git-ignored; ask a teammate). Variables read in
 `src/firebase.ts`: `VITE_FIREBASE_*`, `VITE_RECAPTCHA_SITE_KEY`, optional `VITE_APPCHECK_DEBUG_TOKEN`
-and `VITE_CLOUD_MODEL`. `npm test` needs none of it.
+and `VITE_CLOUD_MODEL` (only the built-in default for `cloud_model`; Remote Config overrides it). `npm test` needs none of it.
 
 ## Architecture
 
@@ -48,9 +48,9 @@ Firebase file.
 **Model modes** (`src/firebase.ts`): redaction = `ONLY_ON_DEVICE` (must never fall back to cloud),
 tagging/tone = `PREFER_ON_DEVICE`, drafting = `ONLY_IN_CLOUD`. All calls go through
 `generateLogged()` in `inference.ts`, which logs the label and `inferenceSource` only — never prompt or
-reply text. Cloud model is pinned in `CLOUD_MODEL`.
+reply text. The cloud model is the Remote Config setting `cloud_model` (see Runtime settings).
 
-**Three redaction engines** (`redact.ts`): `nano` (Gemini Nano; best; retries up to `MAX_RETRIES`, then
+**Three redaction engines** (`redact.ts`): `nano` (Gemini Nano; best; retries up to `max_retries`, then
 `blocked`), `browser-model` (in-browser name model in `browserModel.ts` + rules), `rules-only`. Rules can't
 find names, so `RedactionResult.names` is `'unchecked'` for `rules-only` and the guard blocks sending
 until the user lists names or confirms none (`guard.ts`). The weaker engines set `needsCarefulReview`.
@@ -60,6 +60,16 @@ thing always gets the same placeholder. Category name ≠ placeholder prefix (`P
 `EMPLOYEE`, `MEDICAL`→`MEDICAL_DETAIL`, `DEPARTMENT`→`DEPT`, `DATE_OF_BIRTH`→`DOB`, `EMPLOYEE_ID` and
 `OTHER_ID`→`ID`). `restore()` accepts reformatted placeholders (case, spacing, markdown escapes) but leaves
 look-alikes that aren't in the map alone. Role+team phrases are split into `[ROLE_n] in the [DEPT_n]`.
+
+**Runtime settings (Firebase Remote Config).** `src/policy.ts` (pure) defines four settings: `redact_salary`,
+`medical_mode` (`generalize` | `block`), `max_retries` (0–5), `cloud_model`. Code reads them with `getPolicy()` at
+the moment it runs; never cache the result. `src/remoteConfig.ts` fetches on load (started from `main.tsx` via a
+lazy import, so failure leaves the built-in defaults) and keeps them live with `onConfigUpdate`. Unreadable values
+fail toward more privacy. `redact_salary=false` is honoured in `findLeaks()` and for Nano's SALARY answers only;
+work restrictions always reject money (`findLeaks(..., { ignorePolicy: true })`). `medical_mode=block` is
+enforced in `redactionBlockReason()` (guard.ts), so it covers drafting, tagging and tone. Template:
+`remoteconfig.template.json`; demo steps: `docs/DEMO-REMOTE-CONFIG.md`. Tests that change a setting must
+`resetPolicy()` afterwards.
 
 **Health details invariant.** `HEALTH_PREFIXES` (`MEDICAL_DETAIL`, `FAMILY_MEDICAL`) are withheld
 (`[withheld]`) in **every** template (29 CFR 1630.14(c)(1): medical info stays out of case files and

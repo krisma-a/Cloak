@@ -12,6 +12,7 @@ import {
   InferenceMode,
   type OnDeviceParams,
 } from 'firebase/ai'
+import { getPolicy, setPolicyDefaults } from './policy.ts'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -67,9 +68,15 @@ export const db = getFirestore(app)
 // --- AI Logic (hybrid inference) -------------------------------------------
 const ai = getAI(app, { backend: new GoogleAIBackend() })
 
-// Pin a 3.x cloud model (Gemini 2.5 requests get rerouted from Dec 1).
-// Later this value moves to Remote Config so it can change without a redeploy.
-export const CLOUD_MODEL: string = import.meta.env.VITE_CLOUD_MODEL ?? 'gemini-3.6-flash'
+// The cloud model is the Remote Config setting cloud_model (src/policy.ts), so it can change without
+// a redeploy. Keep it on a 3.x model (Gemini 2.5 requests get rerouted from Dec 1).
+// VITE_CLOUD_MODEL only sets the built-in default, used until Remote Config answers or if it never does.
+if (import.meta.env.VITE_CLOUD_MODEL) setPolicyDefaults({ cloud_model: import.meta.env.VITE_CLOUD_MODEL })
+
+/** The cloud model in force right now. */
+export function cloudModel(): string {
+  return getPolicy().cloud_model
+}
 
 // Redaction: raw text must never leave the laptop, so on-device only.
 // If Gemini Nano is missing, the call fails and the app falls back to Strict mode.
@@ -82,14 +89,15 @@ export function getRedactionModel(onDeviceParams?: OnDeviceParams) {
 export function getTaggingModel() {
   return getGenerativeModel(ai, {
     mode: InferenceMode.PREFER_ON_DEVICE,
-    inCloudParams: { model: CLOUD_MODEL },
+    inCloudParams: { model: cloudModel() },
   })
 }
 
 // Drafting: long outputs need the bigger cloud model. Input is redacted text only.
-export function getDraftingModel() {
+// Pass the model name when the caller also records it (the receipt), so both always agree.
+export function getDraftingModel(model: string = cloudModel()) {
   return getGenerativeModel(ai, {
     mode: InferenceMode.ONLY_IN_CLOUD,
-    inCloudParams: { model: CLOUD_MODEL },
+    inCloudParams: { model },
   })
 }

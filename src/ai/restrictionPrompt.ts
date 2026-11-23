@@ -154,7 +154,8 @@ export function restrictionProblem(text: string, map: PlaceholderMap, redactedTe
   if (t.length < 3) return 'too short'
   if (t.length > 160) return 'too long (keep each restriction to one short line)'
   if (/[[\]]/.test(t)) return 'contains a placeholder or brackets'
-  const leak = findLeaks(t, sensitiveStrings(map))[0]
+  // Strict: pay is rejected here even when redact_salary is off (a manager email never gets money).
+  const leak = findLeaks(t, sensitiveStrings(map), { ignorePolicy: true })[0]
   if (leak) return `contains a private detail ("${leak.text}")`
   const hidden = hiddenHealthWords(map, redactedText)
   const word = wordsOf(t).find((w) => hidden.has(w))

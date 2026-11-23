@@ -1,6 +1,10 @@
 // Fixed leak checks that run on text AFTER the model has redacted it.
 // No model is trusted alone: if anything here still matches, the text is not safe to send.
 // Shared by the app and the eval page. Pure functions only (no Firebase), so tests run in Node.
+// One setting changes what counts as a leak: redact_salary=false (Remote Config, see policy.ts)
+// lets pay amounts stay visible. Everything else is always checked.
+
+import { getPolicy } from '../policy.ts'
 
 export type LeakCategory =
   | 'SSN'
@@ -71,8 +75,15 @@ export function wholeWordRegex(s: string): RegExp {
 /**
  * Returns every leak found in `text`.
  * @param knownSensitive strings that must not appear, e.g. names the model already found.
+ * @param options `ignorePolicy` checks everything, even when redact_salary is off (for text that
+ *   must never contain money, such as a work restriction).
  */
-export function findLeaks(text: string, knownSensitive: string[] = []): Leak[] {
+export function findLeaks(
+  text: string,
+  knownSensitive: string[] = [],
+  options: { ignorePolicy?: boolean } = {},
+): Leak[] {
+  const allowSalary = !options.ignorePolicy && !getPolicy().redact_salary
   const leaks: Leak[] = []
   const seen = new Set<string>()
   const add = (category: LeakCategory, value: string) => {
@@ -84,6 +95,7 @@ export function findLeaks(text: string, knownSensitive: string[] = []): Leak[] {
   }
 
   for (const { category, regex } of PATTERNS) {
+    if (allowSalary && category === 'SALARY') continue
     for (const match of text.matchAll(regex)) {
       if (match[0].includes('[')) continue // already partly hidden by a placeholder
       add(category, match[0].trim())

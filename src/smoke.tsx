@@ -4,7 +4,10 @@
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { getToken } from 'firebase/app-check'
-import { appCheck, CLOUD_MODEL, ensureSignedIn, getDraftingModel, getRedactionModel } from './firebase'
+import { appCheck, cloudModel, ensureSignedIn, getDraftingModel, getRedactionModel } from './firebase'
+import { LiveSettings } from './LiveSettings'
+import { expectPolicyLoad } from './policy'
+import { startRemoteConfig } from './remoteConfig'
 import { prepareRedaction, redact, type EngineChoice, type RedactionResult } from './ai/redact'
 import { restore } from './ai/placeholders'
 import { draft } from './ai/draft'
@@ -21,6 +24,9 @@ const SAMPLE_NOTE = `Case 24-117. Maria Santos (EMP-40912) reported that her sup
 function describe(e: unknown): string {
   return e instanceof Error ? `${e.name}: ${e.message}` : String(e)
 }
+
+// Fetch the Remote Config settings as this page loads (same as src/main.tsx does for the app).
+expectPolicyLoad(startRemoteConfig())
 
 function SmokeTest() {
   const [lines, setLines] = useState<string[]>([])
@@ -72,7 +78,7 @@ function SmokeTest() {
     })
 
   const cloud = () =>
-    run(`Cloud call (${CLOUD_MODEL})`, async () => {
+    run(`Cloud call (${cloudModel()})`, async () => {
       await ensureSignedIn()
       const result = await getDraftingModel().generateContent(PROMPT)
       log(`  OK reply: ${result.response.text().trim()}`)
@@ -184,6 +190,7 @@ function SmokeTest() {
     <main style={{ fontFamily: 'system-ui, sans-serif', padding: 16, maxWidth: 720 }}>
       <h1>Cloak smoke test</h1>
       <p>Run these in order. Fake data only.</p>
+      <LiveSettings />
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button disabled={busy} onClick={token}>0. App Check token</button>
         <button disabled={busy} onClick={signIn}>1. Sign in</button>

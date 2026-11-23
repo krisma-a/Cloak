@@ -4,7 +4,7 @@
 //   "nano"          Gemini Nano via Firebase AI Logic (ONLY_ON_DEVICE). Chrome on capable laptops.
 //                   Nano finds entities as JSON -> placeholders -> the in-browser name model
 //                   cross-checks for names Nano missed -> rules re-check ->
-//                   misses go back to Nano (max 2 retries) -> still leaking = blocked.
+//                   misses go back to Nano (max_retries, default 2) -> still leaking = blocked.
 //   "browser-model" Any browser: a small name/place model running in the page (browserModel.ts)
 //                   plus rule and medical-keyword finders (ruleEntities.ts) -> rules re-check.
 //   "rules-only"    If the browser model can't load: rule and keyword finders only.
@@ -16,11 +16,24 @@ import { getRedactionModel } from '../firebase'
 import { generateLogged } from './inference.ts'
 import { findLeaks, type Leak } from '../rules/rules.ts'
 import { findNamesAndPlaces, loadBrowserModel } from './browserModel.ts'
-import { applyEntities, countByPrefix, emptyMap, sensitiveStrings, type PlaceholderMap } from './placeholders.ts'
+import { getPolicy, whenPolicyReady } from '../policy.ts'
+import {
+  applyEntities,
+  countByPrefix,
+  emptyMap,
+  sensitiveStrings,
+  type Entity,
+  type PlaceholderMap,
+} from './placeholders.ts'
 import { buildPrompt, ENTITY_SCHEMA, parseEntities } from './redactPrompt.ts'
 import { medicalTerms, ruleEntities } from './ruleEntities.ts'
 
-export const MAX_RETRIES = 2 // later read from Remote Config
+// How many retries Nano gets is the Remote Config setting max_retries (see src/policy.ts).
+
+/** redact_salary=false leaves pay visible, so Nano's SALARY answers are ignored (the leak check allows it too). */
+function allowedByPolicy(entity: Entity): boolean {
+  return !(entity.category === 'SALARY' && !getPolicy().redact_salary)
+}
 
 export type Engine = 'nano' | 'browser-model' | 'rules-only'
 export type RedactionStatus = 'ok' | 'blocked'
@@ -110,7 +123,7 @@ async function redactWithNano(text: string, maxRetries: number, knownNames: stri
   for (let i = 0; i <= maxRetries; i++) {
     attempts++
     const generated = await generateLogged('redact', nanoModel(), buildPrompt(current, missed)) // throws if Nano fails
-    ;({ text: current, map } = applyEntities(current, parseEntities(generated.text), map))
+    ;({ text: current, map } = applyEntities(current, parseEntities(generated.text).filter(allowedByPolicy), map))
 
     if (i === 0) {
       const names = await namesPromise
@@ -215,10 +228,11 @@ export async function redact(
   text: string,
   options: { engine: Engine; maxRetries?: number; knownNames?: string[] },
 ): Promise<RedactionResult> {
+  await whenPolicyReady() // the first Remote Config fetch (a few seconds at most, usually already done)
   const knownNames = options.knownNames ?? []
   if (options.engine === 'nano') {
     try {
-      return await redactWithNano(text, options.maxRetries ?? MAX_RETRIES, knownNames)
+      return await redactWithNano(text, options.maxRetries ?? getPolicy().max_retries, knownNames)
     } catch (e) {
       // Nano broke mid-way: fall back to the backup engine rather than failing.
       const fallback = await redactWithoutNano(text, 'browser-model', knownNames).catch(() =>

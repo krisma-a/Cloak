@@ -6,6 +6,7 @@
 // outputs as the real ones; ai.ts is the one file that decides which version the screens use.
 
 import { sendBlockReason } from '../ai/guard.ts'
+import { whenPolicyReady } from '../policy.ts'
 import { applyEntities, countByPrefix, restore, sensitiveStrings } from '../ai/placeholders.ts'
 import type { Entity } from '../ai/placeholders.ts'
 import { buildReceipt } from '../ai/receipt.ts'
@@ -50,6 +51,7 @@ export async function redactNotes(
   notes: string,
   onProgress?: (fraction: number) => void,
 ): Promise<RedactionResult> {
+  await whenPolicyReady() // the first Remote Config fetch, so a live setting applies from the first click
   for (const fraction of [0.25, 0.5, 0.75, 1]) {
     await wait(220)
     onProgress?.(fraction)
@@ -132,6 +134,7 @@ export async function writeDraft(
   templateId: TemplateId,
   options: { approved: boolean; accommodation?: AccommodationPlan },
 ): Promise<DraftResult> {
+  await whenPolicyReady()
   const blocked = sendBlockReason(redaction, options.approved)
   if (blocked) throw new SendBlockedError(blocked)
 

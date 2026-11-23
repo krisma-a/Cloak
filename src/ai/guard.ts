@@ -4,9 +4,18 @@
 // "unchecked" and nothing may be sent until the user either lists the names in the case
 // (they get hidden here) or confirms there are none.
 
+import { getPolicy } from '../policy.ts'
 import { findLeaks } from '../rules/rules.ts'
-import { applyEntities, countByPrefix, sensitiveStrings } from './placeholders.ts'
+import { applyEntities, countByPrefix, findPlaceholders, HEALTH_PREFIXES, sensitiveStrings } from './placeholders.ts'
 import type { RedactionResult } from './redact.ts'
+import { medicalTerms } from './ruleEntities.ts'
+
+/** True if the redacted text still carries a medical detail: a health placeholder or a visible medical term. */
+export function hasMedicalDetail(redaction: RedactionResult): boolean {
+  const health: readonly string[] = HEALTH_PREFIXES
+  if (findPlaceholders(redaction.redactedText, redaction.map).some((p) => health.includes(p.prefix))) return true
+  return medicalTerms(redaction.redactedText).length > 0
+}
 
 /** Why this text may not leave the device (even by a cloud fallback), or null if it may. */
 export function redactionBlockReason(redaction: RedactionResult): string | null {
@@ -16,6 +25,10 @@ export function redactionBlockReason(redaction: RedactionResult): string | null 
   }
   const leaks = findLeaks(redaction.redactedText, sensitiveStrings(redaction.map))
   if (leaks.length) return `Not sent: the leak re-check found ${leaks.length} item(s) still visible.`
+  // medical_mode (Remote Config): "block" refuses any note that still has a medical detail.
+  if (getPolicy().medical_mode === 'block' && hasMedicalDetail(redaction)) {
+    return 'Not sent: this note has medical details and medical mode is "block". Remove them, or switch medical mode to "generalize".'
+  }
   return null
 }
 

@@ -1,1 +1,24 @@
-{}
+{
+  "parameters": {
+    "redact_salary": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "true: salary and pay are hidden before anything is sent. false: pay is left visible (demo toggle)."
+    },
+    "medical_mode": {
+      "defaultValue": { "value": "generalize" },
+      "valueType": "STRING",
+      "description": "generalize: medical details become placeholders and work restrictions. block: a note with medical details is not sent."
+    },
+    "max_retries": {
+      "defaultValue": { "value": "2" },
+      "valueType": "NUMBER",
+      "description": "How many times on-device redaction may retry before it blocks (0 to 5)."
+    },
+    "cloud_model": {
+      "defaultValue": { "value": "gemini-3.6-flash" },
+      "valueType": "STRING",
+      "description": "Cloud Gemini model used for drafting. Keep it on a 3.x model."
+    }
+  }
+}

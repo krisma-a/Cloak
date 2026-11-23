@@ -7,7 +7,8 @@
 //      withheld; everything else is restored on this device. The map never leaves the browser.
 //   4. A receipt records the exact text sent, its SHA-256, the model and where each step ran.
 
-import { CLOUD_MODEL, ensureSignedIn, getDraftingModel } from '../firebase'
+import { cloudModel, ensureSignedIn, getDraftingModel } from '../firebase'
+import { whenPolicyReady } from '../policy.ts'
 import { sendBlockReason } from './guard.ts'
 import { generateLogged } from './inference.ts'
 import { restore } from './placeholders.ts'
@@ -35,6 +36,8 @@ export async function draft(
   templateId: TemplateId,
   options: { approved: boolean; accommodation?: AccommodationPlan },
 ): Promise<DraftResult> {
+  await whenPolicyReady() // the first Remote Config fetch (a few seconds at most, usually already done)
+
   // 1. Guard. "Approve & send" is the only way past this point.
   const blocked = sendBlockReason(redaction, options.approved)
   if (blocked) throw new SendBlockedError(blocked)
@@ -53,7 +56,8 @@ export async function draft(
 
   // 2. Cloud draft from redacted text (or restrictions) only.
   await ensureSignedIn()
-  const { text: cloudText, source } = await generateLogged('draft', getDraftingModel(), prompt)
+  const model = cloudModel() // read once: the call and the receipt must name the same model
+  const { text: cloudText, source } = await generateLogged('draft', getDraftingModel(model), prompt)
 
   // 3. Check and restore on this device.
   const checked = checkDraft(cloudText, redaction.map, templateId)
@@ -82,7 +86,7 @@ export async function draft(
     { step: 'drafting', ranOn: source === 'unknown' ? 'in_cloud' : source, detail: template.label },
     { step: 'restore', ranOn: 'on_device' },
   )
-  const receipt = await buildReceipt(prompt, CLOUD_MODEL, steps)
+  const receipt = await buildReceipt(prompt, model, steps)
 
   return { draftWithPlaceholders: cloudText, restoredDraft, warnings: checked.warnings, receipt }
 }
