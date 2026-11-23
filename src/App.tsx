@@ -3,7 +3,7 @@ import { TEMPLATES } from './ai/templates.ts'
 import { DEMO_MODE, redactNotes, SendBlockedError, suggestRestrictions, writeDraft } from './workspace/ai.ts'
 import { LoadingCard, Stepper } from './workspace/components.tsx'
 import type { StepInfo } from './workspace/components.tsx'
-import { makeLabeler, outgoing } from './workspace/review.ts'
+import { hasWorkToLose, makeLabeler, outgoing } from './workspace/review.ts'
 import { StepGenerate } from './workspace/StepGenerate.tsx'
 import { StepPaste } from './workspace/StepPaste.tsx'
 import { StepResult } from './workspace/StepResult.tsx'
@@ -21,6 +21,9 @@ const STEPS: StepInfo[] = [
 ]
 
 type Busy = 'hiding' | 'writing' | null
+
+// Chrome shows its own wording in the leave dialog and ignores this text. It is set anyway for browsers that use it.
+const LEAVE_MESSAGE = 'Leave? Your notes and the real names will be cleared.'
 
 export default function App() {
   const [step, setStep] = useState<StepId>('start')
@@ -55,6 +58,19 @@ export default function App() {
     }
     mainRef.current?.focus()
   }, [step, busy])
+
+  // Everything above is lost when the tab closes. Warn only while there is something to lose; the
+  // handler is removed again on the start screen, with empty notes, and after "Start over".
+  const workToLose = hasWorkToLose({ notes, base, draft: draftResult })
+  useEffect(() => {
+    if (!workToLose) return
+    function warn(event: BeforeUnloadEvent) {
+      event.preventDefault()
+      event.returnValue = LEAVE_MESSAGE
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [workToLose])
 
   async function hidePrivateDetails() {
     setBusy('hiding')
@@ -196,6 +212,7 @@ export default function App() {
               title="Hiding details on this laptop…"
               note="Your notes aren’t leaving this computer."
               checks={['Reading your notes', 'Finding names and private details', 'Swapping in labels']}
+              where="laptop"
               progress={progress}
             />
           )}
@@ -204,6 +221,7 @@ export default function App() {
               title="Writing your draft in the cloud…"
               note="Only the hidden version is being sent."
               checks={['Sending the hidden version', 'Waiting for the draft', 'Putting real names back on this laptop']}
+              where="cloud"
             />
           )}
 
@@ -214,7 +232,7 @@ export default function App() {
             />
           )}
 
-          {busy === null && step === 'scan' && <StepScan onBack={() => goTo('start')} />}
+          {busy === null && step === 'scan' && <StepScan onBack={() => goTo('start')} onPaste={() => goTo('paste')} />}
 
           {busy === null && step === 'paste' && (
             <StepPaste
@@ -263,8 +281,15 @@ export default function App() {
             />
           )}
 
-          {busy === null && step === 'result' && draftResult && (
-            <StepResult result={draftResult} onStartOver={startOver} />
+          {busy === null && step === 'result' && draftResult && base && (
+            <StepResult
+              result={draftResult}
+              notes={notes}
+              base={base}
+              kept={kept}
+              templateId={templateId}
+              onStartOver={startOver}
+            />
           )}
         </main>
       </div>

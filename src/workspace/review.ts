@@ -7,6 +7,7 @@
 
 import { applyEntities, countByPrefix, restore, sensitiveStrings } from '../ai/placeholders.ts'
 import type { Category, PlaceholderMap } from '../ai/placeholders.ts'
+import type { DraftResult } from '../ai/draft.ts'
 import type { RedactionResult } from '../ai/redact.ts'
 import { ruleEntities } from '../ai/ruleEntities.ts'
 import { findLeaks } from '../rules/rules.ts'
@@ -161,6 +162,32 @@ export function makeLabeler(map: PlaceholderMap): (placeholder: string) => strin
     const word = WORDS[prefix] ?? prefix.replace(/_/g, ' ')
     return prefix === 'EMPLOYEE' || (counts[prefix] ?? 0) > 1 ? `${word} ${match[2]}` : word
   }
+}
+
+/** True while this tab holds anything that closing it would lose: case text, a redaction or a draft. */
+export function hasWorkToLose(state: {
+  notes: string
+  base: RedactionResult | null
+  draft: DraftResult | null
+}): boolean {
+  return state.notes.trim() !== '' || state.base !== null || state.draft !== null
+}
+
+export interface EmployeeOption {
+  /** What the app keeps and sends: always the placeholder, e.g. "[EMPLOYEE_1]". */
+  value: string
+  /** What the person sees: the real name plus its label. Display only; never stored, logged or sent. */
+  text: string
+}
+
+/** The "Who is this for?" choices: "Maria Lopez (sent as NAME 1)". Only names that are still hidden. */
+export function employeeOptions(
+  map: PlaceholderMap,
+  label: (placeholder: string) => string,
+): EmployeeOption[] {
+  return Object.entries(map.originals)
+    .filter(([placeholder]) => placeholder.startsWith('[EMPLOYEE_'))
+    .map(([placeholder, original]) => ({ value: placeholder, text: `${original} (sent as ${label(placeholder)})` }))
 }
 
 /** What "Hide as" offers when the person picks their own words to hide. */

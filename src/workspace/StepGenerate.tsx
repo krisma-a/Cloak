@@ -1,6 +1,7 @@
 import { accommodationBlockReason } from '../ai/restrictionPrompt.ts'
 import { TEMPLATES } from '../ai/templates.ts'
-import { buildSegments } from './review.ts'
+import { WhereChip } from './icons.tsx'
+import { buildSegments, employeeOptions } from './review.ts'
 import type { RedactionResult, TemplateId } from './types.ts'
 
 interface StepGenerateProps {
@@ -50,7 +51,8 @@ export function StepGenerate({
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-  const employees = Object.entries(result.map.originals).filter(([placeholder]) => placeholder.startsWith('[EMPLOYEE_'))
+  const employees = employeeOptions(result.map, label)
+  const hiddenCount = Object.keys(result.map.originals).length
   const planProblem = sendsRestrictions
     ? accommodationBlockReason({ employee, restrictions }, result.map, result.redactedText)
     : null
@@ -82,9 +84,10 @@ export function StepGenerate({
             onChange={(event) => onEmployeeChange(event.target.value)}
           >
             <option value="">Choose…</option>
-            {employees.map(([placeholder]) => (
-              <option key={placeholder} value={placeholder}>
-                {label(placeholder)}
+            {/* The text is for the person reading. The value is the placeholder, and only that is used. */}
+            {employees.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.text}
               </option>
             ))}
           </select>
@@ -111,17 +114,31 @@ export function StepGenerate({
           {planProblem && <p className="hint">{planProblem}</p>}
         </>
       ) : (
-        <div className="notes-view" tabIndex={0} role="region" aria-label="Text that will be sent to the cloud">
-          {buildSegments(result, []).map((segment, index) =>
-            segment.kind === 'text' ? (
-              <span key={index}>{segment.text}</span>
-            ) : (
-              <span key={index} className="label static">
-                {label(segment.placeholder)}
-              </span>
-            ),
+        <>
+          <div className="field-head">
+            <span className="field-label" id="outbound-label">
+              What the cloud will receive
+            </span>
+            <WhereChip where="cloud">Goes to the cloud</WhereChip>
+          </div>
+          <div className="notes-view is-outbound" tabIndex={0} role="region" aria-labelledby="outbound-label">
+            {buildSegments(result, []).map((segment, index) =>
+              segment.kind === 'text' ? (
+                <span key={index}>{segment.text}</span>
+              ) : (
+                <span key={index} className="label static">
+                  {label(segment.placeholder)}
+                </span>
+              ),
+            )}
+          </div>
+          {hiddenCount > 0 && (
+            <p className="hint">
+              {hiddenCount} private {hiddenCount === 1 ? 'detail is' : 'details are'} hidden. The cloud sees only the
+              labels.
+            </p>
           )}
-        </div>
+        </>
       )}
 
       {!sendsRestrictions && keptCount > 0 && (

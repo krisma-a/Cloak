@@ -1,5 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import type { DraftResult } from './types.ts'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { buildComparison } from './compare.ts'
+import { CompareSent } from './CompareSent.tsx'
+import { WhereChip } from './icons.tsx'
+import type { DraftResult, RedactionResult, TemplateId } from './types.ts'
 
 const STEP_NAMES: Record<string, string> = {
   redaction: 'Hiding private details',
@@ -10,19 +13,37 @@ const STEP_NAMES: Record<string, string> = {
   restore: 'Putting real names back',
 }
 
-const PLACES: Record<string, string> = {
-  on_device: 'on this laptop',
-  in_browser: 'in this browser, on this laptop',
-  rules: 'on this laptop (simple rules)',
-  in_cloud: 'in the cloud',
+const PLACES: Record<string, { text: string; where: 'laptop' | 'cloud' }> = {
+  on_device: { text: 'On this laptop', where: 'laptop' },
+  in_browser: { text: 'In this browser, on this laptop', where: 'laptop' },
+  rules: { text: 'On this laptop (simple rules)', where: 'laptop' },
+  in_cloud: { text: 'In the cloud', where: 'cloud' },
 }
 
 interface StepResultProps {
   result: DraftResult
+  /** What the person typed. Only shown on this screen, never sent. */
+  notes: string
+  /** The redaction with every detail still a placeholder, and the details the person kept visible. */
+  base: RedactionResult
+  kept: readonly string[]
+  templateId: TemplateId
   onStartOver: () => void
 }
 
-export function StepResult({ result, onStartOver }: StepResultProps) {
+export function StepResult({ result, notes, base, kept, templateId, onStartOver }: StepResultProps) {
+  const comparison = useMemo(
+    () =>
+      buildComparison({
+        notes,
+        base,
+        kept,
+        sentText: result.receipt.sentText,
+        draftWithPlaceholders: result.draftWithPlaceholders,
+        templateId,
+      }),
+    [notes, base, kept, result.receipt.sentText, result.draftWithPlaceholders, templateId],
+  )
   const [text, setText] = useState(result.restoredDraft)
   const [copied, setCopied] = useState<'idle' | 'done' | 'failed'>('idle')
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -57,9 +78,12 @@ export function StepResult({ result, onStartOver }: StepResultProps) {
         </p>
       ))}
 
-      <label className="field-label spaced" htmlFor="final-draft">
-        Draft
-      </label>
+      <div className="field-head spaced">
+        <label className="field-label" htmlFor="final-draft">
+          Draft
+        </label>
+        <WhereChip where="laptop">Real names, on this laptop only</WhereChip>
+      </div>
       {/* spellCheck is off on purpose: this text has real names, and Chrome's enhanced spell check can send text to Google. */}
       <textarea
         id="final-draft"
@@ -71,18 +95,19 @@ export function StepResult({ result, onStartOver }: StepResultProps) {
       />
 
       <details className="sent">
-        <summary>See exactly what was sent</summary>
-        <h3>Sent to the cloud (hidden version only)</h3>
-        <pre className="sent-box">{receipt.sentText}</pre>
-        <h3>Draft as it came back, before names were restored</h3>
-        <pre className="sent-box">{result.draftWithPlaceholders}</pre>
+        <summary>Full details of what was sent</summary>
+        <CompareSent comparison={comparison} />
         <h3>Where each step ran</h3>
-        <ul className="ran-list">
-          {receipt.steps.map((step) => (
-            <li key={step.step}>
-              <strong>{STEP_NAMES[step.step] ?? step.step}:</strong> {PLACES[step.ranOn] ?? step.ranOn}
-            </li>
-          ))}
+        <ul className="steps">
+          {receipt.steps.map((step) => {
+            const place = PLACES[step.ranOn]
+            return (
+              <li key={step.step}>
+                <span>{STEP_NAMES[step.step] ?? step.step}</span>
+                {place ? <WhereChip where={place.where}>{place.text}</WhereChip> : <span className="where">{step.ranOn}</span>}
+              </li>
+            )
+          })}
         </ul>
         <p className="hint">Fingerprint of what was sent (SHA-256): {receipt.sha256.slice(0, 16)}…</p>
       </details>

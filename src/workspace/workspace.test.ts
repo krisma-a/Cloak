@@ -4,9 +4,12 @@ import { confirmNoNames } from '../ai/guard.ts'
 import { restore } from '../ai/placeholders.ts'
 import { redactNotes, SendBlockedError, suggestRestrictions, writeDraft } from './fakeAi.ts'
 import { SAMPLE_NOTE } from './sampleNote.ts'
+import { accommodationBlockReason } from '../ai/restrictionPrompt.ts'
 import {
   buildSegments,
+  employeeOptions,
   fixLeaks,
+  hasWorkToLose,
   hideText,
   makeLabeler,
   outgoing,
@@ -168,4 +171,54 @@ test('a manager email sends only the approved restrictions, never the notes', as
   assert.ok(!draft.receipt.sentText.includes('Okafor'))
   assert.ok(!draft.receipt.sentText.includes('[MEDICAL_DETAIL_1]'))
   assert.ok(draft.restoredDraft.includes('Maria Santos'))
+})
+
+test('the "Who is this for?" list shows real names, but the value is always a placeholder', async () => {
+  const base = await redactNotes(SAMPLE_NOTE)
+  const out = outgoing(base, [])
+  const options = employeeOptions(out.map, makeLabeler(base.map))
+  assert.ok(options.length >= 3)
+
+  const maria = options.find((option) => option.text.startsWith('Maria Santos'))
+  assert.ok(maria, 'the real name is what the person sees')
+  assert.match(maria.text, /^Maria Santos \(sent as NAME \d+\)$/)
+  for (const option of options) {
+    assert.match(option.value, /^\[EMPLOYEE_\d+\]$/) // what the app keeps and sends
+    assert.notEqual(option.value, out.map.originals[option.value]) // never the real name
+  }
+
+  // A real name is not accepted as the choice, so it can't be what gets used.
+  const plan = { employee: 'Maria Santos', restrictions: ['a short break every 2 hours'] }
+  assert.match(accommodationBlockReason(plan, out.map, out.redactedText) ?? '', /choose which employee/)
+})
+
+test('a manager email built from the dropdown value sends placeholders only', async () => {
+  const base = await redactNotes(SAMPLE_NOTE)
+  const out = outgoing(base, [])
+  const options = employeeOptions(out.map, makeLabeler(base.map))
+  const maria = options.find((option) => option.text.startsWith('Maria Santos'))
+  assert.ok(maria)
+
+  const draft = await writeDraft(out, 'accommodation', {
+    approved: true,
+    accommodation: { employee: maria.value, restrictions: ['a short break every 2 hours'] },
+  })
+  const sent = draft.receipt.sentText
+  assert.ok(sent.includes(`Employee: ${maria.value}`))
+  // Neither any real value, nor the text the dropdown showed, is in what was sent.
+  for (const original of Object.values(out.map.originals)) {
+    assert.ok(!sent.includes(original), `"${original}" must not be sent`)
+  }
+  for (const option of options) assert.ok(!sent.includes(option.text))
+  assert.ok(draft.restoredDraft.includes('Maria Santos')) // the real name comes back on this laptop only
+})
+
+test('the leave warning is wanted only while there is something to lose', async () => {
+  const base = await redactNotes(SAMPLE_NOTE)
+  const draft = await writeDraft(outgoing(base, []), 'investigation', { approved: true })
+  assert.equal(hasWorkToLose({ notes: '', base: null, draft: null }), false) // start screen, or after "Start over"
+  assert.equal(hasWorkToLose({ notes: '  \n ', base: null, draft: null }), false) // only spaces
+  assert.equal(hasWorkToLose({ notes: SAMPLE_NOTE, base: null, draft: null }), true) // text typed
+  assert.equal(hasWorkToLose({ notes: '', base, draft: null }), true) // a redaction with real names in memory
+  assert.equal(hasWorkToLose({ notes: '', base: null, draft }), true) // a draft
 })

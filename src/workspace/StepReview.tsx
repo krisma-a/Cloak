@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { confirmNoNames, hideNames, splitNames } from '../ai/guard.ts'
 import type { Category } from '../ai/placeholders.ts'
+import { WhereChip } from './icons.tsx'
 import {
   buildSegments,
   fixLeaks,
@@ -123,112 +124,7 @@ export function StepReview({ base, kept, onChange, onBack, onContinue }: StepRev
         </p>
       )}
 
-      <div
-        className="notes-view"
-        ref={notesRef}
-        role="region"
-        aria-label="Case notes with private details hidden"
-      >
-        {segments.map((segment, index) => {
-          if (segment.kind === 'text') {
-            return (
-              <span key={index} data-text-segment="">
-                {segment.text}
-              </span>
-            )
-          }
-          if (!segment.hidden) {
-            return (
-              <button
-                key={index}
-                type="button"
-                className="kept"
-                title="Click to hide this again"
-                onClick={() => onChange({ base, kept: toggleKept(kept, segment.placeholder) })}
-              >
-                {segment.original}
-              </button>
-            )
-          }
-          const showing = peeking === segment.placeholder
-          return (
-            <button
-              key={index}
-              type="button"
-              className={showing ? 'label is-peek' : 'label'}
-              aria-label={showing ? undefined : `Hidden ${label(segment.placeholder)}. Click to peek.`}
-              onClick={() => peek(segment.placeholder)}
-            >
-              {showing ? segment.original : label(segment.placeholder)}
-            </button>
-          )
-        })}
-      </div>
-
-      {pending && (
-        <button
-          type="button"
-          className={pending.below ? 'float-hide below' : 'float-hide'}
-          style={{ left: pending.x, top: pending.y }}
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={hideSelection}
-        >
-          Hide as {choiceLabel}
-        </button>
-      )}
-
-      <form
-        className="hide-more"
-        onSubmit={(event) => {
-          event.preventDefault()
-          if (hide(typed)) setTyped('')
-        }}
-      >
-        <div className="grow">
-          <label className="field-label" htmlFor="hide-more-input">
-            Hide another word or phrase
-          </label>
-          <input
-            id="hide-more-input"
-            className="text-input"
-            type="text"
-            value={typed}
-            onChange={(event) => {
-              setTyped(event.target.value)
-              setMessage(null)
-            }}
-            placeholder="Type it exactly as it appears"
-            spellCheck={false}
-            autoComplete="off"
-          />
-        </div>
-        <div>
-          <label className="field-label" htmlFor="hide-as">
-            Hide as
-          </label>
-          <select
-            id="hide-as"
-            className="select-input"
-            value={category}
-            onChange={(event) => setCategory(event.target.value as Category)}
-          >
-            {HIDE_CHOICES.map((choice) => (
-              <option key={choice.category} value={choice.category}>
-                {choice.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className="btn btn-quiet" disabled={typed.trim() === ''}>
-          Hide it
-        </button>
-      </form>
-      {message && (
-        <p className="notice warn" role="alert">
-          {message}
-        </p>
-      )}
-
+      {/* What blocks "Looks good, continue" comes first, so it is never buried below the notes. */}
       {namesUnchecked && (
         <div className="notice warn">
           <p>
@@ -279,48 +175,164 @@ export function StepReview({ base, kept, onChange, onBack, onContinue }: StepRev
         </div>
       )}
 
-      {items.length === 0 ? (
-        <p className="notice warn">
-          Nothing was hidden. If your notes have names or private details, select them above to hide them.
-        </p>
-      ) : (
-        <>
-          <p className="muted summary">
-            {hiddenCount} hidden on this laptop{keptCount > 0 ? `, ${keptCount} kept visible` : ''}.
-          </p>
-          <ul className="review-list">
-            {items.map((item) => (
-              <li key={item.placeholder}>
-                <span>
-                  {item.hidden ? (
+      <div className="review-grid">
+        <div className="review-main">
+          <div className="field-head">
+            <span className="field-label" id="review-notes-label">
+              Your notes, with private details hidden
+            </span>
+            <WhereChip where="laptop">Checked on this laptop</WhereChip>
+          </div>
+          <div className="notes-view" ref={notesRef} role="region" aria-labelledby="review-notes-label">
+            {segments.map((segment, index) => {
+              if (segment.kind === 'text') {
+                return (
+                  <span key={index} data-text-segment="">
+                    {segment.text}
+                  </span>
+                )
+              }
+              if (!segment.hidden) {
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    className="kept"
+                    title="Click to hide this again"
+                    onClick={() => onChange({ base, kept: toggleKept(kept, segment.placeholder) })}
+                  >
+                    {segment.original}
+                  </button>
+                )
+              }
+              const showing = peeking === segment.placeholder
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  className={showing ? 'label is-peek' : 'label'}
+                  aria-label={showing ? undefined : `Hidden ${label(segment.placeholder)}. Click to peek.`}
+                  onClick={() => peek(segment.placeholder)}
+                >
+                  {showing ? segment.original : label(segment.placeholder)}
+                </button>
+              )
+            })}
+          </div>
+
+          {pending && (
+            <button
+              type="button"
+              className={pending.below ? 'float-hide below' : 'float-hide'}
+              style={{ left: pending.x, top: pending.y }}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={hideSelection}
+            >
+              Hide as {choiceLabel}
+            </button>
+          )}
+
+          <form
+            className="hide-more"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (hide(typed)) setTyped('')
+            }}
+          >
+            <div className="grow">
+              <label className="field-label" htmlFor="hide-more-input">
+                Hide another word or phrase
+              </label>
+              <input
+                id="hide-more-input"
+                className="text-input"
+                type="text"
+                value={typed}
+                onChange={(event) => {
+                  setTyped(event.target.value)
+                  setMessage(null)
+                }}
+                placeholder="Type it exactly as it appears"
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <label className="field-label" htmlFor="hide-as">
+                Hide as
+              </label>
+              <select
+                id="hide-as"
+                className="select-input"
+                value={category}
+                onChange={(event) => setCategory(event.target.value as Category)}
+              >
+                {HIDE_CHOICES.map((choice) => (
+                  <option key={choice.category} value={choice.category}>
+                    {choice.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button type="submit" className="btn btn-quiet" disabled={typed.trim() === ''}>
+              Hide it
+            </button>
+          </form>
+          {message && (
+            <p className="notice warn" role="alert">
+              {message}
+            </p>
+          )}
+        </div>
+
+        <section className="review-side" aria-labelledby="review-hidden-title">
+          <h3 id="review-hidden-title" className="side-title">
+            Hidden details
+          </h3>
+          {items.length === 0 ? (
+            <p className="notice warn">
+              Nothing was hidden. If your notes have names or private details, select them in the notes to hide them.
+            </p>
+          ) : (
+            <>
+              <p className="side-count">
+                {hiddenCount} hidden on this laptop{keptCount > 0 ? `, ${keptCount} kept visible` : ''}
+              </p>
+              <ul className="review-list">
+                {items.map((item) => (
+                  <li key={item.placeholder}>
+                    <span>
+                      {item.hidden ? (
+                        <button
+                          type="button"
+                          className={peeking === item.placeholder ? 'label is-peek' : 'label'}
+                          aria-label={
+                            peeking === item.placeholder ? undefined : `Hidden ${label(item.placeholder)}. Click to peek.`
+                          }
+                          onClick={() => peek(item.placeholder)}
+                        >
+                          {peeking === item.placeholder ? item.original : label(item.placeholder)}
+                        </button>
+                      ) : (
+                        <span className="kept static">{item.original}</span>
+                      )}
+                      {item.count > 1 && <span className="count">×{item.count}</span>}
+                    </span>
                     <button
                       type="button"
-                      className={peeking === item.placeholder ? 'label is-peek' : 'label'}
-                      aria-label={
-                        peeking === item.placeholder ? undefined : `Hidden ${label(item.placeholder)}. Click to peek.`
-                      }
-                      onClick={() => peek(item.placeholder)}
+                      className="mini-btn"
+                      aria-label={item.hidden ? `Keep ${label(item.placeholder)} visible` : `Hide ${item.original} again`}
+                      onClick={() => onChange({ base, kept: toggleKept(kept, item.placeholder) })}
                     >
-                      {peeking === item.placeholder ? item.original : label(item.placeholder)}
+                      {item.hidden ? 'Keep visible' : 'Hide again'}
                     </button>
-                  ) : (
-                    <span className="kept static">{item.original}</span>
-                  )}
-                  {item.count > 1 && <span className="count">×{item.count}</span>}
-                </span>
-                <button
-                  type="button"
-                  className="mini-btn"
-                  aria-label={item.hidden ? `Keep ${label(item.placeholder)} visible` : `Hide ${item.original} again`}
-                  onClick={() => onChange({ base, kept: toggleKept(kept, item.placeholder) })}
-                >
-                  {item.hidden ? 'Keep visible' : 'Hide again'}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+      </div>
 
       <div className="actions">
         <button type="button" className="btn btn-quiet" onClick={onBack}>

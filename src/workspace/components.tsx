@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { WhereChip } from './icons.tsx'
 import type { StepId } from './types.ts'
 
 export interface StepInfo {
@@ -61,16 +62,19 @@ interface LoadingCardProps {
   title: string
   note: string
   checks: string[]
+  /** Where this step runs, shown as the same chip used on every screen. */
+  where: 'laptop' | 'cloud'
   /** 0..1 while the on-laptop AI loads (the first time it downloads). Leave out to hide the bar. */
   progress?: number | null
 }
 
 /** Shown while hiding details (on this laptop) and while writing the draft (in the cloud). */
-export function LoadingCard({ title, note, checks, progress = null }: LoadingCardProps) {
+export function LoadingCard({ title, note, checks, where, progress = null }: LoadingCardProps) {
   const percent = progress === null ? null : Math.round(progress * 100)
 
   return (
     <section className="card loading" role="status" aria-live="polite">
+      <WhereChip where={where}>{where === 'cloud' ? 'In the cloud' : 'On this laptop'}</WhereChip>
       <div className="loading-ring" aria-hidden="true" />
       <h2>{title}</h2>
       <p className="muted">{note}</p>

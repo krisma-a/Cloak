@@ -776,10 +776,338 @@
   overflow-wrap: anywhere;
 }
 
-.cloak-app .ran-list {
+/* Section titles inside the details box, below the panels. */
+.cloak-app .sent > h3 {
+  margin: 28px 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cloak-app .steps {
   margin: 0;
-  padding-left: 20px;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.cloak-app .steps li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-height: 52px;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+
+.cloak-app .steps li + li {
+  border-top: 1px solid var(--border);
+}
+
+/* A label with a chip beside it (the notes box, the draft box). */
+.cloak-app .field-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin: 0 0 8px;
+}
+
+.cloak-app .field-head.spaced {
+  margin-top: 16px;
+}
+
+.cloak-app .field-head .field-label {
+  margin: 0;
+}
+
+/* ---------- What stayed here vs what was sent ---------- */
+
+/* Lives inside the "Full details of what was sent" box, at the top. */
+.cloak-app .compare-wrap {
+  margin: 8px 0 0;
+}
+
+
+.cloak-app .compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 124px minmax(0, 1fr);
+}
+
+.cloak-app .compare-wrap > .hint {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.cloak-app .panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 24px 24px;
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  background: #fffefd;
+}
+
+/* The right side is the one that left the laptop, so it is the one with the colored edge. */
+.cloak-app .panel.is-sent {
+  border-color: var(--teal);
+  background: var(--card);
+}
+
+.cloak-app .panel-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.cloak-app .panel-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* The "where it runs" chip, used on every screen. Grey laptop = stays here. Solid teal cloud = goes to the cloud. */
+.cloak-app .where {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 5px 14px 5px 11px;
+  border-radius: 999px;
+  background: #f1ece5;
+  color: var(--text-2);
   font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.cloak-app .where svg {
+  flex: none;
+}
+
+.cloak-app .where.is-cloud {
+  background: var(--teal);
+  color: #fff;
+}
+
+/* The return trip sits under the pair, full width, with a lighter wash than the panel that was sent. */
+.cloak-app .panel.is-back {
+  grid-column: 1 / -1;
+  margin-top: 18px;
+  border-color: var(--teal);
+  background: #f4faf8;
+}
+
+.cloak-app .panel-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 2.1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cloak-app .panel-foot {
+  margin: auto 0 0;
+  padding-top: 14px;
+  border-top: 1px dashed #d6ccbf;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.cloak-app .panel-foot p {
+  margin: 0;
+}
+
+.cloak-app .panel-foot p + .instructions {
+  margin-top: 4px;
+}
+
+/* The standard instructions: a small toggle, so the exact text is there without adding noise. */
+.cloak-app .panel-foot summary {
+  min-height: 36px;
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.cloak-app .panel-foot .sent-box {
+  max-height: 260px;
+  margin: 4px 0 0;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+/* While the instructions are open the right panel is taller, so the left one stops stretching to match. */
+.cloak-app .compare:has(.instructions[open]) {
+  align-items: start;
+}
+
+.cloak-app .compare:has(.instructions[open]) .seam {
+  align-self: stretch;
+}
+
+/* Private details on the typed side: a soft highlight. Kept ones are amber, like on the review screen. */
+.cloak-app .hl {
+  margin: 0 -1px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: #d4ebe6;
+  box-shadow: inset 0 -2px 0 rgba(15, 118, 110, 0.5);
+  color: var(--text);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-color 0.12s, color 0.12s, box-shadow 0.12s;
+}
+
+.cloak-app .hl.is-kept {
+  background: var(--amber-bg);
+  box-shadow: inset 0 -2px 0 rgba(92, 58, 0, 0.45);
+  color: var(--amber-text);
+}
+
+/* The same hidden details on the cloud side: dark labels with white text. */
+.cloak-app .tag {
+  display: inline-block;
+  margin: 0 1px;
+  padding: 1px 11px;
+  border-radius: 999px;
+  background: var(--label-bg);
+  color: #fff;
+  font-size: 0.82em;
+  font-weight: 700;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: background-color 0.12s, box-shadow 0.12s;
+}
+
+/* A detail and its match, on both sides, light up together. */
+.cloak-app .hl.is-match,
+.cloak-app .tag.is-match {
+  background: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-soft);
+  color: #fff;
+}
+
+/* The divider: a dashed tear line with a lock on it. */
+.cloak-app .seam {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+.cloak-app .seam::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 50%;
+  border-left: 2px dashed #d6ccbf;
+  transform: translateX(-1px);
+}
+
+.cloak-app .seam-core {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  background: var(--card); /* hides the dashed line behind the lock and its text */
+  text-align: center;
+}
+
+.cloak-app .seam-badge {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: #fff;
+}
+
+.cloak-app .seam-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.cloak-app .only-narrow {
+  display: none;
+}
+
+/* Narrow screens: the panels stack, and the divider runs sideways between them. */
+@media (max-width: 900px) {
+  .cloak-app .compare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cloak-app .seam {
+    padding: 4px 0;
+  }
+
+  .cloak-app .seam::before {
+    top: 50%;
+    right: 8px;
+    bottom: auto;
+    left: 8px;
+    border-top: 2px dashed #d6ccbf;
+    border-left: 0;
+    transform: translateY(-1px);
+  }
+
+  .cloak-app .seam-core {
+    flex-direction: row;
+    gap: 14px;
+    padding: 6px 14px;
+    text-align: left;
+  }
+
+  .cloak-app .seam-badge {
+    flex: none;
+    width: 44px;
+    height: 44px;
+  }
+
+  .cloak-app .only-wide {
+    display: none;
+  }
+
+  .cloak-app .only-narrow {
+    display: inline;
+  }
+}
+
+@media (max-width: 560px) {
+  .cloak-app .panel {
+    padding: 18px 18px 20px;
+    border-radius: 20px;
+  }
+
+  /* On a phone the lock and its line of text fill the width, so the dashed line would only show as two stubs. */
+  .cloak-app .seam::before {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloak-app .hl,
+  .cloak-app .tag {
+    transition: none;
+  }
 }
 
 /* ---------- Small screens and motion ---------- */
@@ -913,9 +1241,40 @@
 
 .cloak-app .start-lead {
   max-width: 520px;
-  margin: 0 auto 32px;
+  margin: 0 auto 26px;
   font-size: 18px;
   color: var(--text-2);
+}
+
+/* The idea in one made-up sentence: what you type, and what the cloud gets. The only "show, don't tell" on this screen. */
+.cloak-app .specimen {
+  margin: 0 0 24px;
+  padding: 4px 22px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--card);
+  text-align: left;
+}
+
+.cloak-app .specimen-row {
+  display: grid;
+  grid-template-columns: 204px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+.cloak-app .specimen-row + .specimen-row {
+  border-top: 1px dashed #d6ccbf;
+}
+
+.cloak-app .specimen dt,
+.cloak-app .specimen dd {
+  margin: 0;
+}
+
+.cloak-app .specimen dd {
+  line-height: 2;
 }
 
 .cloak-app .choices {
@@ -977,18 +1336,63 @@
 }
 
 .cloak-app .choice-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   margin-top: 14px;
   font-weight: 700;
   color: var(--teal);
 }
 
+.cloak-app .choice-go svg {
+  transition: transform 0.15s;
+}
+
+.cloak-app .choice:hover .choice-go svg {
+  transform: translateX(3px);
+}
+
 .cloak-app .start-note {
-  margin: 28px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 24px 0 0;
   font-size: 14px;
   color: var(--text-2);
 }
 
+/* ---------- Scan (empty state) ---------- */
+
+.cloak-app .card.empty {
+  flex: none;
+  align-items: center;
+  margin: auto 0;
+  padding-top: 52px;
+  padding-bottom: 52px;
+  text-align: center;
+}
+
+.cloak-app .card.empty > .muted {
+  max-width: 420px;
+  margin-bottom: 0;
+}
+
+.cloak-app .card.empty .actions {
+  position: static;
+  justify-content: center;
+  margin: 24px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
 @media (max-width: 640px) {
+  .cloak-app .specimen-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
   .cloak-app .choices {
     grid-template-columns: 1fr;
     gap: 14px;
@@ -1005,5 +1409,120 @@
   .cloak-app .start-lead {
     font-size: 16px;
     margin-bottom: 20px;
+  }
+}
+
+/* ---------- Loading, review and send screens ---------- */
+
+.cloak-app .loading .where {
+  margin-bottom: 20px;
+}
+
+/* Review: the notes and the form on the left, what was hidden on the right. */
+.cloak-app .review-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  align-items: start;
+  gap: 20px 24px;
+  margin-top: 20px;
+}
+
+.cloak-app .review-main {
+  min-width: 0;
+}
+
+.cloak-app .review-main .notes-view {
+  flex: none;
+  min-height: 220px;
+}
+
+.cloak-app .review-side {
+  padding: 18px 18px 6px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: #fffefd;
+}
+
+.cloak-app .side-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cloak-app .side-count {
+  margin: 2px 0 10px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.cloak-app .review-side .review-list {
+  border: 0;
+  border-radius: 0;
+}
+
+.cloak-app .review-side .review-list li {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.cloak-app .review-side .review-list li:first-child {
+  border-top: 1px solid var(--border);
+}
+
+.cloak-app .review-side .notice {
+  margin: 12px 0;
+}
+
+/* Write the draft: the preview is what the cloud receives, so it gets the cloud's colored edge. */
+.cloak-app .notes-view.is-outbound {
+  flex: none;
+  min-height: 140px;
+  border-color: var(--teal);
+}
+
+.cloak-app .btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+@media (max-width: 900px) {
+  .cloak-app .review-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Eleven outlined buttons in a column is a lot: in the side list they read as quiet text until hovered. */
+.cloak-app .review-side .mini-btn {
+  padding: 0 12px;
+  border-color: transparent;
+  background: none;
+  color: var(--teal-dark);
+}
+
+.cloak-app .review-side .mini-btn:hover {
+  border-color: transparent;
+  background: var(--teal-soft);
+}
+
+/* Phones: keep the header on one line, and let the main button keep its words on one line. */
+@media (max-width: 560px) {
+  .cloak-app .brand .brand-sub {
+    display: none;
+  }
+
+  .cloak-app .actions {
+    flex-wrap: nowrap;
+  }
+
+  .cloak-app .actions .btn {
+    padding: 0 18px;
+  }
+
+  .cloak-app .actions .btn-quiet {
+    flex: 0 0 auto;
+  }
+
+  .cloak-app .actions .btn-primary {
+    flex: 1 1 auto;
   }
 }

@@ -1,4 +1,5 @@
 import { TEMPLATES } from '../ai/templates.ts'
+import { WhereChip } from './icons.tsx'
 import { SAMPLE_NOTE } from './sampleNote.ts'
 import type { TemplateId } from './types.ts'
 
@@ -46,9 +47,12 @@ export function StepPaste({ notes, onNotesChange, templateId, onTemplateChange, 
         <p className="hint">You’ll get: {TEMPLATES[templateId].label}</p>
       </fieldset>
 
-      <label className="field-label" htmlFor="case-notes">
-        Case notes
-      </label>
+      <div className="field-head">
+        <label className="field-label" htmlFor="case-notes">
+          Case notes
+        </label>
+        <WhereChip where="laptop">Stays on this laptop</WhereChip>
+      </div>
       {/* spellCheck is off on purpose: Chrome's "enhanced spell check" can send typed text to Google. */}
       <textarea
         id="case-notes"
