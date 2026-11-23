@@ -1241,14 +1241,51 @@
 
 .cloak-app .start-lead {
   max-width: 520px;
-  margin: 0 auto 26px;
+  margin: 0 auto 32px;
   font-size: 18px;
   color: var(--text-2);
 }
 
-/* The idea in one made-up sentence: what you type, and what the cloud gets. The only "show, don't tell" on this screen. */
+/* A quiet toggle under the two choices. The example inside stays closed until someone asks for it. */
+.cloak-app .how {
+  margin-top: 14px;
+}
+
+.cloak-app .how summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: fit-content;
+  min-height: 44px;
+  margin: 0 auto;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  color: var(--teal);
+  list-style: none;
+  cursor: pointer;
+}
+
+.cloak-app .how summary::-webkit-details-marker {
+  display: none;
+}
+
+.cloak-app .how summary:hover {
+  color: var(--teal-dark);
+}
+
+.cloak-app .how summary svg {
+  transition: transform 0.15s;
+}
+
+.cloak-app .how[open] summary svg {
+  transform: rotate(90deg);
+}
+
+/* The idea in one made-up sentence: what you type, and what the cloud gets. */
 .cloak-app .specimen {
-  margin: 0 0 24px;
+  margin: 10px 0 0;
   padding: 4px 22px;
   border: 1px solid var(--border);
   border-radius: 22px;
@@ -1353,13 +1390,16 @@
 }
 
 .cloak-app .start-note {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
   margin: 24px 0 0;
   font-size: 14px;
   color: var(--text-2);
+}
+
+/* The lock flows with the text, so it stays beside it when the line wraps on a phone. */
+.cloak-app .start-note svg {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: -2px;
 }
 
 /* ---------- Scan (empty state) ---------- */
@@ -1524,5 +1564,12 @@
 
   .cloak-app .actions .btn-primary {
     flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloak-app .how summary svg,
+  .cloak-app .choice-go svg {
+    transition: none;
   }
 }

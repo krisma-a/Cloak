@@ -16,30 +16,6 @@ export function StepStart({ onPaste, onScan }: StepStartProps) {
           about.
         </p>
 
-        {/* The whole idea in one sentence, with made-up data: what you type, and what the cloud gets. */}
-        <dl className="specimen" aria-label="An example of what Cloak does">
-          <div className="specimen-row">
-            <dt>
-              <WhereChip where="laptop">Stays on this laptop</WhereChip>
-            </dt>
-            <dd>
-              <mark className="hl">Maria Santos</mark> asked for a schedule change.
-            </dd>
-          </div>
-          <div className="specimen-row">
-            <dt>
-              <WhereChip where="cloud">Sent to the cloud</WhereChip>
-            </dt>
-            <dd>
-              <span className="tag">
-                <span aria-hidden="true">NAME 1</span>
-                <span className="sr-only">hidden: name 1</span>
-              </span>{' '}
-              asked for a schedule change.
-            </dd>
-          </div>
-        </dl>
-
         <div className="choices">
           <button type="button" className="choice" onClick={onPaste}>
             <span className="choice-icon is-teal" aria-hidden="true">
@@ -65,6 +41,36 @@ export function StepStart({ onPaste, onScan }: StepStartProps) {
             </span>
           </button>
         </div>
+
+        {/* The whole idea in one sentence, with made-up data: what you type, and what the cloud gets. Closed until asked for. */}
+        <details className="how">
+          <summary>
+            See what stays and what’s sent
+            <ChevronIcon size={18} />
+          </summary>
+          <dl className="specimen" aria-label="An example of what Cloak does">
+            <div className="specimen-row">
+              <dt>
+                <WhereChip where="laptop">Stays on this laptop</WhereChip>
+              </dt>
+              <dd>
+                <mark className="hl">Maria Santos</mark> asked for a schedule change.
+              </dd>
+            </div>
+            <div className="specimen-row">
+              <dt>
+                <WhereChip where="cloud">Sent to the cloud</WhereChip>
+              </dt>
+              <dd>
+                <span className="tag">
+                  <span aria-hidden="true">NAME 1</span>
+                  <span className="sr-only">hidden: name 1</span>
+                </span>{' '}
+                asked for a schedule change.
+              </dd>
+            </div>
+          </dl>
+        </details>
 
         <p className="start-note">
           <LockIcon size={15} />
