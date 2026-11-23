@@ -44,7 +44,7 @@ export default function App() {
   // What the header pill and the "Hiding details" card say about the AI on this laptop (see aiStatus.ts).
   const [ai, setAi] = useState<AiState>(INITIAL_AI_STATE)
   const reportAi = (event: AiEvent) => setAi((state) => nextAiState(state, event))
-  const skipRef = useRef<AbortController | null>(null) // "Use simpler checks for now" aborts this
+  const skipRef = useRef<AbortController | null>(null) // "Use basic checks for now" aborts this
 
   // Everything below lives in this tab's memory only. Nothing is saved, logged or sent
   // until "Write the draft".
@@ -88,12 +88,12 @@ export default function App() {
   }, [workToLose])
 
   // Without downloading anything, find out if this browser can run the private AI (Gemini Nano). If it can't,
-  // the pill says "Simpler checks" from the start. If it can, it says nothing until we know more.
+  // the pill says "Basic checks" from the start. If it can, it says nothing until we know more.
   useEffect(() => {
     let cancelled = false
     privateAiSupported()
       .then((supported) => {
-        if (!cancelled && !supported) setAi((state) => nextAiState(state, { type: 'stage', stage: 'simpler' }))
+        if (!cancelled && !supported) setAi((state) => nextAiState(state, { type: 'stage', stage: 'basic' }))
       })
       .catch(() => undefined)
     return () => {
@@ -142,7 +142,7 @@ export default function App() {
     }
   }
 
-  // The one-time download can take a while. This stops the wait: the notes are checked with the simpler engine
+  // The one-time download can take a while. This stops the wait: the notes are checked with the basic engine
   // now, and the private AI keeps downloading for next time.
   function skipDownload() {
     setProgress(null)
@@ -254,7 +254,7 @@ export default function App() {
           <span className="ai-slot" role="status">
             {!onStartScreens && ai.mode !== null && (
               <span
-                className={`ai-pill is-${ai.mode}${ai.mode === 'simpler' && ai.background ? ' is-background' : ''}`}
+                className={`ai-pill is-${ai.mode}${ai.mode === 'basic' && ai.background ? ' is-background' : ''}`}
                 title={`${pillHelp(ai)}${DEMO_MODE ? ' Drafts are still placeholders in this build, and nothing is sent anywhere.' : ''}`}
               >
                 {PILL_TEXT[ai.mode]}

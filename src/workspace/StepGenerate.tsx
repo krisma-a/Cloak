@@ -150,7 +150,7 @@ export function StepGenerate({
 
       {needsConfirm && (
         <div className="notice warn">
-          <p>Your laptop used simpler checks, so please read what will be sent before you continue.</p>
+          <p>Your laptop used basic checks, so please read what will be sent before you continue.</p>
           <label className="check-row">
             <input type="checkbox" checked={confirmed} onChange={(event) => onConfirmedChange(event.target.checked)} />
             <span>I’ve read it, and nothing private is left.</span>

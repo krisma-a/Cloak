@@ -120,7 +120,7 @@ export function StepReview({ base, kept, onChange, onBack, onContinue }: StepRev
       {base.note && <p className="notice info">{base.note}</p>}
       {base.needsCarefulReview && (
         <p className="notice warn">
-          Simpler checks were used on this laptop, so they may miss things. Please read all of the notes carefully.
+          Basic checks were used on this laptop instead of the private AI, so they may miss things. Please read all of the notes carefully.
         </p>
       )}
 

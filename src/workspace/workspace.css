@@ -83,7 +83,7 @@
   color: var(--text-2);
 }
 
-/* The header pill: the real mode of the AI that checks notes on this laptop. Ready = teal, simpler checks =
+/* The header pill: the real mode of the AI that checks notes on this laptop. Ready = teal, basic checks =
    amber (read the notes carefully), downloading = grey with a small spinner. */
 .cloak-app .ai-pill {
   display: inline-flex;
@@ -111,7 +111,7 @@
   color: var(--teal-dark);
 }
 
-.cloak-app .ai-pill.is-simpler {
+.cloak-app .ai-pill.is-basic {
   background: var(--amber-bg);
   color: var(--amber-text);
 }
@@ -1498,7 +1498,7 @@
   margin-bottom: 20px;
 }
 
-/* "Use simpler checks for now": a way out of a long first-time download. */
+/* "Use basic checks for now": a way out of a long first-time download. */
 .cloak-app .loading .skip {
   margin-top: 8px;
   text-align: center;

@@ -50,12 +50,12 @@ test('a model that is already on this laptop never shows "downloading"', () => {
   assert.equal(run([{ type: 'stage', stage: 'nano' }, { type: 'progress', fraction: Number.NaN }]).mode, null)
 })
 
-test('without Nano it is "simpler" straight away, and a download then is not called the private AI', () => {
-  const s = run([{ type: 'stage', stage: 'simpler' }, { type: 'progress', fraction: 0.4 }])
-  assert.deepEqual(s, state({ mode: 'simpler', stage: 'simpler' }))
-  assert.equal(downloadLabel(s.stage), 'Downloading the simpler checker (first time only)…')
-  assert.equal(run([{ type: 'stage', stage: 'simpler' }, { type: 'engine', engine: 'browser-model' }]).mode, 'simpler')
-  assert.equal(run([{ type: 'engine', engine: 'rules-only' }]).mode, 'simpler')
+test('without Nano it is "basic" straight away, and a download then is not called the private AI', () => {
+  const s = run([{ type: 'stage', stage: 'basic' }, { type: 'progress', fraction: 0.4 }])
+  assert.deepEqual(s, state({ mode: 'basic', stage: 'basic' }))
+  assert.equal(downloadLabel(s.stage), 'Downloading the basic checker (first time only)…')
+  assert.equal(run([{ type: 'stage', stage: 'basic' }, { type: 'engine', engine: 'browser-model' }]).mode, 'basic')
+  assert.equal(run([{ type: 'engine', engine: 'rules-only' }]).mode, 'basic')
 })
 
 test('the engine that really ran decides the final mode, even if Nano failed on the way', () => {
@@ -64,7 +64,7 @@ test('the engine that really ran decides the final mode, even if Nano failed on 
     { type: 'progress', fraction: 0.5 },
     { type: 'engine', engine: 'browser-model' }, // Nano broke, so redact() used the backup engine
   ])
-  assert.equal(s.mode, 'simpler')
+  assert.equal(s.mode, 'basic')
   assert.equal(s.nanoReady, false)
 })
 
@@ -72,7 +72,7 @@ test('a failure clears "downloading" but keeps a mode that was already known', (
   const downloading = run([{ type: 'stage', stage: 'nano' }, { type: 'progress', fraction: 0.3 }])
   assert.deepEqual(nextAiState(downloading, { type: 'failed' }), INITIAL_AI_STATE)
   assert.equal(nextAiState(state({ mode: 'ready', nanoReady: true }), { type: 'failed' }).mode, 'ready')
-  assert.deepEqual(nextAiState(state({ mode: 'simpler', stage: 'simpler' }), { type: 'failed' }), state({ mode: 'simpler' }))
+  assert.deepEqual(nextAiState(state({ mode: 'basic', stage: 'basic' }), { type: 'failed' }), state({ mode: 'basic' }))
 })
 
 test('it is ready while the notes are still being checked, and the final engine can still correct it', () => {
@@ -80,7 +80,7 @@ test('it is ready while the notes are still being checked, and the final engine 
   assert.equal(ready.mode, 'ready')
   // If Nano then fails while checking, redact() falls back. The pill follows the engine that really ran,
   // unless Nano has already proven itself on this laptop.
-  assert.equal(nextAiState(state({ mode: 'ready', stage: 'nano' }), { type: 'engine', engine: 'browser-model' }).mode, 'simpler')
+  assert.equal(nextAiState(state({ mode: 'ready', stage: 'nano' }), { type: 'engine', engine: 'browser-model' }).mode, 'basic')
 })
 
 test('running again after "ready" stays ready until real progress says otherwise', () => {
@@ -88,21 +88,21 @@ test('running again after "ready" stays ready until real progress says otherwise
   assert.equal(again.mode, 'ready')
 })
 
-// ---- "Use simpler checks for now" ---------------------------------------------------------------
+// ---- "Use basic checks for now" ---------------------------------------------------------------
 
-test('skipping the wait switches to simpler checks and remembers the download is still going', () => {
+test('skipping the wait switches to basic checks and remembers the download is still going', () => {
   const downloading = run([{ type: 'stage', stage: 'nano' }, { type: 'progress', fraction: 0.2 }])
   assert.equal(downloading.mode, 'downloading')
 
   const skipped = nextAiState(downloading, { type: 'skip' })
-  assert.deepEqual(skipped, state({ mode: 'simpler', stage: 'simpler', background: true }))
+  assert.deepEqual(skipped, state({ mode: 'basic', stage: 'basic', background: true }))
   // Any download from here on is the backup model's, and is labelled that way.
-  assert.equal(downloadLabel(skipped.stage), 'Downloading the simpler checker (first time only)…')
+  assert.equal(downloadLabel(skipped.stage), 'Downloading the basic checker (first time only)…')
   // Late progress from the Nano download that is still running does not bring "downloading" back.
-  assert.equal(nextAiState(skipped, { type: 'progress', fraction: 0.5 }).mode, 'simpler')
-  // The simpler run finishes: still simpler checks, and the download is still in the background.
+  assert.equal(nextAiState(skipped, { type: 'progress', fraction: 0.5 }).mode, 'basic')
+  // The basic run finishes: still basic checks, and the download is still in the background.
   const checked = nextAiState(skipped, { type: 'engine', engine: 'browser-model' })
-  assert.deepEqual(checked, state({ mode: 'simpler', stage: null, background: true }))
+  assert.deepEqual(checked, state({ mode: 'basic', stage: null, background: true }))
   assert.match(pillHelp(checked) ?? '', /still downloading in the background/)
 })
 
@@ -118,30 +118,30 @@ test('when the skipped download finishes, the private AI is ready for the next c
   assert.equal(pillHelp(done), PILL_HELP.ready)
 })
 
-test('the download can finish while a simpler check is still running, and the pill is not pulled back', () => {
+test('the download can finish while a basic check is still running, and the pill is not pulled back', () => {
   const skipped = run([{ type: 'stage', stage: 'nano' }, { type: 'progress', fraction: 0.9 }, { type: 'skip' }])
   const nanoDone = nextAiState(skipped, { type: 'background-done', engine: 'nano' })
   assert.equal(nanoDone.mode, 'ready')
-  // The simpler check then finishes. It used the backup engine, but the private AI is what is ready now.
+  // The basic check then finishes. It used the backup engine, but the private AI is what is ready now.
   assert.equal(nextAiState(nanoDone, { type: 'engine', engine: 'browser-model' }).mode, 'ready')
 })
 
-test('if the skipped download fails, it stays on simpler checks and stops saying it is downloading', () => {
+test('if the skipped download fails, it stays on basic checks and stops saying it is downloading', () => {
   const skipped = run([{ type: 'stage', stage: 'nano' }, { type: 'progress', fraction: 0.4 }, { type: 'skip' }])
   const failed = nextAiState(skipped, { type: 'background-done', engine: 'browser-model' })
-  assert.deepEqual(failed, state({ mode: 'simpler', stage: 'simpler', background: false }))
-  assert.equal(pillHelp(failed), PILL_HELP.simpler)
+  assert.deepEqual(failed, state({ mode: 'basic', stage: 'basic', background: false }))
+  assert.equal(pillHelp(failed), PILL_HELP.basic)
 })
 
 test('the wording is the wording that was asked for', () => {
   assert.deepEqual(PILL_TEXT, {
     ready: 'Private AI ready',
     downloading: 'Downloading private AI…',
-    simpler: 'Simpler checks',
+    basic: 'Basic checks',
   })
   assert.equal(downloadLabel('nano'), 'Downloading the private AI (first time only, about 4 GB)…')
   assert.equal(downloadLabel(null), 'Downloading the private AI (first time only, about 4 GB)…')
-  assert.equal(SKIP_LABEL, 'Use simpler checks for now')
+  assert.equal(SKIP_LABEL, 'Use basic checks for now')
   assert.equal(SKIP_HINT, 'The private AI keeps downloading, and is used next time.')
   for (const text of Object.values(PILL_HELP)) assert.ok(text.length > 20)
 })

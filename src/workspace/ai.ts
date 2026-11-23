@@ -9,12 +9,12 @@ import type { RedactionResult } from './types.ts'
 
 /** What the screen can find out and do while the notes are being hidden. All optional. */
 export interface RedactHooks {
-  /** Which model is about to load, before any download starts ("nano" or "simpler"). */
+  /** Which model is about to load, before any download starts ("nano" or "basic"). */
   onStage?: (stage: AiStage) => void
   /** The engine that is ready (after any download), just before the notes are checked. */
   onEngine?: (engine: RedactionResult['engine']) => void
   /**
-   * Abort this to stop waiting for the Gemini Nano download: the notes are checked with the simpler engine
+   * Abort this to stop waiting for the Gemini Nano download: the notes are checked with the basic engine
    * right away, and the Nano download keeps going in the background.
    */
   skipDownload?: AbortSignal
@@ -46,7 +46,7 @@ void loadRedact().catch(() => {
 
 /**
  * Whether this browser can run Gemini Nano (the private AI). Downloads nothing and needs no click.
- * False means notes get the simpler checks.
+ * False means notes get the basic checks.
  */
 export async function privateAiSupported(): Promise<boolean> {
   return (await loadRedact()).nanoSupported()
@@ -54,7 +54,7 @@ export async function privateAiSupported(): Promise<boolean> {
 
 // True while a Nano download that the person chose not to wait for is still running. Another wait on it
 // would show no progress (Chrome reports progress to the first caller only), so later checks use the
-// simpler engine until it finishes.
+// basic engine until it finishes.
 let nanoInBackground = false
 
 /** Resolves when `signal` is aborted. Never resolves if there is no signal. */
@@ -78,15 +78,15 @@ export async function redactNotes(
 ): Promise<RedactionResult> {
   const { nanoSupported, prepareRedaction, redact } = await loadRedact()
 
-  // An earlier download is still running in the background: use the simpler engine without waiting on it.
+  // An earlier download is still running in the background: use the basic engine without waiting on it.
   if (nanoInBackground) {
-    hooks.onStage?.('simpler')
+    hooks.onStage?.('basic')
     const { engine } = await prepareRedaction(onProgress, 'browser-model')
     hooks.onEngine?.(engine)
     return redact(notes, { engine })
   }
 
-  hooks.onStage?.((await nanoSupported()) ? 'nano' : 'simpler')
+  hooks.onStage?.((await nanoSupported()) ? 'nano' : 'basic')
   let forwardNanoProgress = true
   const preparing = prepareRedaction((fraction) => {
     if (forwardNanoProgress) onProgress?.(fraction)
