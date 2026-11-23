@@ -9,4 +9,4 @@ import type { TemplateId } from '../ai/templates.ts'
 
 export type { AccommodationPlan, DraftResult, PlaceholderMap, RedactionResult, TemplateId }
 
-export type StepId = 'paste' | 'review' | 'generate' | 'result'
+export type StepId = 'start' | 'scan' | 'paste' | 'review' | 'generate' | 'result'
