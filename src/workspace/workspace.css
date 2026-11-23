@@ -13,7 +13,12 @@
   --amber-text: #5c3a00;
   --label-bg: #1f2a2e;
 
-  min-height: 100vh;
+  /* Fill the browser window exactly. The page itself never scrolls: the card does. */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: var(--bg);
   color: var(--text);
   color-scheme: light;
@@ -32,9 +37,27 @@
 }
 
 .cloak-app .shell {
-  max-width: 760px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 28px 16px 64px;
+  padding: 20px 24px 24px;
+}
+
+/* Header and stepper keep their size; the card below takes whatever height is left. */
+.cloak-app .top,
+.cloak-app nav {
+  flex: none;
+}
+
+.cloak-app main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .cloak-app .top {
@@ -93,7 +116,7 @@
 .cloak-app .stepper {
   display: flex;
   gap: 8px;
-  margin: 0 0 24px;
+  margin: 0 0 16px;
   padding: 0;
   list-style: none;
 }
@@ -188,7 +211,13 @@
 /* ---------- Cards and text ---------- */
 
 .cloak-app .card {
-  padding: 28px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto; /* if a screen is taller than the window, the card scrolls and the buttons stay in view */
+  --pad: 28px;
+  padding: var(--pad);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 24px;
@@ -323,12 +352,12 @@
   min-height: 120px;
 }
 
-.cloak-app textarea.notes-input[rows='12'] {
-  min-height: 220px;
-}
-
-.cloak-app .notes-input.tall {
-  min-height: 320px;
+/* The big text boxes grow to fill the card, so the screen always looks full. */
+.cloak-app #case-notes,
+.cloak-app #final-draft {
+  flex: 1 1 auto;
+  min-height: 180px;
+  resize: none;
 }
 
 .cloak-app .text-input,
@@ -354,6 +383,7 @@
 }
 
 .cloak-app .link-button {
+  align-self: flex-start;
   margin-top: 10px;
   padding: 4px 0;
   border: 0;
@@ -368,12 +398,25 @@
 
 /* ---------- Buttons ---------- */
 
+/* The buttons sit at the bottom of the card and stay in view, even when the card scrolls. */
 .cloak-app .actions {
+  position: sticky;
+  bottom: calc(var(--pad) * -1);
   display: flex;
+  flex: none;
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 24px;
+  margin: auto calc(var(--pad) * -1) calc(var(--pad) * -1);
+  padding: 16px var(--pad);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 24px 24px;
+  background: var(--card);
+}
+
+/* Space above the buttons when the card has little content. */
+.cloak-app .card > :nth-last-child(2) {
+  margin-bottom: 20px;
 }
 
 .cloak-app .btn {
@@ -431,7 +474,7 @@
   line-height: 2;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  max-height: 420px;
+  flex: 1 0 160px;
   overflow-y: auto;
 }
 
@@ -602,6 +645,8 @@
 /* ---------- Loading ---------- */
 
 .cloak-app .loading {
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 44px 28px;
 }
@@ -739,10 +784,57 @@
 
 /* ---------- Small screens and motion ---------- */
 
-@media (max-width: 560px) {
+/* Short windows (small laptops, landscape phones): tighten spacing so more fits. */
+@media (max-height: 720px) {
+  .cloak-app .shell {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .cloak-app .top {
+    margin-bottom: 8px;
+  }
+
+  .cloak-app .stepper {
+    margin-bottom: 10px;
+  }
+
+  .cloak-app .stepper-label {
+    font-size: 12px;
+  }
+
   .cloak-app .card {
-    padding: 20px;
+    --pad: 20px;
+  }
+
+  .cloak-app h2 {
+    font-size: 20px;
+  }
+
+  .cloak-app .muted {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  .cloak-app .shell {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .cloak-app .card {
+    --pad: 20px;
     border-radius: 20px;
+  }
+
+  .cloak-app .actions {
+    border-radius: 0 0 20px 20px;
+  }
+
+  /* On a phone the whole card scrolls. A second scroll area inside it would be awkward. */
+  .cloak-app .notes-view {
+    flex: none;
+    overflow-y: visible;
   }
 
   .cloak-app .stepper-label {
@@ -771,5 +863,147 @@
 
   .cloak-app .check-tick {
     animation-duration: 0.01s;
+  }
+}
+
+/* ---------- Start screen ---------- */
+
+.cloak-app .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cloak-app .brand .brand-icon {
+  margin-left: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: #fff;
+}
+
+.cloak-app .brand .brand-sub {
+  margin-left: 4px;
+}
+
+.cloak-app .start {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cloak-app .start-inner {
+  width: 100%;
+  max-width: 680px;
+  margin: auto;
+  padding: 8px 0 24px;
+  text-align: center;
+}
+
+.cloak-app .start h2 {
+  margin: 0 0 12px;
+  font-size: clamp(30px, 5vw, 46px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.cloak-app .start-lead {
+  max-width: 520px;
+  margin: 0 auto 32px;
+  font-size: 18px;
+  color: var(--text-2);
+}
+
+.cloak-app .choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  text-align: left;
+}
+
+.cloak-app .choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(31, 42, 46, 0.04), 0 8px 24px rgba(31, 42, 46, 0.05);
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.cloak-app .choice:hover {
+  border-color: var(--teal);
+  transform: translateY(-2px);
+}
+
+.cloak-app .choice-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+}
+
+.cloak-app .choice-icon.is-teal {
+  background: var(--teal-soft);
+  color: var(--teal);
+}
+
+.cloak-app .choice-icon.is-peach {
+  background: #f9e9de;
+  color: #b4532a;
+}
+
+.cloak-app .choice-title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.cloak-app .choice-text {
+  flex: 1;
+  color: var(--text-2);
+}
+
+.cloak-app .choice-go {
+  margin-top: 14px;
+  font-weight: 700;
+  color: var(--teal);
+}
+
+.cloak-app .start-note {
+  margin: 28px 0 0;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+@media (max-width: 640px) {
+  .cloak-app .choices {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .cloak-app .choice {
+    padding: 18px;
+  }
+
+  .cloak-app .choice-icon {
+    margin-bottom: 4px;
+  }
+
+  .cloak-app .start-lead {
+    font-size: 16px;
+    margin-bottom: 20px;
   }
 }
