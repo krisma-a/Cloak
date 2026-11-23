@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { TEMPLATES } from './ai/templates.ts'
-import { DEMO_MODE, redactNotes, SendBlockedError, suggestRestrictions, writeDraft } from './workspace/ai.ts'
+import { DEMO_MODE, privateAiSupported, redactNotes, SendBlockedError, suggestRestrictions, writeDraft } from './workspace/ai.ts'
+import { downloadLabel, INITIAL_AI_STATE, nextAiState, PILL_HELP, PILL_TEXT } from './workspace/aiStatus.ts'
+import type { AiEvent, AiState } from './workspace/aiStatus.ts'
 import { LoadingCard, Stepper } from './workspace/components.tsx'
 import type { StepInfo } from './workspace/components.tsx'
 import { hasWorkToLose, makeLabeler, outgoing } from './workspace/review.ts'
@@ -30,6 +32,10 @@ export default function App() {
   const [busy, setBusy] = useState<Busy>(null)
   const [progress, setProgress] = useState<number | null>(null)
   const lastPercent = useRef(-1)
+
+  // What the header pill and the "Hiding details" card say about the AI on this laptop (see aiStatus.ts).
+  const [ai, setAi] = useState<AiState>(INITIAL_AI_STATE)
+  const reportAi = (event: AiEvent) => setAi((state) => nextAiState(state, event))
 
   // Everything below lives in this tab's memory only. Nothing is saved, logged or sent
   // until "Write the draft".
@@ -72,19 +78,43 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', warn)
   }, [workToLose])
 
+  // Without downloading anything, find out if this browser can run the private AI (Gemini Nano). If it can't,
+  // the pill says "Simpler checks" from the start. If it can, it says nothing until we know more.
+  useEffect(() => {
+    let cancelled = false
+    privateAiSupported()
+      .then((supported) => {
+        if (!cancelled && !supported) setAi((state) => nextAiState(state, { type: 'stage', stage: 'simpler' }))
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Runs from the "Hide private details" click, which is what lets Chrome start the one-time model download.
   async function hidePrivateDetails() {
     setBusy('hiding')
     setPasteError(null)
     setProgress(null)
     lastPercent.current = -1
     try {
-      const result = await redactNotes(notes, (fraction) => {
-        const percent = Math.round(fraction * 100)
-        if (percent !== lastPercent.current) {
-          lastPercent.current = percent
-          setProgress(fraction)
-        }
-      })
+      const result = await redactNotes(
+        notes,
+        (fraction) => {
+          const percent = Math.round(fraction * 100)
+          if (percent !== lastPercent.current) {
+            lastPercent.current = percent
+            setProgress(fraction)
+            reportAi({ type: 'progress', fraction })
+          }
+        },
+        {
+          onStage: (stage) => reportAi({ type: 'stage', stage }),
+          onEngine: (engine) => reportAi({ type: 'engine', engine }),
+        },
+      )
+      reportAi({ type: 'engine', engine: result.engine }) // the engine that really ran, in case Nano failed on the way
       setBase(result)
       setKept([])
       setEmployee('')
@@ -92,6 +122,7 @@ export default function App() {
       setSuggestNote(null)
       setStep('review')
     } catch {
+      reportAi({ type: 'failed' })
       setPasteError('Something went wrong on this laptop. Your notes are still here. Please try again.')
     } finally {
       setBusy(null)
@@ -197,11 +228,17 @@ export default function App() {
             Cloak
             {onStartScreens ? null : <span className="brand-sub">Case workspace</span>}
           </h1>
-          {DEMO_MODE && !onStartScreens && (
-            <span className="demo-tag" title="The screens use placeholder AI. Nothing is sent anywhere.">
-              Demo mode
-            </span>
-          )}
+          {/* Always in the page, so a change of mode is announced. Shows the real mode of the AI that checks notes. */}
+          <span className="ai-slot" role="status">
+            {!onStartScreens && ai.mode !== null && (
+              <span
+                className={`ai-pill is-${ai.mode}`}
+                title={`${PILL_HELP[ai.mode]}${DEMO_MODE ? ' Drafts are still placeholders in this build, and nothing is sent anywhere.' : ''}`}
+              >
+                {PILL_TEXT[ai.mode]}
+              </span>
+            )}
+          </span>
         </header>
 
         {!onStartScreens && <Stepper steps={STEPS} current={step} onGo={goTo} locked={busy !== null} />}
@@ -214,6 +251,7 @@ export default function App() {
               checks={['Reading your notes', 'Finding names and private details', 'Swapping in labels']}
               where="laptop"
               progress={progress}
+              progressLabel={downloadLabel(ai.stage)}
             />
           )}
           {busy === 'writing' && (

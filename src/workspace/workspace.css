@@ -83,14 +83,51 @@
   color: var(--text-2);
 }
 
-.cloak-app .demo-tag {
-  padding: 2px 12px;
+/* The header pill: the real mode of the AI that checks notes on this laptop. Ready = teal, simpler checks =
+   amber (read the notes carefully), downloading = grey with a small spinner. */
+.cloak-app .ai-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 12px;
   border-radius: 999px;
-  background: var(--amber-bg);
-  color: var(--amber-text);
   font-size: 13px;
   font-weight: 700;
+  line-height: 1.5;
   white-space: nowrap;
+}
+
+.cloak-app .ai-pill::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.cloak-app .ai-pill.is-ready {
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+}
+
+.cloak-app .ai-pill.is-simpler {
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+
+.cloak-app .ai-pill.is-downloading {
+  background: #f1ece5;
+  color: var(--text-2);
+}
+
+.cloak-app .ai-pill.is-downloading::before {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #d6ccbf;
+  border-top-color: var(--teal);
+  background: none;
+  animation: cloak-spin 0.9s linear infinite;
 }
 
 .cloak-app .sr-only {
@@ -1185,7 +1222,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .cloak-app .loading-ring,
-  .cloak-app .check-spin {
+  .cloak-app .check-spin,
+  .cloak-app .ai-pill.is-downloading::before {
     animation-duration: 3s;
   }
 

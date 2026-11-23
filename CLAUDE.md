@@ -108,12 +108,16 @@ with the template's `withhold` list → receipt (exact text sent + SHA-256). It 
 refused; callers should treat that as a normal "blocked" state, not a crash.
 
 **Front end.** `src/App.tsx` is a 4-step flow (paste → check details → write draft → result) with screens
-in `src/workspace/`. Screens import AI **only** through `src/workspace/ai.ts`, which currently re-exports
-`fakeAi.ts` (`DEMO_MODE = true`, nothing real is called). The comment block in `ai.ts` says exactly how to
-switch to the real `src/ai` functions. `review.ts` holds the review screen's pure logic: `base` is the
+in `src/workspace/`. Screens import AI **only** through `src/workspace/ai.ts`. Its `redactNotes()` is the REAL
+on-device redaction (`prepareRedaction` + `redact`, loaded lazily so Firebase stays out of the first screen); restrictions
+and drafting are still the placeholders from `fakeAi.ts` (`DEMO_MODE = true`: nothing is sent anywhere). The comment block in
+`ai.ts` says how to switch those to the real `src/ai` functions. `redactNotes()` must run from a button click (Chrome only
+starts the Nano download after a click). `aiStatus.ts` (pure, tested) turns what it reports (which model is loading,
+download progress, which engine is ready) into the header pill ("Private AI ready" / "Downloading private AI…" /
+"Simpler checks") and the loading card's label. Progress arrives only while Chrome is really downloading; a model already on
+the laptop goes straight to "ready". `review.ts` holds the review screen's pure logic: `base` is the
 redaction with every detail still a placeholder, `kept` is what the user chose to leave visible, and what
-is sent is `outgoing(base, kept)`, not `base`. `redactNotes()` must run from a button click (Chrome only
-starts the Nano download after a click).
+is sent is `outgoing(base, kept)`, not `base`.
 
 **Test data.** `scripts/generate-cases.ts` writes 120 deterministic fake notes (seeded; Set A/B use disjoint
 name pools) with a planted-item answer key whose `type` values are the app's `Category` names. Output must
