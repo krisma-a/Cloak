@@ -1,14 +1,106 @@
 rules_version = '2';
 
 // Cloak Firestore rules.
-// Each signed-in user (anonymous counts) can only read and write their own data under
-// /users/{uid}/... (redacted drafts and counts-only audit log). Everything else is denied.
-// Raw case text and real names are never stored in Firestore.
+//
+// The only thing Cloak stores in Firestore is the SEND LOG: one counts-only record per send, at
+// /users/{uid}/sendLogs/{id} (see src/ai/sendLog.ts). Raw case text, names and drafts are never stored.
+//
+//   - A signed-in user (anonymous counts) can read ONLY their own logs.
+//   - A user can create a log only for themselves, and only in the exact shape below: numbers, true/false,
+//     a settings fingerprint, a model name, and fixed labels for where each step ran. There is no field
+//     that can hold free text, and a value that is not on a fixed list or does not match its pattern is refused.
+//   - Logs cannot be changed or deleted by clients.
+//   - Everything else is denied.
+//
+// The lists and patterns in the functions below must match src/ai/sendLog.ts. A test
+// (src/ai/sendLog.test.ts) reads this file and fails if they drift apart.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function isSelf(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // --- fixed lists (keep in step with sendLog.ts) ---------------------------------------------
+
+    function sendLogFields() {
+      return ['userId', 'createdAt', 'schema', 'blocked', 'counts', 'settingsVersion', 'model', 'ranOn'];
+    }
+
+    function countKeys() {
+      return ['EMPLOYEE', 'ID', 'EMAIL', 'PHONE', 'ADDRESS', 'MEDICAL_DETAIL', 'SALARY', 'DOB', 'ROLE', 'DEPT', 'TENURE', 'FAMILY_MEDICAL'];
+    }
+
+    function stepNames() {
+      return ['redaction', 'names', 'cross-check', 'restrictions', 'drafting', 'restore'];
+    }
+
+    function placeNames() {
+      return ['on_device', 'in_browser', 'rules', 'in_cloud'];
+    }
+
+    // --- field checks ---------------------------------------------------------------------------
+
+    // A count may be missing, but if it is there it is a whole number from 0 to 100000.
+    function countOk(counts, key) {
+      return !(key in counts) || (counts[key] is int && counts[key] >= 0 && counts[key] <= 100000);
+    }
+
+    function validCounts(counts) {
+      return counts is map
+        && counts.keys().hasOnly(countKeys())
+        && countOk(counts, 'EMPLOYEE')
+        && countOk(counts, 'ID')
+        && countOk(counts, 'EMAIL')
+        && countOk(counts, 'PHONE')
+        && countOk(counts, 'ADDRESS')
+        && countOk(counts, 'MEDICAL_DETAIL')
+        && countOk(counts, 'SALARY')
+        && countOk(counts, 'DOB')
+        && countOk(counts, 'ROLE')
+        && countOk(counts, 'DEPT')
+        && countOk(counts, 'TENURE')
+        && countOk(counts, 'FAMILY_MEDICAL');
+    }
+
+    // A step may be missing, but if it is there it names one of the fixed places.
+    function placeOk(ranOn, step) {
+      return !(step in ranOn) || ranOn[step] in placeNames();
+    }
+
+    function validRanOn(ranOn) {
+      return ranOn is map
+        && ranOn.keys().hasOnly(stepNames())
+        && placeOk(ranOn, 'redaction')
+        && placeOk(ranOn, 'names')
+        && placeOk(ranOn, 'cross-check')
+        && placeOk(ranOn, 'restrictions')
+        && placeOk(ranOn, 'drafting')
+        && placeOk(ranOn, 'restore');
+    }
+
+    function validSendLog(userId, log) {
+      return log.keys().hasOnly(sendLogFields())
+        && log.keys().hasAll(sendLogFields())
+        && log.userId == userId
+        && log.createdAt == request.time
+        && log.schema == 1
+        && log.blocked is bool
+        // The only strings allowed are a SHA-256 fingerprint (or "unknown") and a model name.
+        && log.settingsVersion is string
+        && log.settingsVersion.matches('^([0-9a-f]{64}|unknown)$')
+        && (log.model == null
+            || (log.model is string && log.model.matches('^[A-Za-z0-9][A-Za-z0-9._-]{1,62}$')))
+        && validCounts(log.counts)
+        && validRanOn(log.ranOn);
+    }
+
+    // --- the send log ---------------------------------------------------------------------------
+
+    match /users/{userId}/sendLogs/{logId} {
+      allow read: if isSelf(userId);
+      allow create: if isSelf(userId) && validSendLog(userId, request.resource.data);
+      allow update, delete: if false;
     }
 
     // Default: deny everything not matched above.

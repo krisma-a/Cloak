@@ -15,8 +15,22 @@ expectPolicyLoad(
     }),
 )
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+const root = createRoot(document.getElementById('root')!)
+
+// /eval is a hidden page for scoring the redaction pipelines on fake data. Nothing links to it, and its code
+// is only downloaded when this path is opened. (Firebase Hosting sends every path to index.html.)
+if (location.pathname.replace(/\/+$/, '') === '/eval') {
+  void import('./eval/EvalPage.tsx').then(({ EvalPage }) =>
+    root.render(
+      <StrictMode>
+        <EvalPage />
+      </StrictMode>,
+    ),
+  )
+} else {
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+}

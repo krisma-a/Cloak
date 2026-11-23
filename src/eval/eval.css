@@ -1,0 +1,294 @@
+/* The hidden /eval page. Same warm look as the app, but a normal scrolling page with tables. */
+
+.eval-page {
+  --bg: #faf8f5;
+  --card: #fff;
+  --border: #ece6de;
+  --teal: #0f766e;
+  --teal-dark: #0b5f58;
+  --teal-soft: #e2f1ee;
+  --text: #1f2a2e;
+  --text-2: #4a5759;
+  --amber-bg: #fcf1dc;
+  --amber-text: #5c3a00;
+
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.eval-page h1 {
+  margin: 0 0 6px;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.eval-page h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.eval-page h3 {
+  margin: 24px 0 8px;
+  font-size: 16px;
+}
+
+.eval-page .lead {
+  max-width: 70ch;
+  margin: 0 0 24px;
+  color: var(--text-2);
+}
+
+.eval-page .card {
+  margin-bottom: 20px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(31, 42, 46, 0.04), 0 8px 24px rgba(31, 42, 46, 0.04);
+}
+
+.eval-page p {
+  margin: 0 0 12px;
+}
+
+.eval-page .muted {
+  color: var(--text-2);
+}
+
+.eval-page .hint {
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.eval-page .alert {
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+
+.eval-page .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.eval-page .pipelines {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+.eval-page .pipelines div {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fffefd;
+}
+
+.eval-page .pipelines dt {
+  font-weight: 700;
+}
+
+.eval-page .pipelines dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.eval-page .controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin-bottom: 12px;
+}
+
+.eval-page .controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.eval-page .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.eval-page .row.between {
+  justify-content: space-between;
+}
+
+.eval-page .row.between h2 {
+  margin: 0;
+}
+
+.eval-page input[type='number'],
+.eval-page select {
+  min-height: 40px;
+  padding: 4px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: #fffefd;
+  font: inherit;
+  color: var(--text);
+}
+
+.eval-page input[type='number'] {
+  width: 84px;
+}
+
+.eval-page input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--teal);
+}
+
+.eval-page button {
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.eval-page button.primary {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #fff;
+}
+
+.eval-page button:hover:not(:disabled) {
+  border-color: var(--teal);
+}
+
+.eval-page button.primary:hover:not(:disabled) {
+  background: var(--teal-dark);
+}
+
+.eval-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.eval-page :focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 2px;
+}
+
+/* Tables */
+
+.eval-page .table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.eval-page .table-wrap.tall {
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.eval-page table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.eval-page th,
+.eval-page td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.eval-page thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f6f2ec;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.eval-page tbody tr:last-child th,
+.eval-page tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.eval-page tbody th {
+  font-weight: 700;
+}
+
+.eval-page .num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.eval-page .sub {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  white-space: normal;
+}
+
+.eval-page td.item {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+/* A small bar behind each category rate */
+.eval-page .bar {
+  display: inline-block;
+  width: 56px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 999px;
+  background: var(--teal-soft);
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.eval-page .bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--teal);
+}
+
+@media (max-width: 640px) {
+  .eval-page {
+    padding: 16px 12px 48px;
+  }
+
+  .eval-page .card {
+    padding: 18px;
+    border-radius: 20px;
+  }
+}

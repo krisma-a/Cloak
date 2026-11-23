@@ -49,6 +49,9 @@ const PREFIX: Record<Category, string> = {
   OTHER_ID: 'ID',
 }
 
+/** Every placeholder prefix a map can hold, once each. The send log and its Firestore rules allow only these. */
+export const PLACEHOLDER_PREFIXES: readonly string[] = [...new Set(Object.values(PREFIX))]
+
 /** Health placeholders: never restored in manager or employee drafts, never shown to the cloud as text. */
 export const HEALTH_PREFIXES = ['MEDICAL_DETAIL', 'FAMILY_MEDICAL'] as const
 

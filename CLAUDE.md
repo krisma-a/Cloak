@@ -13,7 +13,7 @@ Stack: Vite + React 19 + TypeScript, Firebase JS SDK (`firebase/ai`, App Check, 
 ## Commands
 
 ```bash
-npm run dev          # Vite on :5173. App at /, dev-only test page at /smoke.html (not in the build)
+npm run dev          # Vite on :5173. App at /, hidden eval page at /eval (unlinked, in the build), dev-only test page at /smoke.html (not in the build)
 npm test             # node --test "src/**/*.test.ts"
 node --test src/ai/placeholders.test.ts                                   # one file
 node --test --test-name-pattern="restores originals" src/ai/placeholders.test.ts   # one test
@@ -36,7 +36,7 @@ and `VITE_CLOUD_MODEL` (only the built-in default for `cloud_model`; Remote Conf
 **The pipeline (the product's whole point).** Raw note → redact on this device → fixed-rule leak
 re-check → send guard → cloud drafts from placeholder text only → restore real values on this device.
 The placeholder map (`PlaceholderMap`: `originals` + `lookup`) lives in memory only; it is never
-stored, logged or sent. Firestore rules exist but no code uses Firestore (Remote Config template is empty).
+stored, logged or sent. Firestore holds only the counts-only send log (see **Send log**); the Remote Config template is empty.
 
 **Pure vs Firebase split — the key convention.** Anything importing `../firebase` (`redact.ts`,
 `restrict.ts`, `tag.ts`, `draft.ts`, `smoke.tsx`) cannot run under `node --test` (it uses
@@ -77,6 +77,23 @@ BEFORE the call, then finished with the call's `inferenceSource`. If the receipt
 made (`SendBlockedError`). Stored only in IndexedDB via `receiptStore.ts`, never in localStorage, Firestore or logs.
 The web SDK does not expose the Remote Config template version, so receipts carry a fingerprint of the four values.
 
+**Send log.** One record per send in Firestore at `users/{uid}/sendLogs/{id}`: counts per category, blocked or not,
+settings version (the Remote Config fingerprint), model, where each step ran, user id. **Never any text.**
+`sendLog.ts` (pure) builds the record by rebuilding it from fixed lists, so nothing it is handed can end up in it
+(`buildSendLog()`), validates it (`validateSendLog()`) and makes the CSV (`sendLogsToCsv()`); `sendLogStore.ts` is the
+thin Firestore part (`saveSendLog`, `fetchMySendLogs`, `downloadMySendLogsCsv`). `draft()` saves it best-effort and never
+waits on it; a refused send is logged as `blocked`. Pass `logSend: null` to `draft()` to log nothing (the eval does).
+`firestore.rules` allows only that exact shape, only for the owner, create and read only (no update or delete). Its lists and
+patterns must match `sendLog.ts`; `sendLog.test.ts` reads the rules file and fails if they drift. If you add a placeholder
+prefix, step or place, change both. The rules have not been run in the Firestore emulator (it needs Java); deploy with
+`firebase deploy --only firestore:rules`.
+
+**Eval page (`/eval`).** `src/eval/`: `score.ts` + `runner.ts` are pure (tested in Node, including the regex pipeline run on
+all of Set B); `pipelines.ts` builds the three real pipelines (regex only, one Gemini Nano pass, full Cloak with retries and
+the send guard); `EvalPage.tsx` is the UI. An item counts as caught when its text is gone from the output; a name also counts as
+missed if any part of it is still visible. It loads only `data/cases/set-b.json` (fake data), exports a JSON report, and can
+time the cloud draft for a few notes (opt-in; sends hidden fake text through `draft()` with no receipts or send log).
+
 **Health details invariant.** `HEALTH_PREFIXES` (`MEDICAL_DETAIL`, `FAMILY_MEDICAL`) are withheld
 (`[withheld]`) in **every** template (29 CFR 1630.14(c)(1): medical info stays out of case files and
 manager emails). If you add a health-related category, add its prefix to `HEALTH_PREFIXES`. The
@@ -108,6 +125,8 @@ answer key lists a role phrase as one `ROLE` item although redaction now splits 
 - Gemini Nano has never run on the dev machines. The Claude desktop app's built-in browser reports
   `LanguageModel.availability()` = `unavailable`; test Nano in real Chrome (148+, enough disk/GPU/RAM).
   Without Nano everything falls back and the manager-email restrictions must be typed by hand.
+- On `/eval` without Nano, "on-device model only" is skipped (never faked) and "full Cloak" runs on the backup name model,
+  which is labelled in the results. Nano numbers need real Chrome.
 - `docs/READING-GUIDE.md` is a reading order for the backend (written before the front end landed).
 - The team is two people working in parallel on the AI/backend layer (`src/ai`, `src/rules`) and the front
   end (`src/App.tsx`, `src/workspace`). They prefer short answers with exact commands to copy.

@@ -156,6 +156,30 @@ async function redactWithNano(text: string, maxRetries: number, knownNames: stri
   }
 }
 
+/**
+ * For the /eval page only. ONE Gemini Nano pass and nothing else (no name cross-check, no retries, no
+ * leak check, no blocking), so the model's own catch rate can be measured on its own. Throws if Nano
+ * fails: the caller records that note as failed instead of falling back. The app never calls this.
+ */
+export async function redactNanoPass(text: string): Promise<RedactionResult> {
+  await whenPolicyReady()
+  const generated = await generateLogged('redact', nanoModel(), buildPrompt(text, []))
+  const { text: redactedText, map } = applyEntities(text, parseEntities(generated.text).filter(allowedByPolicy))
+  const leaks = findLeaks(redactedText, sensitiveStrings(map))
+  return {
+    status: leaks.length ? 'blocked' : 'ok',
+    engine: 'nano',
+    needsCarefulReview: false,
+    names: 'model',
+    redactedText,
+    map,
+    leaks,
+    attempts: 1,
+    ranOn: 'on_device',
+    counts: countByPrefix(map),
+  }
+}
+
 // ---------------------------------------------------------------------------------------------
 // Backup engines (any browser)
 
