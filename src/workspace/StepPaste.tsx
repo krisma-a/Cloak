@@ -14,10 +14,11 @@ interface StepPasteProps {
   templateId: TemplateId
   onTemplateChange: (value: TemplateId) => void
   onContinue: () => void
+  onBack: () => void
   error: string | null
 }
 
-export function StepPaste({ notes, onNotesChange, templateId, onTemplateChange, onContinue, error }: StepPasteProps) {
+export function StepPaste({ notes, onNotesChange, templateId, onTemplateChange, onContinue, onBack, error }: StepPasteProps) {
   return (
     <section className="card">
       <h2>Paste your case notes</h2>
@@ -73,6 +74,9 @@ export function StepPaste({ notes, onNotesChange, templateId, onTemplateChange, 
       )}
 
       <div className="actions">
+        <button type="button" className="btn btn-quiet" onClick={onBack}>
+          Back
+        </button>
         <button type="button" className="btn btn-primary" onClick={onContinue} disabled={notes.trim() === ''}>
           Hide private details
         </button>
