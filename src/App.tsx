@@ -8,6 +8,8 @@ import { StepGenerate } from './workspace/StepGenerate.tsx'
 import { StepPaste } from './workspace/StepPaste.tsx'
 import { StepResult } from './workspace/StepResult.tsx'
 import { StepReview } from './workspace/StepReview.tsx'
+import { StepScan } from './workspace/StepScan.tsx'
+import { StepStart } from './workspace/StepStart.tsx'
 import type { DraftResult, RedactionResult, StepId, TemplateId } from './workspace/types.ts'
 import './workspace/workspace.css'
 
@@ -21,7 +23,7 @@ const STEPS: StepInfo[] = [
 type Busy = 'hiding' | 'writing' | null
 
 export default function App() {
-  const [step, setStep] = useState<StepId>('paste')
+  const [step, setStep] = useState<StepId>('start')
   const [busy, setBusy] = useState<Busy>(null)
   const [progress, setProgress] = useState<number | null>(null)
   const lastPercent = useRef(-1)
@@ -159,26 +161,34 @@ export default function App() {
     setPasteError(null)
     setWriteError(null)
     setBlockedMessage(null)
-    setStep('paste')
+    setStep('start')
   }
 
   const result = base ? outgoing(base, kept) : null
+  const onStartScreens = step === 'start' || step === 'scan'
 
   return (
     <div className="cloak-app">
       <div className="shell">
         <header className="top">
           <h1 className="brand">
-            Cloak <span>Case workspace</span>
+            <span className="brand-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="5" y="11" width="14" height="9" rx="2.5" />
+                <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
+            </span>
+            Cloak
+            {onStartScreens ? null : <span className="brand-sub">Case workspace</span>}
           </h1>
-          {DEMO_MODE && (
+          {DEMO_MODE && !onStartScreens && (
             <span className="demo-tag" title="The screens use placeholder AI. Nothing is sent anywhere.">
               Demo mode
             </span>
           )}
         </header>
 
-        <Stepper steps={STEPS} current={step} onGo={goTo} locked={busy !== null} />
+        {!onStartScreens && <Stepper steps={STEPS} current={step} onGo={goTo} locked={busy !== null} />}
 
         <main ref={mainRef} tabIndex={-1}>
           {busy === 'hiding' && (
@@ -197,6 +207,15 @@ export default function App() {
             />
           )}
 
+          {busy === null && step === 'start' && (
+            <StepStart
+              onPaste={() => goTo('paste')}
+              onScan={() => goTo('scan')}
+            />
+          )}
+
+          {busy === null && step === 'scan' && <StepScan onBack={() => goTo('start')} />}
+
           {busy === null && step === 'paste' && (
             <StepPaste
               notes={notes}
@@ -204,6 +223,7 @@ export default function App() {
               templateId={templateId}
               onTemplateChange={setTemplateId}
               onContinue={hidePrivateDetails}
+              onBack={() => goTo('start')}
               error={pasteError}
             />
           )}
