@@ -5,9 +5,32 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>cloak</title>
+    <style>
+      /* Shown before the app's code has arrived. React clears #root when it starts, so this disappears on its own. */
+      html { background: #faf8f5; }
+      .boot-note {
+        margin: 0;
+        padding: 48px 24px;
+        text-align: center;
+        font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: #4a5759;
+      }
+      /* Wait a moment before showing anything, so a fast load never flashes this text. */
+      .boot { opacity: 0; animation: boot-in 0s 0.4s forwards; }
+      .boot-late { display: block; opacity: 0; animation: boot-in 0s 12s forwards; }
+      @keyframes boot-in { to { opacity: 1; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <p class="boot-note boot" role="status">
+        Loading Cloak…
+        <span class="boot-late">This is taking longer than usual. Check your internet connection, then reload the page.</span>
+      </p>
+    </div>
+    <noscript>
+      <p class="boot-note">Cloak needs JavaScript to run. Turn it on in your browser settings, then reload the page.</p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

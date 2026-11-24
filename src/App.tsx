@@ -349,6 +349,7 @@ export default function App() {
               base={base}
               kept={kept}
               templateId={templateId}
+              onBack={() => goTo('generate')}
               onStartOver={startOver}
             />
           )}

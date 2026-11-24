@@ -56,6 +56,9 @@ export function StepGenerate({
   const planProblem = sendsRestrictions
     ? accommodationBlockReason({ employee, restrictions }, result.map, result.redactedText)
     : null
+  // With no names to pick from, the notice below already explains it, so don't also say "choose which employee".
+  const noEmployees = sendsRestrictions && employees.length === 0
+  const planHint = planProblem && !(noEmployees && restrictions.length > 0) ? planProblem : null
   const needsConfirm = result.needsCarefulReview
   const canWrite = planProblem === null && (!needsConfirm || confirmed)
 
@@ -74,23 +77,38 @@ export function StepGenerate({
             laptop.
           </p>
 
-          <label className="field-label spaced" htmlFor="employee">
-            Who is this for?
-          </label>
-          <select
-            id="employee"
-            className="select-input wide"
-            value={employee}
-            onChange={(event) => onEmployeeChange(event.target.value)}
-          >
-            <option value="">Choose…</option>
-            {/* The text is for the person reading. The value is the placeholder, and only that is used. */}
-            {employees.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.text}
-              </option>
-            ))}
-          </select>
+          {noEmployees ? (
+            <div className="notice warn">
+              <p>
+                <strong>There’s no one to write this email about yet.</strong> Cloak needs the employee’s name hidden
+                first, so the cloud never sees it. Go back to “Check details” and hide their name. If you chose to
+                keep it visible, switch it back to hidden.
+              </p>
+              <button type="button" className="btn btn-quiet" onClick={onBack}>
+                Go back and check
+              </button>
+            </div>
+          ) : (
+            <>
+              <label className="field-label spaced" htmlFor="employee">
+                Who is this for?
+              </label>
+              <select
+                id="employee"
+                className="select-input wide"
+                value={employee}
+                onChange={(event) => onEmployeeChange(event.target.value)}
+              >
+                <option value="">Choose…</option>
+                {/* The text is for the person reading. The value is the placeholder, and only that is used. */}
+                {employees.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.text}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
 
           <label className="field-label spaced" htmlFor="restrictions">
             Work restrictions (one per line)
@@ -111,7 +129,7 @@ export function StepGenerate({
             </button>
             {suggestNote && <span className="hint">{suggestNote}</span>}
           </div>
-          {planProblem && <p className="hint">{planProblem}</p>}
+          {planHint && <p className="hint">{planHint}</p>}
         </>
       ) : (
         <>

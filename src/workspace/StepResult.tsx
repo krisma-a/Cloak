@@ -28,10 +28,12 @@ interface StepResultProps {
   base: RedactionResult
   kept: readonly string[]
   templateId: TemplateId
+  /** Back to the "Write the draft" screen, for when the cloud sent nothing back. */
+  onBack: () => void
   onStartOver: () => void
 }
 
-export function StepResult({ result, notes, base, kept, templateId, onStartOver }: StepResultProps) {
+export function StepResult({ result, notes, base, kept, templateId, onBack, onStartOver }: StepResultProps) {
   const comparison = useMemo(
     () =>
       buildComparison({
@@ -66,6 +68,28 @@ export function StepResult({ result, notes, base, kept, templateId, onStartOver 
   }
 
   const { receipt } = result
+
+  // The cloud can send back nothing at all. Say so, instead of showing an empty box with a "Copy draft" button.
+  // (Only the draft as it arrived counts: someone who clears the box while editing still sees their own screen.)
+  if (result.restoredDraft.trim() === '') {
+    return (
+      <section className="card empty">
+        <h2>The draft came back empty</h2>
+        <p className="muted">
+          The cloud didn’t write anything this time. Your notes are still on this laptop, so you can go back and try
+          again.
+        </p>
+        <div className="actions">
+          <button type="button" className="btn btn-quiet" onClick={onStartOver}>
+            Start over
+          </button>
+          <button type="button" className="btn btn-primary" onClick={onBack}>
+            Go back and try again
+          </button>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="card">
