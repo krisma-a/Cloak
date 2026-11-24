@@ -64,6 +64,8 @@ interface LoadingCardProps {
   checks: string[]
   /** Where this step runs, shown as the same chip used on every screen. */
   where: 'laptop' | 'cloud'
+  /** The chip's words, when "On this laptop" / "In the cloud" doesn't fit (the scan screen also runs on phones). */
+  whereText?: string
   /** 0..1 while a model downloads (the first time only). Leave out to hide the bar. */
   progress?: number | null
   /** What the download is, shown before the percentage: "Downloading the private AI (first time only)…". */
@@ -78,6 +80,7 @@ export function LoadingCard({
   note,
   checks,
   where,
+  whereText,
   progress = null,
   progressLabel = 'Getting ready…',
   skip,
@@ -87,7 +90,7 @@ export function LoadingCard({
 
   return (
     <section className="card loading" role="status" aria-live="polite">
-      <WhereChip where={where}>{where === 'cloud' ? 'In the cloud' : 'On this laptop'}</WhereChip>
+      <WhereChip where={where}>{whereText ?? (where === 'cloud' ? 'In the cloud' : 'On this laptop')}</WhereChip>
       <div className="loading-ring" aria-hidden="true" />
       <h2>{title}</h2>
       <p className="muted">{note}</p>

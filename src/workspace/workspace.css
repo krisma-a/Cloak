@@ -1623,3 +1623,362 @@
     transition: none;
   }
 }
+
+/* ---------- Scan a document ---------- */
+
+.cloak-app .scan .where {
+  align-self: flex-start;
+  margin-bottom: 12px;
+}
+
+.cloak-app .scan-title:focus {
+  outline: none;
+}
+
+/* The live preview. "contain" shows the whole frame, which is exactly what "Take photo" keeps. */
+.cloak-app .scan-camera {
+  position: relative;
+  flex: none;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: min(56vh, 560px);
+  border-radius: 20px;
+  background: var(--label-bg);
+  overflow: hidden;
+}
+
+.cloak-app .scan-camera video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cloak-app .scan-guide {
+  position: absolute;
+  inset: 8% 10%;
+  border: 2px dashed rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+.cloak-app .scan-camera-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.cloak-app .scan-camera-status .loading-ring {
+  border-color: rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+}
+
+.cloak-app .scan-camera-problem {
+  margin-top: 0;
+}
+
+.cloak-app .scan-camera-problem .mini-btn {
+  margin-top: 4px;
+}
+
+/* PDF pages: one row that scrolls sideways on its own, never the page. */
+.cloak-app .scan-pages {
+  display: flex;
+  flex: none;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 2px 2px 8px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.cloak-app .scan-pages li {
+  flex: none;
+  scroll-snap-align: start;
+}
+
+.cloak-app .scan-page {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 14px 6px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.cloak-app .scan-page:hover {
+  border-color: var(--teal);
+}
+
+.cloak-app .scan-page[aria-current='true'] {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.cloak-app .scan-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.cloak-app .scan-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cloak-app .scan-thumb-missing {
+  font-weight: 700;
+  color: var(--amber-text);
+}
+
+.cloak-app .scan-page-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.cloak-app .scan-page-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cloak-app .scan-page-count {
+  font-size: 13px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.cloak-app .scan-page-count.is-warn {
+  color: var(--amber-text);
+  font-weight: 600;
+}
+
+/* Before and after, side by side; stacked on narrow screens. */
+.cloak-app .scan-compare {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.cloak-app .scan-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: #fffefd;
+}
+
+.cloak-app .scan-figure.is-redacted {
+  border-color: var(--teal);
+  background: var(--card);
+}
+
+.cloak-app .scan-figure figcaption {
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+/* The frame is exactly the size of the picture, so the boxes (in percent) line up at any size. */
+.cloak-app .scan-frame {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.cloak-app .scan-frame img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(58vh, 620px);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(31, 42, 46, 0.12);
+}
+
+.cloak-app .scan-frame.is-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 200px;
+  padding: 20px;
+  border-radius: 6px;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.cloak-app .scan-frame.is-missing p {
+  margin: 0;
+}
+
+/* Where the hovered box is, outlined on the original. */
+.cloak-app .scan-mark {
+  position: absolute;
+  border: 2px solid var(--teal);
+  border-radius: 3px;
+  background: rgba(15, 118, 110, 0.12);
+  pointer-events: none;
+}
+
+/* A black box on the copy. The black is in the picture itself; this is the see-what-it-hides layer on top. */
+.cloak-app .scan-box {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  cursor: help;
+}
+
+/* A bigger touch target than the box itself, at least 44px tall, centred on it. */
+.cloak-app .scan-box::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  min-height: 44px;
+  height: 100%;
+  transform: translateY(-50%);
+}
+
+.cloak-app .scan-box:hover,
+.cloak-app .scan-box.is-active {
+  outline: 2px solid var(--teal);
+  outline-offset: 1px;
+}
+
+.cloak-app .scan-box:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 2px;
+}
+
+.cloak-app .scan-box-label {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  z-index: 2;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--teal-dark);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+
+.cloak-app .scan-box.label-below .scan-box-label {
+  top: calc(100% + 6px);
+  bottom: auto;
+}
+
+.cloak-app .scan-box:hover .scan-box-label,
+.cloak-app .scan-box.is-active .scan-box-label,
+.cloak-app .scan-box:focus-visible .scan-box-label {
+  opacity: 1;
+}
+
+.cloak-app .scan-summary {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cloak-app .scan-summary li {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #f1ece5;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cloak-app .scan-summary .count {
+  margin-left: 4px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cloak-app .scan > .hint {
+  margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .cloak-app .scan-compare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cloak-app .scan-figure {
+    padding: 10px;
+  }
+
+  .cloak-app .scan-frame img {
+    max-height: none;
+  }
+}
+
+/* On a phone the main action takes the whole first row, and the others share the row under it. */
+@media (max-width: 560px) {
+  .cloak-app .scan .actions {
+    flex-wrap: wrap;
+  }
+
+  .cloak-app .scan .actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .cloak-app .scan .actions .btn-primary {
+    order: -1;
+    flex-basis: 100%;
+  }
+
+  .cloak-app .scan-camera {
+    aspect-ratio: 3 / 4;
+    max-height: 52vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloak-app .scan-box-label {
+    transition: none;
+  }
+}

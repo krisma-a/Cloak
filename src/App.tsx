@@ -293,7 +293,7 @@ export default function App() {
             />
           )}
 
-          {busy === null && step === 'scan' && <StepScan onBack={() => goTo('start')} onPaste={() => goTo('paste')} />}
+          {busy === null && step === 'scan' && <StepScan onBack={() => goTo('start')} />}
 
           {busy === null && step === 'paste' && (
             <StepPaste
