@@ -13,7 +13,7 @@ Stack: Vite + React 19 + TypeScript, Firebase JS SDK (`firebase/ai`, App Check, 
 ## Commands
 
 ```bash
-npm run dev          # Vite on :5173. App at /, hidden eval page at /eval (unlinked, in the build), dev-only test page at /smoke.html (not in the build)
+npm run dev          # Vite on :5173. App at /, hidden eval page at /eval and usage dashboard at /usage (unlinked, in the build), dev-only test page at /smoke.html (not in the build)
 npm test             # node --test "src/**/*.test.ts"
 node --test src/ai/placeholders.test.ts                                   # one file
 node --test --test-name-pattern="restores originals" src/ai/placeholders.test.ts   # one test
@@ -48,12 +48,23 @@ Firebase file.
 **Model modes** (`src/firebase.ts`): redaction = `ONLY_ON_DEVICE` (must never fall back to cloud),
 tagging/tone = `PREFER_ON_DEVICE`, drafting = `ONLY_IN_CLOUD`. All calls go through
 `generateLogged()` in `inference.ts`, which logs the label and `inferenceSource` only — never prompt or
-reply text. The cloud model is the Remote Config setting `cloud_model` (see Runtime settings).
+reply text. The cloud model is the Remote Config setting `cloud_model` (see Runtime settings). Cloud calls on
+Gemini 3.x send `thinkingLevel: LOW` (`cloudConfig.ts`, pure): about 4× fewer tokens, same text sent.
 
 **Three redaction engines** (`redact.ts`): `nano` (Gemini Nano; best; retries up to `max_retries`, then
 `blocked`), `browser-model` (in-browser name model in `browserModel.ts` + rules), `rules-only`. Rules can't
 find names, so `RedactionResult.names` is `'unchecked'` for `rules-only` and the guard blocks sending
 until the user lists names or confirms none (`guard.ts`). The weaker engines set `needsCarefulReview`.
+
+**Safety net** (`safetyNet.ts`, pure): on the Nano path, after Nano's pass and the name cross-check, everything a rule
+or keyword list can find (incl. ages, more salary formats, team phrases, quoted nicknames, split hyphenated names) is
+HIDDEN by code, not just used to retry/block. Tuned on Set A only; Set B stays the holdout (see `results/RESULTS.md`).
+
+**Usage tracking** (`usage.ts` pure, `usageStore.ts` Firestore): `generateLogged()` saves one record per model call to
+`usageEvents/{id}`: label, model, where it ran, token counts (Nano's are estimated, ~4 chars/token) and the paid-tier
+price (`PRICES`, dated `PRICE_VERSION`; on-device = $0). No text, no user id, so any signed-in visitor can read them.
+Best effort, never awaited. The hidden `/usage` page (`src/usage/`) is a live dashboard over them (Firestore `onSnapshot`).
+`firestore.rules` must match `usage.ts` (`usage.test.ts` checks); the /eval page marks its calls `origin: 'eval'`.
 
 **Placeholders** (`placeholders.ts`): the model only *finds* entities; code does the replacing so the same
 thing always gets the same placeholder. Category name ≠ placeholder prefix (`PREFIX` table: `PERSON`→
@@ -134,6 +145,9 @@ answer key lists a role phrase as one `ROLE` item although redaction now splits 
   Without Nano everything falls back and the manager-email restrictions must be typed by hand.
 - On `/eval` without Nano, "on-device model only" is skipped (never faked) and "full Cloak" runs on the backup name model,
   which is labelled in the results. Nano numbers need real Chrome.
+- The cloud draft takes about 15–60 s on the free tier, and the wait is Google's server, not tokens or our code
+  (on 2026-11-24 a one-word reply took 62 s). The free-tier quota is per project, so everyone using the hosted
+  app shares it; a few calls a minute already returned 429.
 - `docs/READING-GUIDE.md` is a reading order for the backend (written before the front end landed).
 - The team is two people working in parallel on the AI/backend layer (`src/ai`, `src/rules`) and the front
   end (`src/App.tsx`, `src/workspace`). They prefer short answers with exact commands to copy.

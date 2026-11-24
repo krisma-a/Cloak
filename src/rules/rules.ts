@@ -12,6 +12,7 @@ export type LeakCategory =
   | 'PHONE'
   | 'DATE'
   | 'SALARY'
+  | 'AGE'
   | 'EMPLOYEE_ID'
   | 'INDIRECT'
   | 'KNOWN'
@@ -54,10 +55,26 @@ const PATTERNS: Array<{ category: LeakCategory; regex: RegExp }> = [
     category: 'DATE',
     regex: /\b(?:\d{1,2}[/.-]\d{1,2}[/.-](?:19|20)\d{2}|(?:19|20)\d{2}-\d{1,2}-\d{1,2})\b/g,
   },
-  // $68,500  $68.5k  $85000/yr  USD 70,000  PHP 45,000  ₱45,000
+  // $68,500  $68.5k  $85000/yr  USD 70,000  PHP 45,000  ₱45,000  ₹6 lakh  ₦420,000  INR 7 lakh
   {
     category: 'SALARY',
-    regex: /(?:[$₱€£]\s?\d[\d,]*(?:\.\d+)?\s?[kK]?|\b(?:USD|PHP|EUR|GBP)\s?\d[\d,]*(?:\.\d+)?\s?[kK]?)/g,
+    regex: new RegExp(
+      `(?:[$₱€£₹₦¥₩₫]\\s?|\\b(?:USD|PHP|EUR|GBP|INR|NGN|JPY|KRW|CAD|AUD|SGD|MXN|BRL|ZAR|AED|VND|CNY)\\s?)` +
+        `\\d[\\d,]*(?:\\.\\d+)?(?:\\s?(?:[kKmM]\\b|lakhs?\\b|crores?\\b|million\\b))?`,
+      'g',
+    ),
+  },
+  // Pay written without a currency sign: "62k", "131.5k", "72,000 a year", "24.50 an hour", "85k/yr".
+  // A bare "62k" is money in HR notes far more often than anything else. Skipped right after a currency
+  // sign, so "$68,500 a year" is one leak (the pattern above), not two.
+  {
+    category: 'SALARY',
+    regex: /(?<![$₱€£₹₦¥₩₫]\s?)(?<![\d.,])\b(?:\d{2,3}(?:\.\d{1,2})?[kK]\b(?:\s?\/\s?(?:yr|year|mo|month))?|\d{1,3}(?:,\d{3})+(?:\.\d{2})?\s(?:a|an|per)\s(?:year|month|hour|week)\b|\d{1,3}(?:\.\d{2})?\s?(?:\/\s?(?:hr|hour)|(?:an|per)\s(?:hour))\b)/g,
+  },
+  // Ages: "aged 36", "age 52", "23 years old", "a 41-year-old". Age is a protected trait (ADEA).
+  {
+    category: 'AGE',
+    regex: /\b(?:aged?\s+\d{1,2}|\d{1,2}[\s-]years?[\s-]old)\b/gi,
   },
   // EMP-40912, EID 55120, ID#88231, E10293
   { category: 'EMPLOYEE_ID', regex: /\b(?:EMP|EID|ID|E)[-#: ]?\d{4,}\b/gi },

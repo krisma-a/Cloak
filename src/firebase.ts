@@ -12,6 +12,7 @@ import {
   InferenceMode,
   type OnDeviceParams,
 } from 'firebase/ai'
+import { cloudGenerationConfig } from './ai/cloudConfig.ts'
 import { getPolicy, setPolicyDefaults } from './policy.ts'
 
 const firebaseConfig = {
@@ -87,17 +88,19 @@ export function getRedactionModel(onDeviceParams?: OnDeviceParams) {
 
 // Tagging and tone rewrite: input is already redacted, so cloud fallback is safe.
 export function getTaggingModel() {
+  const model = cloudModel()
   return getGenerativeModel(ai, {
     mode: InferenceMode.PREFER_ON_DEVICE,
-    inCloudParams: { model: cloudModel() },
+    inCloudParams: { model, generationConfig: cloudGenerationConfig(model) },
   })
 }
 
 // Drafting: long outputs need the bigger cloud model. Input is redacted text only.
 // Pass the model name when the caller also records it (the receipt), so both always agree.
+// Thinking is set to LOW on Gemini 3.x (cloudConfig.ts): far fewer tokens, same text sent.
 export function getDraftingModel(model: string = cloudModel()) {
   return getGenerativeModel(ai, {
     mode: InferenceMode.ONLY_IN_CLOUD,
-    inCloudParams: { model },
+    inCloudParams: { model, generationConfig: cloudGenerationConfig(model) },
   })
 }

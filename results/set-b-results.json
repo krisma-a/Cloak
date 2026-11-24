@@ -1,0 +1,4308 @@
+{
+  "generatedAt": "2026-11-24T09:25:51.729Z",
+  "set": "B",
+  "seed": 9049,
+  "notesInSet": 60,
+  "notesRun": 60,
+  "stopped": false,
+  "context": {
+    "fullPipelineEngine": "nano",
+    "nanoAvailable": true,
+    "engineNote": null,
+    "settings": {
+      "redact_salary": true,
+      "medical_mode": "generalize",
+      "max_retries": 2,
+      "cloud_model": "gemini-3.6-flash"
+    },
+    "settingsVersion": "23c27718604d194f1422afe409526485eecfed855aa389faa520c12fcb1d32cb",
+    "cloudSample": 5
+  },
+  "pipelines": [
+    {
+      "id": "regex",
+      "label": "Regex only",
+      "skipped": null,
+      "hasBlocking": false,
+      "notes": 60,
+      "scored": 60,
+      "failed": 0,
+      "planted": 516,
+      "caught": 143,
+      "catchRate": 0.2771317829457364,
+      "byCategory": [
+        {
+          "type": "PERSON",
+          "planted": 199,
+          "caught": 1,
+          "rate": 0.005025125628140704
+        },
+        {
+          "type": "EMPLOYEE_ID",
+          "planted": 36,
+          "caught": 18,
+          "rate": 0.5
+        },
+        {
+          "type": "EMAIL",
+          "planted": 25,
+          "caught": 25,
+          "rate": 1
+        },
+        {
+          "type": "PHONE",
+          "planted": 25,
+          "caught": 19,
+          "rate": 0.76
+        },
+        {
+          "type": "ADDRESS",
+          "planted": 30,
+          "caught": 0,
+          "rate": 0
+        },
+        {
+          "type": "MEDICAL",
+          "planted": 33,
+          "caught": 22,
+          "rate": 0.6666666666666666
+        },
+        {
+          "type": "SALARY",
+          "planted": 60,
+          "caught": 40,
+          "rate": 0.6666666666666666
+        },
+        {
+          "type": "DATE_OF_BIRTH",
+          "planted": 13,
+          "caught": 3,
+          "rate": 0.23076923076923078
+        },
+        {
+          "type": "ROLE",
+          "planted": 47,
+          "caught": 9,
+          "rate": 0.19148936170212766
+        },
+        {
+          "type": "DEPARTMENT",
+          "planted": 33,
+          "caught": 0,
+          "rate": 0
+        },
+        {
+          "type": "OTHER_ID",
+          "planted": 15,
+          "caught": 6,
+          "rate": 0.4
+        }
+      ],
+      "blocked": 0,
+      "blockRate": null,
+      "leakedAfterBlocking": 373,
+      "overRedacted": 0,
+      "keepTotal": 182,
+      "avgOnDeviceMs": 1.161666666592161,
+      "avgCloudMs": null,
+      "cloudSamples": 0,
+      "cloudErrors": 0,
+      "avgAttempts": 1,
+      "engines": {
+        "rules-only": 60
+      },
+      "misses": [
+        {
+          "noteId": "B001",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ada",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B001",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Balogun",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B001",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Qing Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B001",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the youngest claims adjuster at the Tulsa depot",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B001",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "DATE_OF_BIRTH",
+          "text": "aged 27",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B002",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Arjun Kulkarni",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B002",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ketterman",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B002",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Bui",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B002",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the sole dispatcher at the Building C annex",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B002",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Tulsa depot",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B002",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "2370 Calle Luna, Unit 12, Cebu City",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B003",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Maricel \"Cel\" Dizon",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B003",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "37093",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B003",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Kravchuk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B003",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Farouk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B003",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only swing-shift sous chef",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B004",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "FUENTES, ULISES",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B004",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Fuentes, Ulises",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B004",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Olumide Ogunleye",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B005",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Chen Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B005",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tomasz Shevchenko",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B005",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Mide",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B005",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Cebu branch",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B005",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "1870 Banyan Ct, Lagos",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B005",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B006",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Petrenko, Halyna",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B006",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "38141",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B006",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Yuna Jeong",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B006",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "₹11 lakh",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B006",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the weekend dispatch team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B007",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "VILLALOBOS, DANIELA",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B007",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dani",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B007",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ochoa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B007",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ngô Thị Hương",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B007",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the new hire from Hanoi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B008",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Macaraeg, Liezl",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B008",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "38671",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B008",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tmo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B008",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "₦740,000",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B009",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Jia-lii Wu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B009",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dong-hyun Choi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B009",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Qing",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B009",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the night warehouse crew",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B009",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Wu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B009",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Q. Huang",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B010",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Trần Thị Yến",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B010",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Hao",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B010",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Wade Pruuitt",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B010",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "2335 Calle Luna, Apt 4B, Tulsa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B010",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Trần",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B010",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "W. Pruitt",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B011",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "The only Punjabi-speaking QA inspector in cold storage",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B011",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Bui, Minh",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B011",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Bondarenko",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B011",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Yusuf Qureshi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B011",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only Punjabi-speaking QA inspector in cold storage",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B011",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "144.5k",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Meenakshi Ansari",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Xóchitl Coontreras",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Heather Danforth",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only early-morning-shift payroll analyst",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PHONE",
+          "text": "+52 55 000 0126",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "sickle cell disease",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ansari",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Heatther",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B013",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Uises Contreras",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B013",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B013",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tomasz \"Tom\" Bondarenko",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B013",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "11.1k/mo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B013",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "OTHER_ID",
+          "text": "A37909768",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Lakshmi Kulkarni",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "74535",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "mltiple sclerosis",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Manosur",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Noor Qureshi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the sole line cook at the Tulsa depot",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Cebu branch",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "1045 Mabini St., Lagos",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B015",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ayesha Subramaniam",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B015",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only Spanish-speaking CNC machinist in cold storage",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B015",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Amaka Ibekwe",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B015",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "4971 Harbor View Way, Fresno",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B016",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Trần, Khoa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B016",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Lâm Thị Yến",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B016",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "one hundred thirty-two thousand five hundred dollars",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B016",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "epilepssy",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B016",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DATE_OF_BIRTH",
+          "text": "61 years old",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B016",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "OTHER_ID",
+          "text": "928369141",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B017",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Cheng Zhang",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B017",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Amaka Balougn",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B017",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Yusuf Qureshi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B017",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the new hire from Guadalajara",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B017",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Line 3 packaging team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B017",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "4105 Harbor View Way, Apt 4B, Tulsa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B017",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "thirty thousand dollars",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B017",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Zhang",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B017",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Yusuf",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B018",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Prescott, Heather",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B018",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Maricel Cabading",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B018",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "140k",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B018",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B018",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "1947 Orchard Ln, Tulsa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B018",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DATE_OF_BIRTH",
+          "text": "22 November 1974",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B019",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Qign Wu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B019",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "81629",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B019",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the youngest dispatcher on the weekend loading dock",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B019",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Jia-li Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Lâm, Yến",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "41021",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Yusuf Farok",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only Spanish speaker on the weekend dock team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PHONE",
+          "text": "+84 90 000 0179",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Bautista",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Yusuf Farouk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B021",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Cuauhtémoc Ochoa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B021",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "66742",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B021",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "ceilac disease",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B021",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Shin",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B021",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Choi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B021",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the weekend dispatch team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B021",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "DATE_OF_BIRTH",
+          "text": "24 years old",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B022",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dionisio \"Nonoy\" Pangilinan",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B022",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Lâm",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B022",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Macaraeg",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B022",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "765 Maple Hollow Rd, Mesa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B022",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "₦490,000",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "VO, BAO",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Chukwwu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Bao",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "69497",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dalia Farouk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only swing-shift QA inspector",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the new hire from Lagos",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the weekend dispatch team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "sertraline 50 mg daily",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Chukwu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Farouk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B024",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ty",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B024",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tolentino",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B024",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Lâm Văn Bảo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B025",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Nacho",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B025",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the sole dispatcher at the Building C annex",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B025",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Courtney Prescott",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B025",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "₹4 lakh",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B025",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Cebu branch",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B025",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "406 Harbor View Way, #305, Houston",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B026",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Daniela Quintanilla",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B026",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Rolando Manalo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B026",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Courtney",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B026",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "PTSSD",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B026",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "OTHER_ID",
+          "text": "P2815147",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B026",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Quintanilla",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B026",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Courtney Danforth",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B027",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Edgardo Cabadng",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B027",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "52452",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B027",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Truong Van Bao",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B027",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "8.1k/mo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B027",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "4985 Calle Luna, Fresno",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B028",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dionisio Manalo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B028",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Wade Prescott",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B028",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Line 3 packaging team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B028",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "sciatica",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B028",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "3922 Harbor View Way, #305, Cebu City",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B029",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tolentino, Marites",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B029",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Jeong",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B029",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Haalyna Petrenko",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B029",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "3543 Camia St., Houston",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B029",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "OTHER_ID",
+          "text": "993989671",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B030",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Daniela Quintanilla",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B030",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Bautista",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B030",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Pruitt",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B030",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only Spanish-speaking forklift lead in cold storage",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B030",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the weekend dispatch team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B030",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PHONE",
+          "text": "+52 55 000 0169",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B030",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "12.2k/mo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B031",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Shin",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B031",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Uchenna gunleye",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B031",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ximmena",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B031",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B031",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "104.5k",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B031",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ochoa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dong-hyun Seo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Amaka Ibekwe",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "54528",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Cheng Huang",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Tulsa depot",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the weekend dispatch team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DATE_OF_BIRTH",
+          "text": "13 January 1961",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Seo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Huang",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tariq Qureshi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "The youngest payroll analyst on the night warehouse crew",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Pham, Mai",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Amaka Ibekwe",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Tulsa depot",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PHONE",
+          "text": "+84 90 000 0121",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Qureshi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ibekwe",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B034",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "The sole front-desk coordinator at the Cebu branch",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B034",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Trần, Trâm",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B034",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Prescott",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B034",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dalia Nasser",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B034",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the sole front-desk coordinator at the Cebu branch",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B034",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "4465 Maple Hollow Rd, Apt 17, Houston",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B035",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Liezl Sarmiento",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B035",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "42571",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B035",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the new hire from Hanoi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B035",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Yusuf Farouk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B035",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "431 Orchard Ln, Houston",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B035",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "one hundred seven thousand dollars",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B036",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Oluwaseun \"Seun\" Balougn",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B036",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "78798",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B036",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the newest front-desk coordinator on the night warehouse crew",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B036",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dali Nasser",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B036",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the weekend dispatch team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B036",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "1720 Harbor View Way, Apt 17, Quezon City",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B037",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "The only Spanish-speaking loan officer on the weekend loading dock",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B037",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ketterman, Courrtney",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B037",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Phạm",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B037",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Farouk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B037",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B037",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "170 Rizal Ave., Cebu City",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B038",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tariq Farouk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B038",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ulises Villalobos",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B038",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "₦230,000",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B038",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the night warehouse crew",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B038",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "3356 Calle Luna, #305, San Jose",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B039",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "MENON, VENKATESH",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B039",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Menon",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B039",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ketterman",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B039",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Chukwu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B039",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only Spanish speaker on the night warehouse crew",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B039",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "4875 Orchard Ln, Quezon City",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B040",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Subramaniam",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B040",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dong-hun Seo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B040",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ximena",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B040",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "208 Banyan Ct, Tulsa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B040",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Fuentes",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tomasz Kravchuk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Trần Thị Yến",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Qing Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Tulsa depot",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the sole claims adjuster at the Building C annex",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Cebu branch",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "2433 Maple Hollow Rd, Apt 17, Cebu City",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "₹11.5 lakh",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "lupuus",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Kravchuk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "The new hire from Chennai",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ibarra, Ximena",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Nasser",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Menon",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the new hire from Chennai",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PHONE",
+          "text": "+52 55 000 0161",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "DATE_OF_BIRTH",
+          "text": "aged 39",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "OTHER_ID",
+          "text": "P9032854",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B043",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Chukwu, Uchenna",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B043",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Courtney Danforth",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B043",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "3729 Banyan Ct, Mesa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B043",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DATE_OF_BIRTH",
+          "text": "47 years old",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B044",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "CHEN, ZHI-HAO",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B044",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "The longest-serving dispatcher in the ICU",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B044",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "a herniated disc",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B044",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Chen, Zhi-hao",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B044",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tolentino",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B044",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tran Thi Huong",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B044",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "DATE_OF_BIRTH",
+          "text": "aged 47",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B045",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "BÙI, TRÂM",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B045",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Bùi, Trâm",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B045",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "55003",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B045",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Olumide Ogunleye",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B045",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the night warehouse crew",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B045",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "4858 Mabini St., Tulsa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B046",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Oluwaseun Chukwu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B046",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the sole claims adjuster at the Tulsa depot",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B046",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tomasz \"Tom\" Petrenko",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B046",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "one hundred thirty-four thousand dollars",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B046",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "OTHER_ID",
+          "text": "A94495600",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B047",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Noor aNsser",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B047",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "76216",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B047",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only swing-shift payroll analyst",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B047",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tomasz Bondarenko",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B047",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Tulsa depot",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B047",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "734 Mabini St., Mesa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B048",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "MANSOUR, DALIA",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B048",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tram",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B048",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dalia Mansour",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B048",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "30626",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B048",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Heather",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B048",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "4945 Ashgrove Dr, Quezon City",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B049",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Babatunde Obi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B049",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Cheng Huang",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B049",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Courtney Danforth",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B049",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B049",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the new hire from Cebu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B049",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "668 Unity Blvd, Mesa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B049",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Obi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B049",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Courtney",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B050",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Shevchenko",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B050",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Venkatesh \"Venky\" Kulkarni",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B050",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Trần Văn Khoa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B050",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the night warehouse crew",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B050",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Cebu branch",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B050",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PHONE",
+          "text": "+91 98 000 0130",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B050",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "₦470,000",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B050",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Trần",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B051",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ayesha Reddy",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B051",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "scciatica",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B051",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Jeong",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B051",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ketterman",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B051",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only Spanish speaker on the weekend dock team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B051",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "OTHER_ID",
+          "text": "954284939",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B052",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ayesha Menon",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B052",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "71786",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B052",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ibarra",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B052",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Nasser",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B052",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only Spanish-speaking sous chef on Line 3",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B053",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Shevchenko, Piotr",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B053",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Uchenna Adeyemi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B053",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "₹8.5 lakh",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B053",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "MEDICAL",
+          "text": "multiple slerosis",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B053",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "3281 Orchard Ln, Tulsa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B054",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Nasser",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B054",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Meneakshi Gill",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B054",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Piotr Petrenko",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B054",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Line 3 packaging team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B054",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Cebu branch",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B054",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "3653 Ashgrove Dr, #305, Quezon City",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B054",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "3.8k/mo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B054",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DATE_OF_BIRTH",
+          "text": "18 March 1986",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B054",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "OTHER_ID",
+          "text": "P8870756",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B054",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Piotr",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B055",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Courtney Danforth",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B055",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Heather Prescott",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B055",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Bui Thi Huong",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B055",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the sole forklift lead at the Cebu branch",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B055",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "2822 Harbor View Way, Apt 17, Fresno",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B055",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Danforth",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B055",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Huong",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B056",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dionisio \"Nonoy\" Pangilinan",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B056",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "The longest-serving loan officer in Building C",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B056",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Bondarenko, Piotr",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B056",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "31302",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B056",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Tariq Qureshi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B056",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Line 3 packaging team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B056",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the longest-serving loan officer in Building C",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B056",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Pangilinan",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Dizon",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "The new hire from Chennai",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Qureshi, Tariq",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "EMPLOYEE_ID",
+          "text": "83493",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Ngô Văn Hải",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the only early-morning-shift QA inspector",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ROLE",
+          "text": "the new hire from Chennai",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "3622 Camia St., Apt 17, Quezon City",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "SALARY",
+          "text": "148.5k",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "OTHER_ID",
+          "text": "A32352558",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Hải",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B058",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Danforth, Heather",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B058",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Jia-li \"Jia\" Wu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B058",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the weekend dispatch team",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B059",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "OBI, KAYODE",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B059",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Kaayode Obi",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B059",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Menon",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B059",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Adaeze Balogun",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B059",
+          "scenario": "accommodation",
+          "pipeline": "regex",
+          "type": "DATE_OF_BIRTH",
+          "text": "58 years old",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B060",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Choi, Yuna",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B060",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "PERSON",
+          "text": "Jia-li Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B060",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "DEPARTMENT",
+          "text": "the Tulsa depot",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B060",
+          "scenario": "termination",
+          "pipeline": "regex",
+          "type": "ADDRESS",
+          "text": "1747 Harbor View Way, Tulsa",
+          "reason": "visible",
+          "noteBlocked": false
+        }
+      ]
+    },
+    {
+      "id": "nano",
+      "label": "On-device model only",
+      "skipped": null,
+      "hasBlocking": false,
+      "notes": 60,
+      "scored": 60,
+      "failed": 0,
+      "planted": 516,
+      "caught": 456,
+      "catchRate": 0.8837209302325582,
+      "byCategory": [
+        {
+          "type": "PERSON",
+          "planted": 199,
+          "caught": 154,
+          "rate": 0.7738693467336684
+        },
+        {
+          "type": "EMPLOYEE_ID",
+          "planted": 36,
+          "caught": 36,
+          "rate": 1
+        },
+        {
+          "type": "EMAIL",
+          "planted": 25,
+          "caught": 25,
+          "rate": 1
+        },
+        {
+          "type": "PHONE",
+          "planted": 25,
+          "caught": 24,
+          "rate": 0.96
+        },
+        {
+          "type": "ADDRESS",
+          "planted": 30,
+          "caught": 30,
+          "rate": 1
+        },
+        {
+          "type": "MEDICAL",
+          "planted": 33,
+          "caught": 30,
+          "rate": 0.9090909090909091
+        },
+        {
+          "type": "SALARY",
+          "planted": 60,
+          "caught": 56,
+          "rate": 0.9333333333333333
+        },
+        {
+          "type": "DATE_OF_BIRTH",
+          "planted": 13,
+          "caught": 10,
+          "rate": 0.7692307692307693
+        },
+        {
+          "type": "ROLE",
+          "planted": 47,
+          "caught": 46,
+          "rate": 0.9787234042553191
+        },
+        {
+          "type": "DEPARTMENT",
+          "planted": 33,
+          "caught": 30,
+          "rate": 0.9090909090909091
+        },
+        {
+          "type": "OTHER_ID",
+          "planted": 15,
+          "caught": 15,
+          "rate": 1
+        }
+      ],
+      "blocked": 0,
+      "blockRate": null,
+      "leakedAfterBlocking": 60,
+      "overRedacted": 1,
+      "keepTotal": 182,
+      "avgOnDeviceMs": 2519.719999999553,
+      "avgCloudMs": null,
+      "cloudSamples": 0,
+      "cloudErrors": 0,
+      "avgAttempts": 1,
+      "engines": {
+        "nano": 60
+      },
+      "misses": [
+        {
+          "noteId": "B001",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "DATE_OF_BIRTH",
+          "text": "aged 27",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B004",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Olumide Ogunleye",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B006",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "SALARY",
+          "text": "$107000",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B008",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Tmo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B008",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "SALARY",
+          "text": "₦740,000",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B009",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Wu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B009",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Q. Huang",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B010",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "W. Pruitt",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B011",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Bondarenko",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PHONE",
+          "text": "+52 55 000 0126",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B012",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Heatther",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B013",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "MEDICAL",
+          "text": "type 2 diabetes",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "MEDICAL",
+          "text": "mltiple sclerosis",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Manosur",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "DEPARTMENT",
+          "text": "the Cebu branch",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B015",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Amaka Ibekwe",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B018",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Maricel Cabading",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Marites Bauutista",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Yusuf Farok",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Bautista",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B020",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Yusuf Farouk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B022",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Macaraeg",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B023",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Chukwu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B026",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Courtney Danforth",
+          "reason": "partial",
+          "leftover": "Danforth",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B028",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Wade Prescott",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B031",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Ochoa",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Cheng Huang",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B032",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Huang",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Tariq Qureshi",
+          "reason": "partial",
+          "leftover": "Tariq",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "ROLE",
+          "text": "The youngest payroll analyst on the night warehouse crew",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Amaka Ibekwe",
+          "reason": "partial",
+          "leftover": "Amaka",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B034",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Prescott",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B034",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Dalia Nasser",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B037",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Phạm",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B037",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Farouk",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B037",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B038",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Ulises Villalobos",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B039",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Chukwu",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B040",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Fuentes",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Qing Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B041",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Ibarra, Ximena",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Nasser",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B042",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "DATE_OF_BIRTH",
+          "text": "aged 39",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B043",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Chukwu, Uchenna",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B043",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Courtney Danforth",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B043",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "SALARY",
+          "text": "$77500",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B044",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Tolentino",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B044",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "DATE_OF_BIRTH",
+          "text": "aged 47",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B046",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Tomasz \"Tom\" Petrenko",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B046",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "SALARY",
+          "text": "one hundred thirty-four thousand dollars",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B048",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Tram",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B051",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Ketterman",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B053",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "MEDICAL",
+          "text": "multiple slerosis",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Dizon",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Ngô Văn Hải",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B057",
+          "scenario": "investigation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Hải",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B059",
+          "scenario": "accommodation",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Kaayode Obi",
+          "reason": "partial",
+          "leftover": "Kaayode",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B060",
+          "scenario": "termination",
+          "pipeline": "nano",
+          "type": "PERSON",
+          "text": "Jia-li Chen",
+          "reason": "visible",
+          "noteBlocked": false
+        }
+      ]
+    },
+    {
+      "id": "full",
+      "label": "Full Cloak",
+      "skipped": null,
+      "hasBlocking": true,
+      "notes": 60,
+      "scored": 60,
+      "failed": 0,
+      "planted": 516,
+      "caught": 505,
+      "catchRate": 0.9786821705426356,
+      "byCategory": [
+        {
+          "type": "PERSON",
+          "planted": 199,
+          "caught": 198,
+          "rate": 0.9949748743718593
+        },
+        {
+          "type": "EMPLOYEE_ID",
+          "planted": 36,
+          "caught": 36,
+          "rate": 1
+        },
+        {
+          "type": "EMAIL",
+          "planted": 25,
+          "caught": 25,
+          "rate": 1
+        },
+        {
+          "type": "PHONE",
+          "planted": 25,
+          "caught": 25,
+          "rate": 1
+        },
+        {
+          "type": "ADDRESS",
+          "planted": 30,
+          "caught": 30,
+          "rate": 1
+        },
+        {
+          "type": "MEDICAL",
+          "planted": 33,
+          "caught": 31,
+          "rate": 0.9393939393939394
+        },
+        {
+          "type": "SALARY",
+          "planted": 60,
+          "caught": 58,
+          "rate": 0.9666666666666667
+        },
+        {
+          "type": "DATE_OF_BIRTH",
+          "planted": 13,
+          "caught": 11,
+          "rate": 0.8461538461538461
+        },
+        {
+          "type": "ROLE",
+          "planted": 47,
+          "caught": 46,
+          "rate": 0.9787234042553191
+        },
+        {
+          "type": "DEPARTMENT",
+          "planted": 33,
+          "caught": 30,
+          "rate": 0.9090909090909091
+        },
+        {
+          "type": "OTHER_ID",
+          "planted": 15,
+          "caught": 15,
+          "rate": 1
+        }
+      ],
+      "blocked": 0,
+      "blockRate": 0,
+      "leakedAfterBlocking": 11,
+      "overRedacted": 8,
+      "keepTotal": 182,
+      "avgOnDeviceMs": 3273.1499999995035,
+      "avgCloudMs": 53128.30000000149,
+      "cloudSamples": 5,
+      "cloudErrors": 0,
+      "avgAttempts": 1.1166666666666667,
+      "engines": {
+        "nano": 60
+      },
+      "misses": [
+        {
+          "noteId": "B001",
+          "scenario": "accommodation",
+          "pipeline": "full",
+          "type": "DATE_OF_BIRTH",
+          "text": "aged 27",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B008",
+          "scenario": "termination",
+          "pipeline": "full",
+          "type": "PERSON",
+          "text": "Tmo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B013",
+          "scenario": "accommodation",
+          "pipeline": "full",
+          "type": "SALARY",
+          "text": "11.1k/mo",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B014",
+          "scenario": "accommodation",
+          "pipeline": "full",
+          "type": "MEDICAL",
+          "text": "mltiple sclerosis",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B018",
+          "scenario": "termination",
+          "pipeline": "full",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "full",
+          "type": "ROLE",
+          "text": "The youngest payroll analyst on the night warehouse crew",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B033",
+          "scenario": "investigation",
+          "pipeline": "full",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B037",
+          "scenario": "accommodation",
+          "pipeline": "full",
+          "type": "DEPARTMENT",
+          "text": "the cold-storage unit",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B044",
+          "scenario": "accommodation",
+          "pipeline": "full",
+          "type": "DATE_OF_BIRTH",
+          "text": "aged 47",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B046",
+          "scenario": "termination",
+          "pipeline": "full",
+          "type": "SALARY",
+          "text": "one hundred thirty-four thousand dollars",
+          "reason": "visible",
+          "noteBlocked": false
+        },
+        {
+          "noteId": "B051",
+          "scenario": "accommodation",
+          "pipeline": "full",
+          "type": "MEDICAL",
+          "text": "scciatica",
+          "reason": "visible",
+          "noteBlocked": false
+        }
+      ]
+    }
+  ]
+}

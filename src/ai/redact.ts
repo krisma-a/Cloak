@@ -27,6 +27,7 @@ import {
 } from './placeholders.ts'
 import { buildPrompt, ENTITY_SCHEMA, parseEntities } from './redactPrompt.ts'
 import { medicalTerms, ruleEntities } from './ruleEntities.ts'
+import { extendNameSpans, safetyNet } from './safetyNet.ts'
 
 // How many retries Nano gets is the Remote Config setting max_retries (see src/policy.ts).
 
@@ -129,11 +130,14 @@ async function redactWithNano(text: string, maxRetries: number, knownNames: stri
       const names = await namesPromise
       if (names) {
         const before = Object.keys(map.originals).length
-        ;({ text: current, map } = applyEntities(current, names, map))
+        ;({ text: current, map } = applyEntities(current, extendNameSpans(current, names), map))
         crossCheck.ran = true
         crossCheck.added = Object.keys(map.originals).length - before
       }
     }
+
+    // Safety net: whatever a rule or keyword list can find is hidden by code, not left to Nano (safetyNet.ts).
+    ;({ text: current, map } = safetyNet(current, map, allowedByPolicy))
 
     leaks = findLeaks(current, [...sensitiveStrings(map), ...knownNames])
     if (leaks.length === 0) break

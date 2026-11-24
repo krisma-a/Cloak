@@ -2,8 +2,10 @@ rules_version = '2';
 
 // Cloak Firestore rules.
 //
-// The only thing Cloak stores in Firestore is the SEND LOG: one counts-only record per send, at
-// /users/{uid}/sendLogs/{id} (see src/ai/sendLog.ts). Raw case text, names and drafts are never stored.
+// Cloak stores two things in Firestore, both numbers and fixed labels only:
+//   - the SEND LOG: one counts-only record per send, at /users/{uid}/sendLogs/{id} (src/ai/sendLog.ts);
+//   - USAGE records: tokens and cost per model call, at /usageEvents/{id} (src/ai/usage.ts, see below).
+// Raw case text, names and drafts are never stored.
 //
 //   - A signed-in user (anonymous counts) can read ONLY their own logs.
 //   - A user can create a log only for themselves, and only in the exact shape below: numbers, true/false,
@@ -100,6 +102,55 @@ service cloud.firestore {
     match /users/{userId}/sendLogs/{logId} {
       allow read: if isSelf(userId);
       allow create: if isSelf(userId) && validSendLog(userId, request.resource.data);
+      allow update, delete: if false;
+    }
+
+    // --- usage records (keep in step with src/ai/usage.ts) ----------------------------------------
+    // One record per model call: fixed labels and numbers only (tokens, cost), no text and no user id,
+    // so any signed-in visitor may read them for the /usage dashboard. Append-only.
+
+    function usageFields() {
+      return ['schema', 'origin', 'label', 'model', 'ranOn', 'inputTokens', 'outputTokens', 'thinkingTokens', 'estimated', 'costUsd', 'priceVersion', 'createdAt'];
+    }
+
+    function usageLabels() {
+      return ['redact', 'restrictions', 'tag-case-type', 'rewrite-tone', 'draft'];
+    }
+
+    function usagePlaces() {
+      return ['on_device', 'in_cloud'];
+    }
+
+    function usageOrigins() {
+      return ['app', 'eval'];
+    }
+
+    function tokenOk(n) {
+      return n is int && n >= 0 && n <= 10000000;
+    }
+
+    function validUsageEvent(e) {
+      return e.keys().hasOnly(usageFields())
+        && e.keys().hasAll(usageFields())
+        && e.createdAt == request.time
+        && e.schema == 1
+        && e.origin in usageOrigins()
+        && e.label in usageLabels()
+        && e.ranOn in usagePlaces()
+        && e.model is string
+        && e.model.matches('^[A-Za-z0-9][A-Za-z0-9._-]{1,62}$')
+        && tokenOk(e.inputTokens)
+        && tokenOk(e.outputTokens)
+        && tokenOk(e.thinkingTokens)
+        && e.estimated is bool
+        && (e.costUsd == null || ((e.costUsd is float || e.costUsd is int) && e.costUsd >= 0 && e.costUsd <= 1000))
+        && e.priceVersion is string
+        && e.priceVersion.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    match /usageEvents/{eventId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && validUsageEvent(request.resource.data);
       allow update, delete: if false;
     }
 
