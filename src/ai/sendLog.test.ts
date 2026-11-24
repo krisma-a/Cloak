@@ -218,7 +218,9 @@ test('firestore.rules allows exactly the fields, categories, steps and places th
 })
 
 test('firestore.rules uses the same patterns as sendLog.ts for the only strings a log may hold', () => {
-  const patterns = [...rules.matchAll(/\.matches\('([^']*)'\)/g)].map((m) => m[1])
+  // Only the send log's own checks (usage records have their own, tested in usage.test.ts).
+  const sendLogBody = /function validSendLog\(userId, log\) \{([\s\S]*?)\n {4}\}/.exec(rules)?.[1] ?? ''
+  const patterns = [...sendLogBody.matchAll(/\.matches\('([^']*)'\)/g)].map((m) => m[1])
   assert.equal(patterns.length, 2)
   const version = new RegExp(patterns[0])
   const model = new RegExp(patterns[1])

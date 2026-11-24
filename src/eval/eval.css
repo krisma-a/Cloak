@@ -60,6 +60,11 @@
   margin: 0 0 12px;
 }
 
+.eval-page .alert-text {
+  color: var(--amber-text);
+  font-weight: 600;
+}
+
 .eval-page .muted {
   color: var(--text-2);
 }

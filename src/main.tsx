@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { EvalRoute } from './eval/EvalRoute.tsx'
 import { expectPolicyLoad } from './policy.ts'
+import { UsageRoute } from './usage/UsageRoute.tsx'
 import { ErrorBoundary } from './workspace/PageStates.tsx'
 
 // Fetch the Remote Config settings (redact_salary, medical_mode, max_retries, cloud_model) as the page
@@ -22,10 +23,18 @@ const root = createRoot(document.getElementById('root')!)
 // /eval is a hidden page for scoring the redaction pipelines on fake data. Nothing links to it, and its code
 // is only downloaded when this path is opened (see EvalRoute, which also covers loading and a failed download).
 // (Firebase Hosting sends every path to index.html.)
-if (location.pathname.replace(/\/+$/, '') === '/eval') {
+// /usage is a hidden live dashboard of tokens and cost per model call (numbers only, see src/ai/usage.ts).
+const path = location.pathname.replace(/\/+$/, '')
+if (path === '/eval') {
   root.render(
     <StrictMode>
       <EvalRoute />
+    </StrictMode>,
+  )
+} else if (path === '/usage') {
+  root.render(
+    <StrictMode>
+      <UsageRoute />
     </StrictMode>,
   )
 } else {

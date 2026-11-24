@@ -68,7 +68,14 @@ function SummaryTable({ pipelines }: { pipelines: PipelineSummary[] }) {
                 </td>
                 <td className="num">{ms(p.avgOnDeviceMs)}</td>
                 <td className="num">
-                  {p.avgCloudMs === null ? <span className="muted">not measured</span> : ms(p.avgCloudMs)}
+                  {p.avgCloudMs === null && p.cloudErrors > 0 ? (
+                    // Every cloud call failed (often the free-tier quota): say so instead of "not measured".
+                    <span className="alert-text">all {p.cloudErrors} failed</span>
+                  ) : p.avgCloudMs === null ? (
+                    <span className="muted">not measured</span>
+                  ) : (
+                    ms(p.avgCloudMs)
+                  )}
                   {p.avgCloudMs !== null && (
                     <span className="sub">
                       {p.cloudSamples} {p.cloudSamples === 1 ? 'call' : 'calls'}

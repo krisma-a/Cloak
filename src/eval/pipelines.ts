@@ -14,6 +14,7 @@ import { sendBlockReason } from '../ai/guard.ts'
 import { currentConfig, type LocalReceipt, type ReceiptStore } from '../ai/receiptLog.ts'
 import { prepareRedaction, redact, redactNanoPass, type RedactionResult } from '../ai/redact.ts'
 import type { AccommodationPlan } from '../ai/restrictionPrompt.ts'
+import { setUsageOrigin } from '../ai/usage.ts'
 import { ensureSignedIn } from '../firebase'
 import { getPolicy, whenPolicyReady } from '../policy.ts'
 import type { Pipeline } from './runner.ts'
@@ -53,6 +54,7 @@ export async function buildPipelines(options: {
   cloudSample: number
   onProgress?: (fraction: number) => void
 }): Promise<BuiltPipelines> {
+  setUsageOrigin('eval') // usage records from this page are marked "eval", apart from real use
   await whenPolicyReady() // so the first note is not charged for waiting on Remote Config
   const prepared = await prepareRedaction(options.onProgress, 'auto')
   const nanoReady = prepared.engine === 'nano'

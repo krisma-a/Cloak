@@ -11,6 +11,7 @@ const RULE_TO_CATEGORY: Partial<Record<LeakCategory, Category>> = {
   PHONE: 'PHONE',
   DATE: 'DATE_OF_BIRTH',
   SALARY: 'SALARY',
+  AGE: 'DATE_OF_BIRTH',
   EMPLOYEE_ID: 'EMPLOYEE_ID',
   INDIRECT: 'ROLE',
 }
