@@ -83,6 +83,13 @@
   color: var(--text-2);
 }
 
+.cloak-app .brand-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+
 /* The header pill: the real mode of the AI that checks notes on this laptop. Ready = teal, basic checks =
    amber (read the notes carefully), downloading = grey with a small spinner. */
 .cloak-app .ai-pill {
