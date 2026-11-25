@@ -19,7 +19,7 @@
 
 import { redactNotes } from './ai.ts'
 import { loadCheckMode } from './checkMode.ts'
-import type { OcrProgress, OcrResult, Rect, ScanBox } from './scan.ts'
+import type { LiveView, OcrProgress, OcrResult, Rect, ScanBox } from './scan.ts'
 
 export { pagesToPdf, pdfToPages } from './fakeScan.ts'
 
@@ -65,5 +65,23 @@ export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promis
     redacted: result.canvas,
     review: result.review,
     needsReview: result.needsReview,
+  }
+}
+
+/**
+ * For the live camera preview: where the private details are in one video frame, painting nothing. Always uses the
+ * fast basic engine (never starts or waits on Gemini Nano), so it can run every second or two. The photo itself
+ * gets the full check from blackOut(). The frame and its text stay on this device.
+ */
+export async function previewBoxes(frame: HTMLCanvasElement, ocr: OcrResult): Promise<LiveView> {
+  if (ocr.words.length === 0) return { kind: 'no-text' }
+  const { detectBoxes } = await import('../camera/blackoutPlan.ts')
+  const result = await detectBoxes(ocr, frame, (text) => redactNotes(text, undefined, { basicOnly: true }))
+  if (result.status !== 'ok') return { kind: result.status }
+  return {
+    kind: 'found',
+    boxes: result.boxes.map(({ x, y, width, height, category }) => ({ x, y, width, height, category })),
+    width: frame.width,
+    height: frame.height,
   }
 }

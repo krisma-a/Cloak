@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { test } from 'node:test'
 import { applyEntities } from '../ai/placeholders.ts'
 import type { Entity } from '../ai/placeholders.ts'
-import { categoryOf, matchKey, ocrText, planBlackout, runBlackout, unclearWords } from './blackoutPlan.ts'
+import { categoryOf, detectBoxes, matchKey, ocrText, planBlackout, runBlackout, unclearWords } from './blackoutPlan.ts'
 import type { BlackoutParts, RedactionLike, Rect } from './blackoutPlan.ts'
 import type { OcrResult, OcrWord } from './ocr.ts'
 
@@ -274,4 +274,36 @@ test('the blackout code never sends anything: no network calls and no cloud draf
       assert.ok(!code.includes(banned), `${file} mentions ${banned}`)
     }
   }
+})
+
+test('detectBoxes finds the same boxes as the photo would get, and paints nothing', async () => {
+  const ocr = page([['Met', 'with', 'Jordan', 'Example', 'today']])
+  const redact = async (text: string) => redaction(text, [{ text: 'Jordan Example', category: 'PERSON' }])
+  const found = await detectBoxes(ocr, SIZE, redact)
+  const { parts } = fakeParts(redact)
+  const photo = await runBlackout('page', ocr, parts)
+  assert.equal(found.status, 'ok')
+  assert.equal(photo.status, 'ok')
+  if (found.status === 'ok' && photo.status === 'ok') assert.deepEqual(found.boxes, photo.boxes)
+})
+
+test('detectBoxes says hard-to-read without redacting, and blocked when a detail cannot be placed', async () => {
+  let redacted = 0
+  const garbled = page([['Dear', 'Jcrdcn', 'Exarnp1e']], (t) => (t === 'Dear' ? 90 : 30))
+  const unclear = await detectBoxes(garbled, SIZE, async (text) => {
+    redacted += 1
+    return redaction(text, [])
+  })
+  assert.deepEqual(unclear, { status: 'hard-to-read' })
+  assert.equal(redacted, 0)
+
+  const blocked = await detectBoxes(page([['Hello']]), SIZE, async () => ({
+    status: 'ok',
+    redactedText: 'Hello',
+    map: { originals: { '[EMPLOYEE_1]': 'Riley Sample' }, lookup: { 'riley sample': '[EMPLOYEE_1]' } },
+    leaks: [],
+    engine: 'browser-model',
+    needsCarefulReview: true,
+  }))
+  assert.deepEqual(blocked, { status: 'blocked' })
 })

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { KeyboardEvent } from 'react'
+import type { KeyboardEvent, RefObject } from 'react'
 import { downloadBlob } from '../download.ts'
 import { LoadingCard } from './components.tsx'
 import { ScanIcon, WhereChip } from './icons.tsx'
 import {
   boxPercent,
   CAMERA_MESSAGES,
+  containRect,
   cameraProblem,
   CATEGORY_LABELS,
   fileKind,
@@ -13,6 +14,7 @@ import {
   hiddenCountLabel,
   isPhone,
   labelBelow,
+  liveHint,
   ocrFraction,
   pageList,
   readingLabel,
@@ -24,8 +26,8 @@ import {
   unreadablePages,
   videoConstraints,
 } from './scan.ts'
-import type { CameraProblem, Rect, ScanBox } from './scan.ts'
-import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, readText } from './scanAi.ts'
+import type { CameraProblem, LiveView, Rect, ScanBox } from './scan.ts'
+import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, previewBoxes, readText } from './scanAi.ts'
 
 // "Scan a document": take a photo or upload a photo or PDF, read the text ON THIS DEVICE, and show the original
 // next to a blacked-out copy. Pictures live in this tab's memory only (canvases and blob: URLs, freed on leaving).
@@ -36,6 +38,11 @@ const BLOCKED_MESSAGE =
 
 /** Long side of a picture we read. Bigger photos take longer and read no better. */
 const MAX_SIDE = 2400
+/** Long side of a live preview frame: smaller than a photo, so each look takes a second or two, not five. */
+const LIVE_SIDE = 1280
+/** Rest between live looks, so a slow laptop isn't kept at full speed. */
+const LIVE_PAUSE_MS = 700
+
 /** Share of the progress bar spent turning PDF pages into pictures. */
 const PDF_RENDER_SHARE = 0.15
 
@@ -139,6 +146,49 @@ interface CaptureViewProps {
   fileError: string | null
 }
 
+/**
+ * While the camera is live: every second or two, reads one frame and finds the private details in it (on this
+ * device, basic engine), so they can be blurred on the preview. One look at a time; paused while the tab is hidden;
+ * stops when the preview goes away. A preview only: the photo gets its own full check.
+ */
+function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boolean): LiveView {
+  const [view, setView] = useState<LiveView>({ kind: 'starting' })
+
+  useEffect(() => {
+    if (!active) return
+    let stopped = false
+    const rest = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+    async function look() {
+      while (!stopped) {
+        const video = videoRef.current
+        if (document.hidden || !video || !video.videoWidth) {
+          await rest(500)
+          continue
+        }
+        try {
+          const size = fitWithin(video.videoWidth, video.videoHeight, LIVE_SIDE)
+          const frame = canvasOf(size.width, size.height)
+          frame.getContext('2d')?.drawImage(video, 0, 0, size.width, size.height)
+          const ocr = await readText(frame)
+          if (stopped) return
+          const seen = await previewBoxes(frame, ocr)
+          if (!stopped) setView(seen)
+        } catch {
+          if (!stopped) setView({ kind: 'no-text' }) // a look that fails just tries again; the photo is unaffected
+        }
+        await rest(LIVE_PAUSE_MS)
+      }
+    }
+    void look()
+    return () => {
+      stopped = true
+    }
+  }, [active, videoRef])
+
+  return view
+}
+
 /** The camera preview plus "Upload a photo or PDF". The camera runs only while this is on screen. */
 function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
   const { videoRef, attachVideo, state, retry } = useCamera()
@@ -147,6 +197,17 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
 
   const problem = state.status === 'problem' ? CAMERA_MESSAGES[state.problem] : null
   const canShoot = state.status === 'live' && videoReady
+  const live = useLiveView(videoRef, canShoot)
+  const [frameBox, setFrameBox] = useState<{ width: number; height: number } | null>(null)
+  // The preview frame's size, kept current, so the outlines line up with the picture at any window size.
+  const watchFrame = useCallback((element: HTMLDivElement | null) => {
+    if (!element) return
+    const measure = () => setFrameBox({ width: element.clientWidth, height: element.clientHeight })
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
 
   function takePhoto() {
     const video = videoRef.current
@@ -175,7 +236,7 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
           )}
         </div>
       ) : (
-        <div className="scan-camera">
+        <div className="scan-camera" ref={watchFrame}>
           <video
             ref={attachVideo}
             muted
@@ -185,6 +246,14 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
             onLoadedData={() => setVideoReady(true)}
             onEmptied={() => setVideoReady(false)}
           />
+          {canShoot && live.kind === 'found' && frameBox && (
+            // Blurred patches where the private details are, on top of the picture (not the letterbox bars).
+            <div className="scan-live" style={containRect(frameBox, live)} aria-hidden="true">
+              {live.boxes.map((box, index) => (
+                <span key={`${box.x}-${box.y}-${index}`} className="scan-live-box" style={boxPercent(box, live.width, live.height)} />
+              ))}
+            </div>
+          )}
           {canShoot ? (
             <span className="scan-guide" aria-hidden="true" />
           ) : (
@@ -194,6 +263,12 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
             </span>
           )}
         </div>
+      )}
+
+      {!problem && canShoot && (
+        <p className={`scan-live-hint${live.kind === 'hard-to-read' ? ' is-warn' : ''}`} role="status" aria-live="polite">
+          {liveHint(live)}
+        </p>
       )}
 
       {fileError && (

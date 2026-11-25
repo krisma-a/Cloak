@@ -1769,6 +1769,43 @@
   pointer-events: none;
 }
 
+.cloak-app .scan-live {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* A private detail spotted on the live preview: blurred on the video, so it reads as "being hidden" before the photo
+   blacks it out for good. Where backdrop blur isn't supported, a frosted fill covers it instead. */
+.cloak-app .scan-live-box {
+  position: absolute;
+  border-radius: 4px;
+  background: rgba(240, 238, 232, 0.92);
+  transition: left 0.25s ease, top 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .cloak-app .scan-live-box {
+    background: rgba(240, 238, 232, 0.25);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloak-app .scan-live-box { transition: none; }
+}
+
+.cloak-app .scan-live-hint {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.cloak-app .scan-live-hint.is-warn {
+  color: var(--amber-text);
+  font-weight: 600;
+}
+
 .cloak-app .scan-camera-status {
   position: absolute;
   inset: 0;
