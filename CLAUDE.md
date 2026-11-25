@@ -137,9 +137,11 @@ is sent is `outgoing(base, kept)`, not `base`.
 files) and blackout are real and on-device. `src/camera/blackoutPlan.ts` (pure, tested) matches every hidden string to OCR
 words (look-alikes 0/O, 1/l folded, across line breaks); found only in the text → whole line blacked + review; found nowhere,
 or boxes outside the image → `blocked` (nothing painted, page can't be downloaded). Words under 60 confidence are outlined
-for review; more than 15% of them → `hard-to-read`, refused before redaction (shown as "couldn't read", no download).
-While the camera is live, `previewBoxes()` (scanAi.ts → `detectBoxes()`) reads a 1280 px frame about every 1–2 s with
-the basic engine only (never Nano) and blurs what it finds on the video; a preview only, the photo gets the full check. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
+for review; more than 15% of them → the copy is still made but marked `unclear`, and the result screen warns that details
+may have been missed and it's risky to share or draft from. A photo always reaches the result screen (original + copy, or why
+there's no copy). While the camera is live, each 960 px frame gets two looks (scanAi.ts → `detectBoxes()`): `quickPreview()`
+(rules + names remembered from the last 15 s, instant) then `previewBoxes()` (browser name model); never Nano. Found details
+are blurred on the video (~0.5 s to follow the page); a preview only, the photo gets the full check. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
 `redactedText` may ever be sent; never the image. PDFs are still `fakeScan.ts` (`PDF_DEMO`): made-up readable pages.
 
 **Test data.** `scripts/generate-cases.ts` writes 120 deterministic fake notes (seeded; Set A/B use disjoint

@@ -27,7 +27,7 @@ import {
   videoConstraints,
 } from './scan.ts'
 import type { CameraProblem, LiveView, Rect, ScanBox } from './scan.ts'
-import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, previewBoxes, readText } from './scanAi.ts'
+import { blackOut, forgetPreview, pagesToPdf, PDF_DEMO, pdfToPages, previewBoxes, quickPreview, readText, warmUpPreview } from './scanAi.ts'
 
 // "Scan a document": take a photo or upload a photo or PDF, read the text ON THIS DEVICE, and show the original
 // next to a blacked-out copy. Pictures live in this tab's memory only (canvases and blob: URLs, freed on leaving).
@@ -38,10 +38,10 @@ const BLOCKED_MESSAGE =
 
 /** Long side of a picture we read. Bigger photos take longer and read no better. */
 const MAX_SIDE = 2400
-/** Long side of a live preview frame: smaller than a photo, so each look takes a second or two, not five. */
-const LIVE_SIDE = 1280
-/** Rest between live looks, so a slow laptop isn't kept at full speed. */
-const LIVE_PAUSE_MS = 700
+/** Long side of a live preview frame: smaller than a photo, so each look is quick. */
+const LIVE_SIDE = 960
+/** A short rest between live looks, so the page stays responsive on a slow laptop. */
+const LIVE_PAUSE_MS = 100
 
 /** Share of the progress bar spent turning PDF pages into pictures. */
 const PDF_RENDER_SHARE = 0.15
@@ -57,6 +57,8 @@ interface ScannedPage {
   boxes: ScanBox[]
   /** Words read with low confidence, outlined so the person checks them. */
   review: Rect[]
+  /** Too much of the page was read badly: details may have been missed, so the copy is risky to use. */
+  unclear: boolean
 }
 
 type Phase =
@@ -154,6 +156,13 @@ interface CaptureViewProps {
 function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boolean): LiveView {
   const [view, setView] = useState<LiveView>({ kind: 'starting' })
 
+  // Load the text reader and the name model together as soon as the camera view opens, before the video is ready,
+  // and forget remembered names when it closes.
+  useEffect(() => {
+    void warmUpPreview().catch(() => undefined)
+    return () => forgetPreview()
+  }, [])
+
   useEffect(() => {
     if (!active) return
     let stopped = false
@@ -172,8 +181,15 @@ function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boole
           frame.getContext('2d')?.drawImage(video, 0, 0, size.width, size.height)
           const ocr = await readText(frame)
           if (stopped) return
-          const seen = await previewBoxes(frame, ocr)
-          if (!stopped) setView(seen)
+          // Rules and remembered names first (instant), then the name model on the same frame.
+          const quick = await quickPreview(frame, ocr)
+          if (stopped) return
+          setView(quick)
+          // No text, too unclear or blocked: nothing for the name model to add.
+          if (quick.kind === 'found') {
+            const seen = await previewBoxes(frame, ocr)
+            if (!stopped) setView(seen)
+          }
         } catch {
           if (!stopped) setView({ kind: 'no-text' }) // a look that fails just tries again; the photo is unaffected
         }
@@ -408,26 +424,21 @@ export function StepScan({ onBack }: StepScanProps) {
         } catch {
           if (!still()) return
           // Any reading failure is shown the same way: too dark, blurry, blank or not a document.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, boxes: [], review: [] })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, boxes: [], review: [], unclear: false })
           continue
         }
         if (!still()) return
         if (ocr.words.length === 0) {
           // The reader ran but found no text: a blank, blurry or too-dark shot.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, boxes: [], review: [] })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, boxes: [], review: [], unclear: false })
           continue
         }
         setPhase({ kind: 'reading', progress: readingProgress(index, pages.length, 1, share), label: 'Finding private details…' })
         const result = await blackOut(page, ocr)
         if (!still()) return
-        if (result.status === 'unreadable') {
-          // Too much was read unclearly to find the private details: shown like any page we couldn't read.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, boxes: [], review: [] })
-          continue
-        }
         if (result.status === 'blocked') {
           // Fail closed: no copy at all rather than one that might show a detail.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, boxes: [], review: [] })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, boxes: [], review: [], unclear: false })
           continue
         }
         const blob = await toBlob(result.redacted)
@@ -439,6 +450,7 @@ export function StepScan({ onBack }: StepScanProps) {
           blocked: false,
           boxes: result.boxes,
           review: result.review,
+          unclear: result.unclear,
         })
       }
     } catch {
@@ -447,12 +459,8 @@ export function StepScan({ onBack }: StepScanProps) {
     }
     if (!still()) return
 
-    if (scanned.every((page) => page.redacted === null)) {
-      freeUrls()
-      if (scanned.some((page) => page.blocked)) showProblem('We couldn’t black this out safely', BLOCKED_MESSAGE)
-      else showProblem('We couldn’t read this', UNREADABLE_MESSAGE)
-      return
-    }
+    // Always show what was captured, next to whatever copy could be made: a page with no safe copy says why, and the
+    // download stays off until every page has one.
     setCurrent(0)
     setActive(null)
     setPhase({ kind: 'result', source, fileName, pages: scanned })
@@ -579,6 +587,7 @@ export function StepScan({ onBack }: StepScanProps) {
     const unreadable = unreadablePages(pages.map((p) => ({ unreadable: p.redacted === null && !p.blocked })))
     const blocked = unreadablePages(pages.map((p) => ({ unreadable: p.blocked })))
     const toCheck = pages.reduce((sum, p) => sum + p.review.length, 0)
+    const unclear = unreadablePages(pages.map((p) => ({ unreadable: p.redacted !== null && p.unclear })))
     const totalHidden = pages.reduce((sum, p) => sum + p.boxes.length, 0)
     const summary = summarize(page.boxes)
     const activeBox = active === null ? null : page.boxes[active]
@@ -698,18 +707,32 @@ export function StepScan({ onBack }: StepScanProps) {
 
         {unreadable.length > 0 && (
           <p className="notice warn" role="alert">
-            We couldn’t read {pageList(unreadable)}, so there’s no safe copy of {unreadable.length === 1 ? 'it' : 'them'} and the
-            PDF can’t be downloaded yet. Scan {unreadable.length === 1 ? 'that page' : 'those pages'} again, flat and close, in good light.
+            {isPdf ? (
+              <>
+                We couldn’t read {pageList(unreadable)}, so there’s no safe copy of {unreadable.length === 1 ? 'it' : 'them'} and the
+                PDF can’t be downloaded yet. Scan {unreadable.length === 1 ? 'that page' : 'those pages'} again, flat and close, in good
+                light.
+              </>
+            ) : (
+              <>We couldn’t read any text in this photo, so there’s no copy to download. Retake it flat and close, in good light.</>
+            )}
           </p>
         )}
         {blocked.length > 0 && (
           <p className="notice warn" role="alert">
-            We couldn’t black out {pageList(blocked)} safely: a private detail couldn’t be matched to a spot on the picture, so
-            there’s no copy of {blocked.length === 1 ? 'it' : 'them'} to download. Scan {blocked.length === 1 ? 'it' : 'them'} again,
-            flatter and in better light.
+            We couldn’t black out {isPdf ? pageList(blocked) : 'this photo'} safely: a private detail couldn’t be matched to a spot
+            on the picture, so there’s no copy of {blocked.length === 1 ? 'it' : 'them'} to download. Scan{' '}
+            {blocked.length === 1 ? 'it' : 'them'} again, flatter and in better light.
           </p>
         )}
-        {missing.length === 0 && toCheck > 0 && (
+        {unclear.length > 0 && (
+          <p className="notice warn" role="alert">
+            <strong>Cloak may have missed private details.</strong> Much of {isPdf ? pageList(unclear) : 'this photo'} was hard
+            to read, so some names, numbers or health details may still show. It’s risky to share this copy or write a draft
+            from it. Check every line, or retake it flat and close, in good light.
+          </p>
+        )}
+        {missing.length === 0 && unclear.length === 0 && toCheck > 0 && (
           <p className="notice warn">
             Some words were hard to read, so they might hide a detail we missed. Check the dashed outlines before you share it.
           </p>

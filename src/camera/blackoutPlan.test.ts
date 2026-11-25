@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { test } from 'node:test'
 import { applyEntities } from '../ai/placeholders.ts'
 import type { Entity } from '../ai/placeholders.ts'
-import { categoryOf, detectBoxes, matchKey, ocrText, planBlackout, runBlackout, unclearWords } from './blackoutPlan.ts'
+import { categoryOf, detectBoxes, matchKey, ocrText, planBlackout, rememberedInText, runBlackout, unclearWords } from './blackoutPlan.ts'
 import type { BlackoutParts, RedactionLike, Rect } from './blackoutPlan.ts'
 import type { OcrResult, OcrWord } from './ocr.ts'
 
@@ -198,15 +198,23 @@ test('words under 60% confidence are flagged for review (position only), even wh
   assert.deepEqual(calls.paint, [[]], 'the copy is still made, with no boxes')
 })
 
-test('a page where more than 15% of the words are unclear is blocked before redaction, and nothing is painted', async () => {
+test('a page where more than 15% of the words are unclear still gets its copy, marked unclear and for review', async () => {
   // A far-away, angled photo: the name came out garbled, so redaction could never find it. 2 of 6 words unclear.
   const ocr = page([['Dear', 'Jcrdcn', 'Exarnp1e'], ['your', 'plan', 'statement']], (text) => (/^(Jcrdcn|Exarnp1e)$/.test(text) ? 35 : 92))
   const { parts, calls } = fakeParts((text) => redaction(text, []))
   const result = await runBlackout('page', ocr, parts)
-  assert.deepEqual(result, { status: 'blocked', reason: 'hard-to-read', count: 2, engine: null })
-  assert.equal(calls.redact.length, 0, 'redaction never ran')
-  assert.equal(calls.open, 0)
-  assert.equal(calls.paint.length, 0)
+  assert.equal(result.status, 'ok')
+  if (result.status !== 'ok') return
+  assert.equal(result.unclear, true)
+  assert.equal(result.needsReview, true)
+  assert.equal(result.review.length, 2)
+  assert.equal(calls.paint.length, 1, 'the copy is made so the person can see what was captured')
+})
+
+test('a clear page is not marked unclear', async () => {
+  const { parts } = fakeParts((text) => redaction(text, []))
+  const result = await runBlackout('page', page([['All', 'clear', 'here']]), parts)
+  assert.equal(result.status === 'ok' && result.unclear, false)
 })
 
 test('the unclear-word limit can be changed, and a page with no words counts as unreadable', () => {
@@ -306,4 +314,10 @@ test('detectBoxes says hard-to-read without redacting, and blocked when a detail
     needsCarefulReview: true,
   }))
   assert.deepEqual(blocked, { status: 'blocked' })
+})
+
+test('rememberedInText keeps only the remembered names that are on this frame, with OCR look-alikes', () => {
+  const remembered = { 'riley sample': '[EMPLOYEE_1]', 'jordan': '[EMPLOYEE_2]', 'al': '[EMPLOYEE_3]' }
+  assert.deepEqual(rememberedInText(remembered, 'R1ley Sample will call.\nAl said hi'), { 'riley sample': '[EMPLOYEE_1]' })
+  assert.deepEqual(rememberedInText(remembered, 'Nothing here'), {})
 })
