@@ -23,6 +23,7 @@ import { StepScan } from './workspace/StepScan.tsx'
 import { StepStart } from './workspace/StepStart.tsx'
 import type { DraftResult, RedactionResult, StepId, TemplateId } from './workspace/types.ts'
 import './workspace/workspace.css'
+import logo from './assets/logo.png'
 
 const STEPS: StepInfo[] = [
   { id: 'paste', label: 'Paste notes' },
