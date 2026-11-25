@@ -71,7 +71,7 @@
 .cloak-app .brand {
   margin: 0;
   font-family: inherit;
-  font-size: 20px;
+  font-size: 25px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--teal);
@@ -84,8 +84,8 @@
 }
 
 .cloak-app .brand-logo {
-  width: 36px;
-  height: 36px;
+  width: 47px;
+  height: 47px;
   object-fit: contain;
 }
 
