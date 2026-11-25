@@ -1958,6 +1958,14 @@
   pointer-events: none;
 }
 
+/* A word read with low confidence: outlined on the copy so the person checks it. Not part of the picture. */
+.cloak-app .scan-review {
+  position: absolute;
+  border: 2px dashed var(--amber-text);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
 /* A black box on the copy. The black is in the picture itself; this is the see-what-it-hides layer on top. */
 .cloak-app .scan-box {
   position: absolute;

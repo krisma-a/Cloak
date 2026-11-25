@@ -1,12 +1,7 @@
-// PLACEHOLDER SCANNING. Nothing here reads real text, and nothing is sent anywhere.
+// PLACEHOLDER PDF FUNCTIONS, until src/camera/pdf.ts exists. Nothing is sent anywhere.
 //
-// Each function has the inputs and output the real one will have (see scanAi.ts, the one file that decides which
-// version the screen uses). The fakes are good enough to try the whole screen: the progress bar moves, a dark or
-// blank photo is "unreadable", a few boxes appear at fixed spots, and the redacted PDF is a real PDF file.
-
-import type { Category } from '../ai/placeholders.ts'
-import { brightness, tooDarkOrFlat, UnreadableScanError } from './scan.ts'
-import type { OcrProgress, OcrResult, OcrWord, ScanBox } from './scan.ts'
+// Same inputs and output as the real ones will have (see scanAi.ts). pdfToPages() ignores the file and draws three
+// made-up pages of readable text, so the real reader and blackout run on them; pagesToPdf() writes a real PDF.
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
@@ -23,70 +18,22 @@ function blankCanvas(width: number, height: number): HTMLCanvasElement {
   return canvas
 }
 
-// Where the fake "words" sit, as fractions of the page, and what each one pretends to be.
-const FAKE_WORDS: ReadonlyArray<{ x: number; y: number; w: number; h: number; category: Category }> = [
-  { x: 0.16, y: 0.16, w: 0.3, h: 0.035, category: 'PERSON' },
-  { x: 0.58, y: 0.16, w: 0.2, h: 0.035, category: 'EMPLOYEE_ID' },
-  { x: 0.1, y: 0.37, w: 0.42, h: 0.035, category: 'MEDICAL' },
-  { x: 0.1, y: 0.58, w: 0.26, h: 0.035, category: 'PERSON' },
-  { x: 0.48, y: 0.78, w: 0.32, h: 0.035, category: 'PHONE' },
+// Made-up note lines for the fake PDF pages. FAKE DATA ONLY: no real person, ID or case.
+const FAKE_PAGES: ReadonlyArray<readonly string[]> = [
+  [
+    'Case notes - page 1',
+    'Met with Jordan Example (ID E-1042) on Oct 3.',
+    'Jordan asked for a quieter desk near the window.',
+    'Manager Riley Sample agreed to review the seating plan.',
+    'Follow up by phone on 555-010-0199 next week.',
+  ],
+  [
+    'Case notes - page 2',
+    'Riley Sample confirmed the desk move for Oct 10.',
+    'No other changes were requested.',
+  ],
+  ['Case notes - page 3', 'Closed. Email jordan.example@example.com the summary.'],
 ]
-
-/**
- * Same inputs and output as the real readText() (ocr.ts). Reads the words on one page image, on this device.
- * `onProgress` gets 0..1. Throws UnreadableScanError when there is no usable text.
- */
-export async function readText(
-  image: HTMLCanvasElement,
-  options: { onProgress?: (progress: OcrProgress) => void } = {},
-): Promise<OcrResult> {
-  if (image.width < 200 || image.height < 200) throw new UnreadableScanError()
-
-  // A small copy is plenty to tell a dark or blank shot from a page of text.
-  const sample = blankCanvas(64, 64)
-  context(sample).drawImage(image, 0, 0, 64, 64)
-  const looks = brightness(context(sample).getImageData(0, 0, 64, 64).data)
-
-  for (const fraction of [0.15, 0.35, 0.55, 0.75, 0.9, 1]) {
-    await wait(180)
-    options.onProgress?.({ stage: 'reading', fraction })
-  }
-  if (tooDarkOrFlat(looks)) throw new UnreadableScanError()
-
-  const words: OcrWord[] = FAKE_WORDS.map((word, index) => ({
-    text: `word${index + 1}`,
-    x: Math.round(word.x * image.width),
-    y: Math.round(word.y * image.height),
-    w: Math.round(word.w * image.width),
-    h: Math.round(word.h * image.height),
-    line: index,
-    confidence: 90,
-  }))
-  return { text: words.map((word) => word.text).join(' '), words }
-}
-
-/**
- * Same inputs and output as the real blackOut() (blackout.ts): finds the private details among the words, and
- * returns a copy of the page with each one painted solid black. The boxes say only what kind of detail was there.
- */
-export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promise<{ boxes: ScanBox[]; redacted: HTMLCanvasElement }> {
-  await wait(250)
-  const pad = Math.max(2, Math.round(image.width * 0.004))
-  const boxes: ScanBox[] = ocr.words.map((word, index) => ({
-    x: word.x - pad,
-    y: word.y - pad,
-    width: word.w + pad * 2,
-    height: word.h + pad * 2,
-    category: FAKE_WORDS[index % FAKE_WORDS.length]?.category ?? 'OTHER_ID',
-  }))
-
-  const redacted = blankCanvas(image.width, image.height)
-  const ctx = context(redacted)
-  ctx.drawImage(image, 0, 0)
-  ctx.fillStyle = '#000'
-  for (const box of boxes) ctx.fillRect(box.x, box.y, box.width, box.height)
-  return { boxes, redacted }
-}
 
 /**
  * Same inputs and output as the real pdfToPages() (pdf.ts): one picture per PDF page, drawn on this device.
@@ -95,24 +42,18 @@ export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promis
 export async function pdfToPages(file: File, onProgress?: (fraction: number) => void): Promise<HTMLCanvasElement[]> {
   void file
   const pages: HTMLCanvasElement[] = []
-  for (let n = 0; n < 3; n++) {
+  for (const [n, lines] of FAKE_PAGES.entries()) {
     await wait(200)
     const page = blankCanvas(1240, 1754) // A4 at 150 dpi
     const ctx = context(page)
     ctx.fillStyle = '#fff'
     ctx.fillRect(0, 0, page.width, page.height)
-    ctx.fillStyle = '#c9c3bb'
-    for (let line = 0; line < 22; line++) {
-      const y = 140 + line * 70
-      ctx.fillRect(124, y, line % 4 === 3 ? 600 : 990, 18)
-    }
-    // Dark "words" where the fake reader will find them, so the boxes cover something.
-    ctx.fillStyle = '#3a3a3a'
-    for (const word of FAKE_WORDS) {
-      ctx.fillRect(word.x * page.width, word.y * page.height, word.w * page.width, word.h * page.height)
-    }
+    // Real, readable made-up text, so the real reader and blackout have something to work on.
+    ctx.fillStyle = '#111'
+    ctx.font = '36px Helvetica, Arial, sans-serif'
+    lines.forEach((line, index) => ctx.fillText(line, 124, 180 + index * 80))
     pages.push(page)
-    onProgress?.((n + 1) / 3)
+    onProgress?.((n + 1) / FAKE_PAGES.length)
   }
   return pages
 }

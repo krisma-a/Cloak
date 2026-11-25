@@ -24,12 +24,15 @@ import {
   unreadablePages,
   videoConstraints,
 } from './scan.ts'
-import type { CameraProblem, ScanBox } from './scan.ts'
-import { blackOut, pagesToPdf, pdfToPages, readText, SCAN_DEMO } from './scanAi.ts'
+import type { CameraProblem, Rect, ScanBox } from './scan.ts'
+import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, readText } from './scanAi.ts'
 
 // "Scan a document": take a photo or upload a photo or PDF, read the text ON THIS DEVICE, and show the original
 // next to a blacked-out copy. Pictures live in this tab's memory only (canvases and blob: URLs, freed on leaving).
 // The camera is on only while the capture view is showing.
+
+const BLOCKED_MESSAGE =
+  'A private detail couldn’t be matched to a spot on the picture, so no copy was made. Try again, flatter and in better light.'
 
 /** Long side of a picture we read. Bigger photos take longer and read no better. */
 const MAX_SIDE = 2400
@@ -40,9 +43,13 @@ interface ScannedPage {
   width: number
   height: number
   originalUrl: string
-  /** Null when the page couldn't be read: there is no safe copy of it. */
+  /** Null when the page couldn't be read or blacked out safely: there is no safe copy of it. */
   redacted: { canvas: HTMLCanvasElement; blob: Blob; url: string } | null
+  /** True when the text was read but a private detail couldn't be placed on the picture (so no copy was made). */
+  blocked: boolean
   boxes: ScanBox[]
+  /** Words read with low confidence, outlined so the person checks them. */
+  review: Rect[]
 }
 
 type Phase =
@@ -326,18 +333,33 @@ export function StepScan({ onBack }: StepScanProps) {
         } catch {
           if (!still()) return
           // Any reading failure is shown the same way: too dark, blurry, blank or not a document.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, boxes: [] })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, boxes: [], review: [] })
           continue
         }
         if (!still()) return
         if (ocr.words.length === 0) {
           // The reader ran but found no text: a blank, blurry or too-dark shot.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, boxes: [] })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, boxes: [], review: [] })
           continue
         }
-        const { boxes, redacted } = await blackOut(page, ocr)
-        const blob = await toBlob(redacted)
-        scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: { canvas: redacted, blob, url: makeUrl(blob) }, boxes })
+        setPhase({ kind: 'reading', progress: readingProgress(index, pages.length, 1, share), label: 'Finding private details…' })
+        const result = await blackOut(page, ocr)
+        if (!still()) return
+        if (result.status === 'blocked') {
+          // Fail closed: no copy at all rather than one that might show a detail.
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, boxes: [], review: [] })
+          continue
+        }
+        const blob = await toBlob(result.redacted)
+        scanned.push({
+          width: page.width,
+          height: page.height,
+          originalUrl: original,
+          redacted: { canvas: result.redacted, blob, url: makeUrl(blob) },
+          blocked: false,
+          boxes: result.boxes,
+          review: result.review,
+        })
       }
     } catch {
       if (still()) showProblem('Something went wrong', 'Something went wrong on this device. Nothing was sent anywhere. Please try again.')
@@ -347,7 +369,8 @@ export function StepScan({ onBack }: StepScanProps) {
 
     if (scanned.every((page) => page.redacted === null)) {
       freeUrls()
-      showProblem('We couldn’t read this', UNREADABLE_MESSAGE)
+      if (scanned.some((page) => page.blocked)) showProblem('We couldn’t black this out safely', BLOCKED_MESSAGE)
+      else showProblem('We couldn’t read this', UNREADABLE_MESSAGE)
       return
     }
     setCurrent(0)
@@ -472,7 +495,10 @@ export function StepScan({ onBack }: StepScanProps) {
     const pages = phase.pages
     const page = pages[Math.min(current, pages.length - 1)]
     if (!page) return null
-    const unreadable = unreadablePages(pages.map((p) => ({ unreadable: p.redacted === null })))
+    const missing = unreadablePages(pages.map((p) => ({ unreadable: p.redacted === null })))
+    const unreadable = unreadablePages(pages.map((p) => ({ unreadable: p.redacted === null && !p.blocked })))
+    const blocked = unreadablePages(pages.map((p) => ({ unreadable: p.blocked })))
+    const toCheck = pages.reduce((sum, p) => sum + p.review.length, 0)
     const totalHidden = pages.reduce((sum, p) => sum + p.boxes.length, 0)
     const summary = summarize(page.boxes)
     const activeBox = active === null ? null : page.boxes[active]
@@ -494,8 +520,8 @@ export function StepScan({ onBack }: StepScanProps) {
             : `${totalHidden} ${totalHidden === 1 ? 'detail is' : 'details are'} blacked out${isPdf ? ` across ${pages.length} pages` : ''}. Hover over or tap a box to see what it hides.`}
         </p>
 
-        {SCAN_DEMO && (
-          <p className="notice info">Demo: the boxes are placeholders. Real text reading isn’t connected yet.</p>
+        {isPdf && PDF_DEMO && (
+          <p className="notice info">Demo: opening PDFs isn’t connected yet, so these are made-up sample pages, read and blacked out for real.</p>
         )}
 
         {isPdf && (
@@ -517,7 +543,7 @@ export function StepScan({ onBack }: StepScanProps) {
                   <span className="scan-page-text">
                     <span className="scan-page-name">Page {index + 1}</span>
                     <span className={p.redacted ? 'scan-page-count' : 'scan-page-count is-warn'}>
-                      {p.redacted ? hiddenCountLabel(p.boxes.length) : 'Couldn’t read'}
+                      {p.redacted ? hiddenCountLabel(p.boxes.length) : p.blocked ? 'Not safe' : 'Couldn’t read'}
                     </span>
                   </span>
                 </button>
@@ -537,7 +563,7 @@ export function StepScan({ onBack }: StepScanProps) {
 
           <figure className="scan-figure is-redacted">
             <figcaption>
-              Blacked out · {page.redacted ? hiddenCountLabel(page.boxes.length) : 'couldn’t read'}
+              Blacked out · {page.redacted ? hiddenCountLabel(page.boxes.length) : page.blocked ? 'not safe to share' : 'couldn’t read'}
             </figcaption>
             {page.redacted ? (
               <div className="scan-frame">
@@ -547,6 +573,9 @@ export function StepScan({ onBack }: StepScanProps) {
                   height={page.height}
                   alt={`Blacked-out copy${isPdf ? ` of page ${current + 1}` : ''}, ${hiddenCountLabel(page.boxes.length).toLowerCase()}`}
                 />
+                {page.review.map((spot) => (
+                  <span key={`review-${spot.x}-${spot.y}`} className="scan-review" style={boxPercent(spot, page.width, page.height)} aria-hidden="true" />
+                ))}
                 {page.boxes.map((box, index) => {
                   const label = CATEGORY_LABELS[box.category]
                   return (
@@ -571,7 +600,7 @@ export function StepScan({ onBack }: StepScanProps) {
               </div>
             ) : (
               <div className="scan-frame is-missing">
-                <p>{UNREADABLE_MESSAGE}</p>
+                <p>{page.blocked ? BLOCKED_MESSAGE : UNREADABLE_MESSAGE}</p>
               </div>
             )}
           </figure>
@@ -587,12 +616,25 @@ export function StepScan({ onBack }: StepScanProps) {
           </ul>
         )}
 
-        {unreadable.length > 0 ? (
+        {unreadable.length > 0 && (
           <p className="notice warn" role="alert">
             We couldn’t read {pageList(unreadable)}, so there’s no safe copy of {unreadable.length === 1 ? 'it' : 'them'} and the
             PDF can’t be downloaded yet. Scan {unreadable.length === 1 ? 'that page' : 'those pages'} again with more light.
           </p>
-        ) : (
+        )}
+        {blocked.length > 0 && (
+          <p className="notice warn" role="alert">
+            We couldn’t black out {pageList(blocked)} safely: a private detail couldn’t be matched to a spot on the picture, so
+            there’s no copy of {blocked.length === 1 ? 'it' : 'them'} to download. Scan {blocked.length === 1 ? 'it' : 'them'} again,
+            flatter and in better light.
+          </p>
+        )}
+        {missing.length === 0 && toCheck > 0 && (
+          <p className="notice warn">
+            Some words were hard to read, so they might hide a detail we missed. Check the dashed outlines before you share it.
+          </p>
+        )}
+        {missing.length === 0 && toCheck === 0 && (
           <p className="hint">Check every page before you share it. Handwriting and faint text can be missed.</p>
         )}
         {saveError && (
@@ -612,7 +654,7 @@ export function StepScan({ onBack }: StepScanProps) {
             type="button"
             className="btn btn-primary"
             onClick={download}
-            disabled={saving || unreadable.length > 0}
+            disabled={saving || missing.length > 0}
           >
             {saving ? 'Saving…' : isPdf ? 'Download redacted PDF' : 'Download redacted photo'}
           </button>

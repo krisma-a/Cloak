@@ -133,6 +133,13 @@ first caller only). The pill shows a spinner cue meanwhile, then "Private AI rea
 redaction with every detail still a placeholder, `kept` is what the user chose to leave visible, and what
 is sent is `outgoing(base, kept)`, not `base`.
 
+**Scan a document** (`src/workspace/StepScan.tsx`, imports only `scanAi.ts`). OCR (`src/camera/ocr.ts`, Tesseract.js, own
+files) and blackout are real and on-device. `src/camera/blackoutPlan.ts` (pure, tested) matches every hidden string to OCR
+words (look-alikes 0/O, 1/l folded, across line breaks); found only in the text → whole line blacked + review; found nowhere,
+or boxes outside the image → `blocked` (nothing painted, page can't be downloaded). Words under 60 confidence are outlined
+for review. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
+`redactedText` may ever be sent; never the image. PDFs are still `fakeScan.ts` (`PDF_DEMO`): made-up readable pages.
+
 **Test data.** `scripts/generate-cases.ts` writes 120 deterministic fake notes (seeded; Set A/B use disjoint
 name pools) with a planted-item answer key whose `type` values are the app's `Category` names. Output must
 stay byte-identical for the same seed. The generated sets are not yet scored against redaction, and the
