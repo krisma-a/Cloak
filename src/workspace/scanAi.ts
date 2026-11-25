@@ -1,42 +1,65 @@
 // The ONLY file you change to connect the real scanning code.
 // The "Scan a document" screen (StepScan.tsx) imports OCR, blackout and PDF functions from here, and nothing else.
 //
-// Today every function is the placeholder from fakeScan.ts. Everything runs on this device and nothing is sent.
+// Reading and blacking out are REAL and run on this device: readText() is src/camera/ocr.ts, blackOut() is
+// src/camera/blackout.ts with the same on-device redaction as the paste screen (redactNotes() in ai.ts, so the
+// "Basic checks only" choice applies here too). Nothing is sent anywhere: not the picture, not the text.
 //
-// The four functions and what the real ones must do:
-//
-//   readText(image, { onProgress? }) -> Promise<OcrResult>                              src/camera/ocr.ts
-//     Already real: src/camera/ocr.ts. Reads one page (a canvas) and returns the text and every word with its box,
-//     in the image's own pixels. `onProgress` gets { stage: 'loading' | 'reading', fraction }. A page with no words,
-//     or a read that throws, is shown as "We couldn't read this. Try more light and hold it steady."
-//
-//   blackOut(image, ocr) -> Promise<{ boxes: ScanBox[]; redacted: HTMLCanvasElement }>  src/camera/blackout.ts
-//     Find the private details in `ocr` (on this device), paint each one solid black on a COPY of `image`, and
-//     return the copy plus one box per black area with its category. The boxes must never carry the hidden text.
+// The PDF functions are still the placeholders from fakeScan.ts (src/camera/pdf.ts doesn't exist yet):
 //
 //   pdfToPages(file, onProgress?) -> Promise<HTMLCanvasElement[]>                       src/camera/pdf.ts
 //     One picture per page, on this device. Throw if the file can't be opened.
 //
 //   pagesToPdf(pages) -> Promise<Blob>                                                  src/camera/pdf.ts
 //     One PDF made only from the blacked-out pictures (no text layer), so nothing hidden survives underneath.
-
-export { blackOut, pagesToPdf, pdfToPages, readText } from './fakeScan.ts'
-
-/** True while the functions above are the placeholders. The result screen says so. Set to false when connected. */
-export const SCAN_DEMO = true
-
-// ---------------------------------------------------------------------------------------------
-// TO CONNECT THE REAL CODE:
 //
-// 1. Delete the `export { ... } from './fakeScan.ts'` line above.
-// 2. Paste this in its place (rename to match what the files really export):
-//
-//    export { readText } from '../camera/ocr.ts'   // already built; works on its own
-//    export { blackOut } from '../camera/blackout.ts'
+// TO CONNECT THE REAL PDF CODE: replace the fakeScan.ts line below with
 //    export { pdfToPages, pagesToPdf } from '../camera/pdf.ts'
-//
-// 3. Set SCAN_DEMO to false.
-//
-// Tesseract.js and a PDF reader are large, so consider loading them on first use (as ai.ts does for redaction)
-// instead of with the first screen.
-// ---------------------------------------------------------------------------------------------
+// and set PDF_DEMO to false.
+
+import { redactNotes } from './ai.ts'
+import { loadCheckMode } from './checkMode.ts'
+import type { OcrProgress, OcrResult, Rect, ScanBox } from './scan.ts'
+
+export { pagesToPdf, pdfToPages } from './fakeScan.ts'
+
+/** True while the PDF functions are the placeholders (made-up pages, whatever the file holds). The result screen says so. */
+export const PDF_DEMO = true
+
+/** One page, blacked out. "blocked": no safe copy could be made, so the page can't be downloaded. */
+export type ScanPageResult =
+  | {
+      status: 'ok'
+      boxes: ScanBox[]
+      redacted: HTMLCanvasElement
+      /** Words read with low confidence, to check by eye. Positions only. */
+      review: Rect[]
+      /** Low-confidence words, a whole-line box, or the basic engine: the person should check this page. */
+      needsReview: boolean
+    }
+  | { status: 'blocked' }
+
+// Tesseract.js and the redaction code are large, so they load on first use, not with the first screen.
+
+/** Reads one page on this device: the text and every word with its box, in the image's own pixels. */
+export async function readText(image: HTMLCanvasElement, options?: { onProgress?: (progress: OcrProgress) => void }): Promise<OcrResult> {
+  const ocr = await import('../camera/ocr.ts')
+  return ocr.readText(image, options)
+}
+
+/** Finds the private details in `ocr` on this device and paints each one solid black on a COPY of `image`. */
+export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promise<ScanPageResult> {
+  const { blackOut: run } = await import('../camera/blackout.ts')
+  const result = await run(image, ocr, {
+    redact: (text) => redactNotes(text, undefined, { basicOnly: loadCheckMode() === 'basic' }),
+  })
+  if (result.status !== 'ok') return { status: 'blocked' }
+  if (!(result.canvas instanceof HTMLCanvasElement)) throw new Error('The blacked-out copy isn’t a page canvas.')
+  return {
+    status: 'ok',
+    boxes: result.boxes.map(({ x, y, width, height, category }) => ({ x, y, width, height, category })),
+    redacted: result.canvas,
+    review: result.review,
+    needsReview: result.needsReview,
+  }
+}
