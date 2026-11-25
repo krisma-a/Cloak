@@ -8,6 +8,8 @@
 // - Found in the OCR text but not in the words -> its whole line is painted over, and the page needs review.
 // - Not found anywhere, or a word box lies outside the image -> "blocked": we can't say where it is.
 // - Words read with low confidence (under 60 by default) are flagged for review (their boxes only, never their text).
+// - More than 15% of the words read with low confidence -> "blocked" ("hard-to-read"), before redaction even runs:
+//   private details hidden in garbled words can't be found, so a copy would look safe and not be.
 //
 // What may leave the laptop: only `redactedText` (placeholders, no real values). Never the image, never the boxes'
 // words: a box carries a category and a position, nothing else.
@@ -50,6 +52,8 @@ export interface PlanOptions {
   padding?: number
   /** Words below this OCR confidence (0–100) are flagged for review. Default 60. */
   minConfidence?: number
+  /** Share of low-confidence words (0–1) above which the page is too hard to read safely. Default 0.15. */
+  maxUnclearShare?: number
 }
 
 export interface Plan {
@@ -64,6 +68,13 @@ export interface Plan {
 
 export const DEFAULT_PADDING = 4
 export const DEFAULT_MIN_CONFIDENCE = 60
+export const DEFAULT_MAX_UNCLEAR_SHARE = 0.15
+
+/** How many words were read with low confidence, and what share of all words that is (1 when there are none). */
+export function unclearWords(words: readonly OcrWord[], minConfidence = DEFAULT_MIN_CONFIDENCE): { count: number; share: number } {
+  const count = words.filter((word) => word.confidence < minConfidence).length
+  return { count, share: words.length === 0 ? 1 : count / words.length }
+}
 
 // ---------------------------------------------------------------------------------------------
 // Matching text against OCR words
@@ -255,6 +266,8 @@ export type BlockedReason =
   | 'unplaced'
   /** The OCR boxes don't fit this image, so the boxes would land in the wrong place. */
   | 'image-mismatch'
+  /** Too many words were read with low confidence: details in them can't be found. Nothing was redacted or painted. */
+  | 'hard-to-read'
 
 export type BlackoutResult<Canvas> =
   | {
@@ -275,9 +288,10 @@ export type BlackoutResult<Canvas> =
   | {
       status: 'blocked'
       reason: BlockedReason
-      /** Counts only, safe to show: how many leaks or unplaced details. */
+      /** Counts only, safe to show: how many leaks, unplaced details, misfit boxes or unclear words. */
       count: number
-      engine: string
+      /** The engine that ran, or null when the page was refused before redaction. */
+      engine: string | null
     }
 
 /**
@@ -301,6 +315,11 @@ export async function runBlackout<Image, Canvas>(
   parts: BlackoutParts<Image, Canvas>,
   options: PlanOptions = {},
 ): Promise<BlackoutResult<Canvas>> {
+  const unclear = unclearWords(ocr.words, options.minConfidence)
+  if (unclear.share > (options.maxUnclearShare ?? DEFAULT_MAX_UNCLEAR_SHARE)) {
+    return { status: 'blocked', reason: 'hard-to-read', count: unclear.count, engine: null }
+  }
+
   const text = ocrText(ocr)
   const redaction = await parts.redact(text)
   if (redaction.status !== 'ok') {

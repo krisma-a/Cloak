@@ -192,6 +192,6 @@ describe('UnreadableScanError', () => {
     const error = new UnreadableScanError()
     assert.equal(error.name, 'UnreadableScanError')
     assert.equal(error.message, UNREADABLE_MESSAGE)
-    assert.equal(UNREADABLE_MESSAGE, 'We couldn’t read this. Try more light and hold it steady.')
+    assert.equal(UNREADABLE_MESSAGE, 'We couldn’t read this clearly enough to hide the private details. Hold the page flat and close, in good light.')
   })
 })

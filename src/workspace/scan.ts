@@ -115,7 +115,7 @@ export function fitWithin(width: number, height: number, max: number): { width: 
 // ---------- Reading ----------
 
 /** The one message for a photo the OCR engine can't read. */
-export const UNREADABLE_MESSAGE = 'We couldn’t read this. Try more light and hold it steady.'
+export const UNREADABLE_MESSAGE = 'We couldn’t read this clearly enough to hide the private details. Hold the page flat and close, in good light.'
 
 /** Thrown by readText() when there is no usable text: too dark, too blurry, blank or not a document. */
 export class UnreadableScanError extends Error {

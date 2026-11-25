@@ -26,7 +26,10 @@ export { pagesToPdf, pdfToPages } from './fakeScan.ts'
 /** True while the PDF functions are the placeholders (made-up pages, whatever the file holds). The result screen says so. */
 export const PDF_DEMO = true
 
-/** One page, blacked out. "blocked": no safe copy could be made, so the page can't be downloaded. */
+/**
+ * One page, blacked out. "unreadable": too much of it was read unclearly to find the private details. "blocked": a
+ * detail couldn't be hidden or placed. Neither has a copy, so the page can't be downloaded.
+ */
 export type ScanPageResult =
   | {
       status: 'ok'
@@ -37,6 +40,7 @@ export type ScanPageResult =
       /** Low-confidence words, a whole-line box, or the basic engine: the person should check this page. */
       needsReview: boolean
     }
+  | { status: 'unreadable' }
   | { status: 'blocked' }
 
 // Tesseract.js and the redaction code are large, so they load on first use, not with the first screen.
@@ -53,7 +57,7 @@ export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promis
   const result = await run(image, ocr, {
     redact: (text) => redactNotes(text, undefined, { basicOnly: loadCheckMode() === 'basic' }),
   })
-  if (result.status !== 'ok') return { status: 'blocked' }
+  if (result.status !== 'ok') return { status: result.reason === 'hard-to-read' ? 'unreadable' : 'blocked' }
   if (!(result.canvas instanceof HTMLCanvasElement)) throw new Error('The blacked-out copy isn’t a page canvas.')
   return {
     status: 'ok',
