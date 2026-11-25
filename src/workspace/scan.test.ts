@@ -23,6 +23,8 @@ import {
   UnreadableScanError,
   unreadablePages,
   videoConstraints,
+  containRect,
+  liveHint,
 } from './scan.ts'
 
 const domError = (name: string) => Object.assign(new Error(name), { name })
@@ -193,5 +195,33 @@ describe('UnreadableScanError', () => {
     assert.equal(error.name, 'UnreadableScanError')
     assert.equal(error.message, UNREADABLE_MESSAGE)
     assert.equal(UNREADABLE_MESSAGE, 'We couldn’t read this clearly enough to hide the private details. Hold the page flat and close, in good light.')
+  })
+})
+
+describe('live preview', () => {
+  it('finds where a contained picture sits in its frame', () => {
+    // A 16:9 camera in a 4:3 frame: full width, bars above and below.
+    assert.deepEqual(containRect({ width: 800, height: 600 }, { width: 1280, height: 720 }), {
+      left: '0%',
+      top: '12.5%',
+      width: '100%',
+      height: '75%',
+    })
+    // A tall (portrait) camera: full height, bars at the sides.
+    assert.deepEqual(containRect({ width: 800, height: 600 }, { width: 720, height: 1280 }), {
+      left: '28.91%',
+      top: '0%',
+      width: '42.19%',
+      height: '100%',
+    })
+  })
+
+  it('says one plain line for each state', () => {
+    assert.equal(liveHint({ kind: 'no-text' }), 'Point the camera at the page.')
+    assert.match(liveHint({ kind: 'hard-to-read' }), /Move closer/)
+    assert.match(liveHint({ kind: 'found', boxes: [], width: 1, height: 1 }), /No private details/)
+    const box = { x: 0, y: 0, width: 1, height: 1, category: 'PERSON' as const }
+    assert.match(liveHint({ kind: 'found', boxes: [box], width: 1, height: 1 }), /^1 private detail spotted/)
+    assert.match(liveHint({ kind: 'found', boxes: [box, box], width: 1, height: 1 }), /^2 private details spotted/)
   })
 })

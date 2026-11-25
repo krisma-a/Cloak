@@ -112,6 +112,51 @@ export function fitWithin(width: number, height: number, max: number): { width: 
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) }
 }
 
+// ---------- Live preview ----------
+
+/**
+ * Where a picture shown with `object-fit: contain` sits inside its frame, in percent of the frame, so boxes drawn in
+ * the picture's own pixels line up with it (the camera preview is letterboxed in a 4:3 frame).
+ */
+export function containRect(
+  frame: { width: number; height: number },
+  picture: { width: number; height: number },
+): { left: string; top: string; width: string; height: string } {
+  const fw = Math.max(frame.width, 1)
+  const fh = Math.max(frame.height, 1)
+  const scale = Math.min(fw / Math.max(picture.width, 1), fh / Math.max(picture.height, 1))
+  const w = (picture.width * scale) / fw
+  const h = (picture.height * scale) / fh
+  const pct = (n: number) => `${Math.round(n * 10000) / 100}%`
+  return { left: pct((1 - w) / 2), top: pct((1 - h) / 2), width: pct(w), height: pct(h) }
+}
+
+/** What the live preview last saw. Boxes are in the frame's own pixels; they never hold the text. */
+export type LiveView =
+  | { kind: 'starting' }
+  | { kind: 'no-text' }
+  | { kind: 'hard-to-read' }
+  | { kind: 'blocked' }
+  | { kind: 'found'; boxes: ScanBox[]; width: number; height: number }
+
+/** The one line under the camera preview. */
+export function liveHint(view: LiveView): string {
+  switch (view.kind) {
+    case 'starting':
+      return 'Getting ready to read the page…'
+    case 'no-text':
+      return 'Point the camera at the page.'
+    case 'hard-to-read':
+      return 'Too hard to read from here. Move closer and hold the page flat.'
+    case 'blocked':
+      return 'Hold steady: a detail can’t be pinned down yet.'
+    case 'found':
+      return view.boxes.length === 0
+        ? 'No private details spotted yet. The photo gets a full check.'
+        : `${view.boxes.length} private ${view.boxes.length === 1 ? 'detail' : 'details'} spotted. They’ll be blacked out when you take the photo.`
+  }
+}
+
 // ---------- Reading ----------
 
 /** The one message for a photo the OCR engine can't read. */

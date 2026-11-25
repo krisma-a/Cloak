@@ -343,3 +343,34 @@ export async function runBlackout<Image, Canvas>(
     engine: redaction.engine,
   }
 }
+
+// ---------------------------------------------------------------------------------------------
+// Detect only (the live camera preview): the same checks, no picture made
+
+export type DetectResult =
+  | { status: 'ok'; boxes: BlackoutBox[]; review: Rect[] }
+  /** More than the limit of words were read unclearly (see runBlackout). */
+  | { status: 'hard-to-read' }
+  /** Redaction blocked, a detail couldn't be placed, or the boxes don't fit the frame. */
+  | { status: 'blocked' }
+
+/**
+ * Where the private details are in one frame, without painting anything. Same order and limits as runBlackout(),
+ * so the preview agrees with what the photo will get (the photo still gets its own full check).
+ */
+export async function detectBoxes(
+  ocr: OcrResult,
+  size: { width: number; height: number },
+  redact: (text: string) => Promise<RedactionLike>,
+  options: PlanOptions = {},
+): Promise<DetectResult> {
+  if (unclearWords(ocr.words, options.minConfidence).share > (options.maxUnclearShare ?? DEFAULT_MAX_UNCLEAR_SHARE)) {
+    return { status: 'hard-to-read' }
+  }
+  const text = ocrText(ocr)
+  const redaction = await redact(text)
+  if (redaction.status !== 'ok') return { status: 'blocked' }
+  const plan = planBlackout({ text, words: ocr.words }, redaction.map.lookup, size, options)
+  if (plan.outside > 0 || plan.unplaced > 0) return { status: 'blocked' }
+  return { status: 'ok', boxes: plan.boxes, review: plan.review }
+}
