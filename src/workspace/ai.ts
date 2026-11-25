@@ -20,6 +20,11 @@ export interface RedactHooks {
   skipDownload?: AbortSignal
   /** The download that was skipped has ended. `engine` is "nano" if the private AI is now ready for the next check. */
   onBackgroundDone?: (engine: RedactionResult['engine']) => void
+  /**
+   * The person chose "Basic checks only" (for a slow laptop): use the backup engine and never start or wait for
+   * Gemini Nano. Catches less, so the review screen asks for a careful read (needsCarefulReview).
+   */
+  basicOnly?: boolean
 }
 
 export { suggestRestrictions, writeDraft, SendBlockedError } from './fakeAi.ts'
@@ -78,8 +83,9 @@ export async function redactNotes(
 ): Promise<RedactionResult> {
   const { nanoSupported, prepareRedaction, redact } = await loadRedact()
 
-  // An earlier download is still running in the background: use the basic engine without waiting on it.
-  if (nanoInBackground) {
+  // The person chose basic checks, or an earlier download is still running in the background: use the basic
+  // engine without starting or waiting on Nano.
+  if (hooks.basicOnly || nanoInBackground) {
     hooks.onStage?.('basic')
     const { engine } = await prepareRedaction(onProgress, 'browser-model')
     hooks.onEngine?.(engine)

@@ -11,6 +11,7 @@ import {
   SKIP_LABEL,
 } from './workspace/aiStatus.ts'
 import type { AiEvent, AiState } from './workspace/aiStatus.ts'
+import { loadCheckMode, saveCheckMode, type CheckMode } from './workspace/checkMode.ts'
 import { LoadingCard, Stepper } from './workspace/components.tsx'
 import type { StepInfo } from './workspace/components.tsx'
 import { hasWorkToLose, makeLabeler, outgoing } from './workspace/review.ts'
@@ -62,6 +63,15 @@ export default function App() {
   const [pasteError, setPasteError] = useState<string | null>(null)
   const [writeError, setWriteError] = useState<string | null>(null)
   const [blockedMessage, setBlockedMessage] = useState<string | null>(null)
+  // Full Cloak (recommended) or basic checks for a slow laptop, remembered in this browser only.
+  const [checkMode, setCheckMode] = useState<CheckMode>(() => loadCheckMode())
+  // Whether this browser could run the private AI at all. False: basic checks are the only option, so no choice is shown.
+  const [nanoPossible, setNanoPossible] = useState<boolean | null>(null)
+
+  function chooseCheckMode(mode: CheckMode) {
+    setCheckMode(mode)
+    saveCheckMode(mode)
+  }
 
   // Move keyboard focus to the new screen so screen readers announce it.
   const mainRef = useRef<HTMLElement>(null)
@@ -93,6 +103,7 @@ export default function App() {
     let cancelled = false
     privateAiSupported()
       .then((supported) => {
+        if (!cancelled) setNanoPossible(supported)
         if (!cancelled && !supported) setAi((state) => nextAiState(state, { type: 'stage', stage: 'basic' }))
       })
       .catch(() => undefined)
@@ -125,6 +136,7 @@ export default function App() {
           onEngine: (engine) => reportAi({ type: 'engine', engine }),
           skipDownload: skip.signal,
           onBackgroundDone: (engine) => reportAi({ type: 'background-done', engine }),
+          basicOnly: checkMode === 'basic' && nanoPossible !== false,
         },
       )
       reportAi({ type: 'engine', engine: result.engine }) // the engine that really ran, in case Nano failed on the way
@@ -304,6 +316,8 @@ export default function App() {
               onContinue={hidePrivateDetails}
               onBack={() => goTo('start')}
               error={pasteError}
+              checkMode={nanoPossible === false ? null : checkMode}
+              onCheckModeChange={chooseCheckMode}
             />
           )}
 
