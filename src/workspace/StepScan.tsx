@@ -345,6 +345,11 @@ export function StepScan({ onBack }: StepScanProps) {
         setPhase({ kind: 'reading', progress: readingProgress(index, pages.length, 1, share), label: 'Finding private details…' })
         const result = await blackOut(page, ocr)
         if (!still()) return
+        if (result.status === 'unreadable') {
+          // Too much was read unclearly to find the private details: shown like any page we couldn't read.
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, boxes: [], review: [] })
+          continue
+        }
         if (result.status === 'blocked') {
           // Fail closed: no copy at all rather than one that might show a detail.
           scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, boxes: [], review: [] })
@@ -619,7 +624,7 @@ export function StepScan({ onBack }: StepScanProps) {
         {unreadable.length > 0 && (
           <p className="notice warn" role="alert">
             We couldn’t read {pageList(unreadable)}, so there’s no safe copy of {unreadable.length === 1 ? 'it' : 'them'} and the
-            PDF can’t be downloaded yet. Scan {unreadable.length === 1 ? 'that page' : 'those pages'} again with more light.
+            PDF can’t be downloaded yet. Scan {unreadable.length === 1 ? 'that page' : 'those pages'} again, flat and close, in good light.
           </p>
         )}
         {blocked.length > 0 && (
