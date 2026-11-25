@@ -371,6 +371,106 @@
   outline-offset: 2px;
 }
 
+/* ---------- How to check (paste screen) ---------- */
+/* Full Cloak is the default and the recommendation. Choosing basic checks turns the option and its note amber,
+   so the riskier choice never looks like an equal, neutral pick. */
+
+.cloak-app .check-mode {
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.cloak-app .check-mode legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cloak-app .check-mode-options {
+  display: grid;
+  gap: 8px;
+}
+
+.cloak-app .check-mode-option {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.cloak-app .check-mode-option input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 3px 0 0;
+  accent-color: var(--teal);
+}
+
+.cloak-app .check-mode-option:has(input:checked) {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.cloak-app .check-mode-option.is-basic:has(input:checked) {
+  border-color: var(--amber-text);
+  background: var(--amber-bg);
+}
+
+.cloak-app .check-mode-option.is-basic input {
+  accent-color: var(--amber-text);
+}
+
+.cloak-app .check-mode-option:has(input:focus-visible) {
+  outline: 3px solid var(--teal);
+  outline-offset: 2px;
+}
+
+.cloak-app .check-mode-text {
+  display: grid;
+  gap: 2px;
+}
+
+.cloak-app .check-mode-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+}
+
+.cloak-app .check-mode-detail {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.cloak-app .recommended {
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--teal);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.cloak-app .check-mode-warning {
+  margin-top: 10px;
+}
+
+.cloak-app .check-mode-warning .link-button {
+  margin-top: 0;
+  color: var(--amber-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ---------- Inputs ---------- */
 
 .cloak-app .notes-input,
