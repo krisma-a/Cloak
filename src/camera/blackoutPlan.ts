@@ -8,8 +8,9 @@
 // - Found in the OCR text but not in the words -> its whole line is painted over, and the page needs review.
 // - Not found anywhere, or a word box lies outside the image -> "blocked": we can't say where it is.
 // - Words read with low confidence (under 60 by default) are flagged for review (their boxes only, never their text).
-// - More than 15% of the words read with low confidence -> "blocked" ("hard-to-read"), before redaction even runs:
-//   private details hidden in garbled words can't be found, so a copy would look safe and not be.
+// - More than 15% of the words read with low confidence -> the copy is still made, but marked `unclear`: private
+//   details in garbled words can't be found, so the screen warns that it may have missed some and is risky to use.
+//   (The live preview just says it's too hard to read.)
 //
 // What may leave the laptop: only `redactedText` (placeholders, no real values). Never the image, never the boxes'
 // words: a box carries a category and a position, nothing else.
@@ -266,8 +267,6 @@ export type BlockedReason =
   | 'unplaced'
   /** The OCR boxes don't fit this image, so the boxes would land in the wrong place. */
   | 'image-mismatch'
-  /** Too many words were read with low confidence: details in them can't be found. Nothing was redacted or painted. */
-  | 'hard-to-read'
 
 export type BlackoutResult<Canvas> =
   | {
@@ -283,15 +282,19 @@ export type BlackoutResult<Canvas> =
       review: Rect[]
       /** True when a person should check the page: low-confidence words, a whole-line box, or a weaker engine. */
       needsReview: boolean
+      /**
+       * More than the limit of words (15%) were read with low confidence: details in them may have been missed, so
+       * this copy is risky to share or draft from. The screen must say so.
+       */
+      unclear: boolean
       engine: string
     }
   | {
       status: 'blocked'
       reason: BlockedReason
-      /** Counts only, safe to show: how many leaks, unplaced details, misfit boxes or unclear words. */
+      /** Counts only, safe to show: how many leaks, unplaced details or misfit boxes. */
       count: number
-      /** The engine that ran, or null when the page was refused before redaction. */
-      engine: string | null
+      engine: string
     }
 
 /**
@@ -315,11 +318,7 @@ export async function runBlackout<Image, Canvas>(
   parts: BlackoutParts<Image, Canvas>,
   options: PlanOptions = {},
 ): Promise<BlackoutResult<Canvas>> {
-  const unclear = unclearWords(ocr.words, options.minConfidence)
-  if (unclear.share > (options.maxUnclearShare ?? DEFAULT_MAX_UNCLEAR_SHARE)) {
-    return { status: 'blocked', reason: 'hard-to-read', count: unclear.count, engine: null }
-  }
-
+  const unclear = unclearWords(ocr.words, options.minConfidence).share > (options.maxUnclearShare ?? DEFAULT_MAX_UNCLEAR_SHARE)
   const text = ocrText(ocr)
   const redaction = await parts.redact(text)
   if (redaction.status !== 'ok') {
@@ -339,7 +338,8 @@ export async function runBlackout<Image, Canvas>(
     redactedText: redaction.redactedText,
     boxes: plan.boxes,
     review: plan.review,
-    needsReview: plan.review.length > 0 || plan.boxes.some((box) => box.source === 'line') || redaction.needsCarefulReview,
+    needsReview: unclear || plan.review.length > 0 || plan.boxes.some((box) => box.source === 'line') || redaction.needsCarefulReview,
+    unclear,
     engine: redaction.engine,
   }
 }
@@ -373,4 +373,14 @@ export async function detectBoxes(
   const plan = planBlackout({ text, words: ocr.words }, redaction.map.lookup, size, options)
   if (plan.outside > 0 || plan.unplaced > 0) return { status: 'blocked' }
   return { status: 'ok', boxes: plan.boxes, review: plan.review }
+}
+
+/**
+ * For the live preview: which remembered hidden strings (from earlier frames) appear in this frame's text, so they
+ * can be blurred at once, before the slower name model has looked at this frame. Only those that appear are kept,
+ * because a string that isn't on the page can't be placed (and would make the frame "blocked").
+ */
+export function rememberedInText(remembered: Readonly<Record<string, string>>, text: string): Record<string, string> {
+  const page = matchKey(text)
+  return Object.fromEntries(Object.entries(remembered).filter(([hidden]) => matchKey(hidden).length >= 3 && page.includes(matchKey(hidden))))
 }
