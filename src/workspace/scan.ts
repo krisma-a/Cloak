@@ -137,6 +137,42 @@ export type LiveView =
   | { kind: 'no-text' }
   | { kind: 'text'; lines: Rect[]; width: number; height: number; unclear: boolean }
 
+/** A region of the camera picture in fractions of its size (0 to 1), so it fits the picture at any size. */
+export interface Region {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/** Where the frosted pane rests before any text is found: the middle of the picture, so nothing is readable yet. */
+export const RESTING_REGION: Region = { x: 0.1, y: 0.08, width: 0.8, height: 0.84 }
+
+/** One region around every line of text, padded by `pad` (a fraction of the picture), or null when there's no text. */
+export function textRegion(lines: readonly Rect[], size: { width: number; height: number }, pad = 0.03): Region | null {
+  if (lines.length === 0 || size.width <= 0 || size.height <= 0) return null
+  const clamp = (n: number) => Math.min(1, Math.max(0, n))
+  const x0 = clamp(Math.min(...lines.map((l) => l.x)) / size.width - pad)
+  const y0 = clamp(Math.min(...lines.map((l) => l.y)) / size.height - pad)
+  const x1 = clamp(Math.max(...lines.map((l) => l.x + l.width)) / size.width + pad)
+  const y1 = clamp(Math.max(...lines.map((l) => l.y + l.height)) / size.height + pad)
+  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 }
+}
+
+/**
+ * Moves the pane one animation frame toward `target`, each edge on its own: an edge that must move outward to cover
+ * more text moves fast (`grow`, the time constant in ms), one moving inward moves slowly (`shrink`), so new text is
+ * covered at once and the pane never flickers open.
+ */
+export function stepRegion(current: Region, target: Region, dtMs: number, tau = { grow: 90, shrink: 450 }): Region {
+  const ease = (from: number, to: number, outward: boolean) => from + (to - from) * (1 - Math.exp(-Math.max(0, dtMs) / (outward ? tau.grow : tau.shrink)))
+  const left = ease(current.x, target.x, target.x < current.x)
+  const top = ease(current.y, target.y, target.y < current.y)
+  const right = ease(current.x + current.width, target.x + target.width, target.x + target.width > current.x + current.width)
+  const bottom = ease(current.y + current.height, target.y + target.height, target.y + target.height > current.y + current.height)
+  return { x: left, y: top, width: right - left, height: bottom - top }
+}
+
 /** The one line under the camera preview. */
 export function liveHint(view: LiveView): string {
   switch (view.kind) {

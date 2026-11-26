@@ -27,6 +27,8 @@ import {
   hiddenByCategory,
   liveHint,
   resultHeadline,
+  stepRegion,
+  textRegion,
 } from './scan.ts'
 
 const domError = (name: string) => Object.assign(new Error(name), { name })
@@ -245,5 +247,36 @@ describe('result screen', () => {
     assert.equal(resultHeadline({ ...base, hidden: 0 }).title, 'Nothing private found')
     assert.equal(resultHeadline({ ...base, unclear: true }).title, 'Check this copy before you share it')
     assert.equal(resultHeadline({ ...base, noCopy: true, unclear: true }).title, 'No safe copy yet')
+  })
+})
+
+describe('frosted pane', () => {
+  it('covers every line with one padded region, in fractions of the picture', () => {
+    const lines = [
+      { x: 100, y: 50, width: 300, height: 20 },
+      { x: 80, y: 90, width: 500, height: 20 },
+    ]
+    const r = textRegion(lines, { width: 1000, height: 500 }, 0.02)
+    assert.ok(r)
+    assert.equal(r.x.toFixed(3), '0.060')
+    assert.equal(r.y.toFixed(3), '0.080')
+    assert.equal((r.x + r.width).toFixed(3), '0.600')
+    assert.equal((r.y + r.height).toFixed(3), '0.240')
+    assert.equal(textRegion([], { width: 1000, height: 500 }), null)
+  })
+
+  it('grows fast and shrinks slowly, edge by edge', () => {
+    const now = { x: 0.3, y: 0.3, width: 0.4, height: 0.4 }
+    // The target is wider on the left (grow) and shorter at the bottom (shrink).
+    const target = { x: 0.1, y: 0.3, width: 0.6, height: 0.2 }
+    const next = stepRegion(now, target, 50)
+    const leftMoved = now.x - next.x
+    const bottomMoved = now.y + now.height - (next.y + next.height)
+    assert.ok(leftMoved > 0 && bottomMoved > 0)
+    assert.ok(leftMoved / 0.2 > 3 * (bottomMoved / 0.2), 'the growing edge covers ground several times faster')
+    // Given time, it arrives.
+    let r = now
+    for (let i = 0; i < 200; i++) r = stepRegion(r, target, 16)
+    assert.ok(Math.abs(r.x - 0.1) < 1e-3 && Math.abs(r.y + r.height - 0.5) < 1e-3)
   })
 })
