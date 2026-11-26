@@ -15,6 +15,7 @@
 import { cloudModel, ensureSignedIn, getDraftingModel } from '../firebase'
 import { whenPolicyReady } from '../policy.ts'
 import { SendBlockedError } from './errors.ts'
+import type { UsageEvent } from './usage.ts'
 import { sendBlockReason } from './guard.ts'
 import { generateLogged } from './inference.ts'
 import { restore } from './placeholders.ts'
@@ -35,6 +36,8 @@ export interface DraftResult {
   restoredDraft: string
   warnings: string[]
   receipt: CloudReceipt
+  /** What this draft used and what it would cost on the paid tier (token counts and money; never any text). */
+  usage?: UsageEvent
 }
 
 /** Where the counts-only send log goes. Default: Firestore. `null` turns logging off (used by /eval). */
@@ -132,7 +135,7 @@ async function sendDraft(redaction: RedactionResult, templateId: TemplateId, opt
   // 2. Cloud draft from redacted text (or restrictions) only. The local receipt is saved first.
   await ensureSignedIn()
   const model = cloudModel() // read once: the call and the receipts must name the same model
-  const { text: cloudText, source } = await recordedCall(
+  const { text: cloudText, source, usage } = await recordedCall(
     options.store ?? indexedReceiptStore,
     { name: 'draft', model, sentText: prompt },
     () => generateLogged('draft', getDraftingModel(model), prompt),
@@ -161,5 +164,5 @@ async function sendDraft(redaction: RedactionResult, templateId: TemplateId, opt
   // Not awaited: the person gets the draft without waiting for the log.
   void logSend(options.logSend, redaction, { blocked: false, model, steps })
 
-  return { draftWithPlaceholders: cloudText, restoredDraft, warnings: checked.warnings, receipt }
+  return { draftWithPlaceholders: cloudText, restoredDraft, warnings: checked.warnings, receipt, usage: usage ?? undefined }
 }

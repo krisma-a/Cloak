@@ -3139,3 +3139,256 @@
   outline: 3px solid var(--teal);
   outline-offset: 2px;
 }
+
+/* ---------- What drafts cost ---------- */
+
+/* "Cost" in the header sits just before the AI pill, pushed to the right with it. */
+.cloak-app .top .brand {
+  margin-right: auto;
+}
+
+.cloak-app .top-link {
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--teal);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.cloak-app .link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--teal);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.cloak-app .cost-line {
+  margin: 14px 0 0;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.cloak-app .cost-line strong {
+  color: var(--text);
+}
+
+.cloak-app .cost-dialog {
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 24px 60px rgba(31, 42, 46, 0.28);
+  overflow: auto;
+}
+
+.cloak-app .cost-dialog::backdrop {
+  background: rgba(31, 42, 46, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.cloak-app .cost-dialog[open] {
+  animation: phone-dialog-in 0.18s ease-out;
+}
+
+.cloak-app .cost-body {
+  padding: 20px 24px 20px;
+}
+
+.cloak-app .cost-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.cloak-app .cost-head h3 {
+  margin: 0;
+  font-size: 21px;
+  letter-spacing: -0.01em;
+}
+
+/* The receipt: dotted leaders join each line to its amount, and a double rule sets off the total. */
+.cloak-app .receipt {
+  padding: 16px 18px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: #fffefb;
+}
+
+.cloak-app .receipt h4 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.cloak-app .receipt-lines {
+  margin: 0;
+}
+
+.cloak-app .receipt-line {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 5px 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cloak-app .receipt-line dt {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  align-items: baseline;
+  min-width: 0;
+}
+
+/* the leader: dots filling the gap between the words and the amount */
+.cloak-app .receipt-line dt::after {
+  content: '';
+  flex: 1;
+  min-width: 16px;
+  align-self: flex-end;
+  margin-bottom: 5px;
+  border-bottom: 2px dotted #cfc8bd;
+  order: 3;
+}
+
+.cloak-app .receipt-tokens {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.cloak-app .receipt-line dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.cloak-app .receipt-line.is-total {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 3px double var(--text-2);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.cloak-app .receipt-line.is-total dd {
+  color: var(--teal-dark);
+}
+
+.cloak-app .receipt-note {
+  margin: 10px 0 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.cloak-app .cost-section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.cloak-app .cost-section h4 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.cloak-app .cost-empty,
+.cloak-app .cost-small {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cloak-app .cost-small {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.cloak-app .cost-figures {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.cloak-app .cost-bars {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 44px;
+}
+
+.cloak-app .cost-bars span {
+  flex: 1;
+  max-width: 22px;
+  min-height: 4px;
+  border-radius: 3px 3px 0 0;
+  background: var(--teal);
+  opacity: 0.8;
+}
+
+.cloak-app .cost-plan {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 15px;
+}
+
+.cloak-app .cost-plan input {
+  width: 74px;
+  min-height: 40px;
+  padding: 4px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.cloak-app .cost-plan input:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 2px;
+}
+
+.cloak-app .cost-plan strong {
+  color: var(--teal-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.cloak-app .cost-foot {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+@media (max-width: 520px) {
+  .cloak-app .cost-body {
+    padding: 16px 16px 16px;
+  }
+
+  .cloak-app .receipt-line dt {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloak-app .cost-dialog[open] { animation: none; }
+}

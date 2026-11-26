@@ -1,3 +1,5 @@
+import { formatUsd } from './draftCost.ts'
+import type { DraftCost } from './draftCost.ts'
 import { accommodationBlockReason } from '../ai/restrictionPrompt.ts'
 import { TEMPLATES } from '../ai/templates.ts'
 import { WhereChip } from './icons.tsx'
@@ -24,6 +26,11 @@ interface StepGenerateProps {
   error: string | null
   onBack: () => void
   onWrite: () => void
+  /** About what this draft will cost, shown next to the button. Null when it can't be worked out yet. */
+  estimate?: DraftCost | null
+  /** Real AI sends the text to the cloud; Demo doesn't, and says so. */
+  realAi?: boolean
+  onShowCost?: () => void
 }
 
 export function StepGenerate({
@@ -44,6 +51,9 @@ export function StepGenerate({
   error,
   onBack,
   onWrite,
+  estimate = null,
+  realAi = false,
+  onShowCost,
 }: StepGenerateProps) {
   const template = TEMPLATES[templateId]
   const sendsRestrictions = template.input === 'restrictions'
@@ -190,6 +200,21 @@ export function StepGenerate({
       {error && (
         <p className="notice warn" role="alert">
           {error}
+        </p>
+      )}
+
+      {estimate && (
+        <p className="cost-line">
+          {realAi ? 'Estimated cost: ' : 'Demo draft: nothing is sent. A real one would cost about '}
+          <strong>{formatUsd(estimate.costUsd)}</strong> on a paid plan ($0.00 on the free tier).
+          {onShowCost && (
+            <>
+              {' '}
+              <button type="button" className="link-btn" onClick={onShowCost}>
+                See what drafts cost
+              </button>
+            </>
+          )}
         </p>
       )}
 

@@ -2,10 +2,9 @@
 // The screens import everything AI-related from here, and nothing else.
 //
 // Redaction is REAL: it runs the on-device engine from src/ai/redact.ts, on this laptop only.
-// Restrictions and drafting are still the placeholders from fakeAi.ts, so nothing is sent anywhere.
+// Drafting is Demo or Real AI (see below).
 
 import type { AiStage } from './aiStatus.ts'
-import type { RedactionResult } from './types.ts'
 
 /** What the screen can find out and do while the notes are being hidden. All optional. */
 export interface RedactHooks {
@@ -27,13 +26,62 @@ export interface RedactHooks {
   basicOnly?: boolean
 }
 
-export { suggestRestrictions, writeDraft, SendBlockedError } from './fakeAi.ts'
+// Drafting has two modes, switched at run time so the team can test the real AI without a new build:
+//   Demo (the default): the placeholder draft from fakeAi.ts. Nothing is sent anywhere.
+//   Real AI: src/ai/draft.ts. After the guard and the person's approval, the placeholder text (never the real details,
+//   never a photo) goes to Gemini in the cloud. It uses the free-tier quota the team shares, so it can answer 429.
+// The choice is kept in this browser (localStorage cloak.realAi). A link ending ?ai=real or ?ai=demo sets it too.
+// To make Real AI the default for everyone, change DEFAULT_REAL_AI below to true.
 
-/**
- * True while drafting is still the placeholder (nothing is sent anywhere). The header pill's tooltip says so.
- * Set to false when the real drafting is connected (see below).
- */
-export const DEMO_MODE = true
+import { SendBlockedError } from '../ai/errors.ts'
+import * as demo from './fakeAi.ts'
+import type { AccommodationPlan, DraftResult, RedactionResult, TemplateId } from './types.ts'
+
+export { SendBlockedError }
+
+const DEFAULT_REAL_AI = false
+const REAL_AI_KEY = 'cloak.realAi'
+
+/** Whether drafting goes to the real cloud model (true) or the placeholder (false) in this browser. */
+export function realAiEnabled(storage: Pick<Storage, 'getItem'> | undefined = globalThis.localStorage): boolean {
+  try {
+    const saved = storage?.getItem(REAL_AI_KEY)
+    return saved === 'on' ? true : saved === 'off' ? false : DEFAULT_REAL_AI
+  } catch {
+    return DEFAULT_REAL_AI
+  }
+}
+
+export function setRealAi(on: boolean, storage: Pick<Storage, 'setItem'> | undefined = globalThis.localStorage): void {
+  try {
+    storage?.setItem(REAL_AI_KEY, on ? 'on' : 'off')
+  } catch {
+    // Not remembered: the choice applies until the page reloads.
+  }
+}
+
+/** Reads ?ai=real or ?ai=demo from the address and saves it, so a teammate can send a link that sets the mode. */
+export function applyAiParam(search: string = globalThis.location?.search ?? ''): void {
+  const value = new URLSearchParams(search).get('ai')
+  if (value === 'real') setRealAi(true)
+  else if (value === 'demo') setRealAi(false)
+}
+
+/** Work restrictions for the manager email. Real: Gemini Nano on this laptop (needs Chrome with the private AI). */
+export async function suggestRestrictions(redaction: RedactionResult) {
+  if (!realAiEnabled()) return demo.suggestRestrictions(redaction)
+  return (await import('../ai/restrict.ts')).deriveRestrictions(redaction)
+}
+
+/** Writes the draft. Real mode sends the placeholder text to the cloud model; Demo sends nothing. */
+export async function writeDraft(
+  redaction: RedactionResult,
+  templateId: TemplateId,
+  options: { approved: boolean; accommodation?: AccommodationPlan },
+): Promise<DraftResult> {
+  if (!realAiEnabled()) return demo.writeDraft(redaction, templateId, options)
+  return (await import('../ai/draft.ts')).draft(redaction, templateId, options)
+}
 
 // The redaction code pulls in Firebase, so it loads in the background as soon as the app starts instead of
 // being part of the first screen. By the time someone clicks "Hide private details" it is already here, which
@@ -119,15 +167,3 @@ export async function redactNotes(
   hooks.onEngine?.(first.engine)
   return redact(notes, { engine: first.engine })
 }
-
-// ---------------------------------------------------------------------------------------------
-// TO CONNECT THE REAL DRAFTING (ask Pam to check this first):
-//
-// 1. Delete the `export { ... } from './fakeAi.ts'` line above.
-// 2. Paste this in its place:
-//
-//    export { deriveRestrictions as suggestRestrictions } from '../ai/restrict'
-//    export { draft as writeDraft, SendBlockedError } from '../ai/draft'
-//
-// 3. Set DEMO_MODE to false.
-// ---------------------------------------------------------------------------------------------

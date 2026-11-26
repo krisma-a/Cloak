@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { TEMPLATES } from './ai/templates.ts'
-import { DEMO_MODE, privateAiSupported, redactNotes, SendBlockedError, suggestRestrictions, writeDraft } from './workspace/ai.ts'
+import { buildDraftPrompt, buildManagerPrompt, TEMPLATES } from './ai/templates.ts'
+import type { UsageEvent } from './ai/usage.ts'
+import { applyAiParam, privateAiSupported, realAiEnabled, redactNotes, SendBlockedError, setRealAi, suggestRestrictions, writeDraft } from './workspace/ai.ts'
 import {
   downloadLabel,
   INITIAL_AI_STATE,
@@ -21,6 +22,8 @@ import { StepResult } from './workspace/StepResult.tsx'
 import { StepReview } from './workspace/StepReview.tsx'
 import { StepScan } from './workspace/StepScan.tsx'
 import { StepStart } from './workspace/StepStart.tsx'
+import { CostDialog } from './workspace/CostDialog.tsx'
+import { addDraftRecord, estimateDraftCost } from './workspace/draftCost.ts'
 import { SpecsNotice } from './workspace/SpecsNotice.tsx'
 import { markSpecsSeen, shouldShowSpecs, specsSeen } from './workspace/specs.ts'
 import type { DeviceInfo } from './workspace/specs.ts'
@@ -71,6 +74,19 @@ export default function App() {
   const [checkMode, setCheckMode] = useState<CheckMode>(() => loadCheckMode())
   // Whether this browser could run the private AI at all. False: basic checks are the only option, so no choice is shown.
   const [nanoPossible, setNanoPossible] = useState<boolean | null>(null)
+  // Drafting mode (Demo or Real AI) and the cost of the last draft; see workspace/ai.ts and CostDialog.
+  const [realAi, setRealAiState] = useState(() => {
+    applyAiParam()
+    return realAiEnabled()
+  })
+  const [costOpen, setCostOpen] = useState(false)
+  const [lastCost, setLastCost] = useState<{ usage: UsageEvent; demo: boolean } | null>(null)
+  const [costVersion, setCostVersion] = useState(0)
+  function chooseRealAi(on: boolean) {
+    setRealAi(on)
+    setRealAiState(on)
+  }
+
   // The one-time "Cloak runs best on…" notice for slower or unsupported setups, once we know what this device can do.
   const [specsDismissed, setSpecsDismissed] = useState(() => specsSeen())
   const device = deviceInfo(nanoPossible)
@@ -221,6 +237,13 @@ export default function App() {
         accommodation: TEMPLATES[templateId].input === 'restrictions' ? { employee, restrictions } : undefined,
       })
       setDraftResult(result)
+      if (result.usage) {
+        // The cost is kept on this laptop (numbers only), so "What drafts cost" can show the history.
+        const demo = !realAi
+        addDraftRecord({ ...result.usage, at: Date.now(), demo })
+        setLastCost({ usage: result.usage, demo })
+        setCostVersion((n) => n + 1)
+      }
       setStep('result')
     } catch (error) {
       if (error instanceof SendBlockedError) {
@@ -259,6 +282,8 @@ export default function App() {
   }
 
   const result = base ? outgoing(base, kept) : null
+  // About what the draft will cost: the length of the prompt that would be sent (placeholders only).
+  const estimate = result ? estimateDraftCost(promptLength(result.redactedText, templateId, employee, restrictionsText)) : null
   const onStartScreens = step === 'start' || step === 'scan'
 
   return (
@@ -270,12 +295,15 @@ export default function App() {
             Cloak
             {onStartScreens ? null : <span className="brand-sub">Case workspace</span>}
           </h1>
+          <button type="button" className="top-link" onClick={() => setCostOpen(true)} aria-haspopup="dialog">
+            Cost
+          </button>
           {/* Always in the page, so a change of mode is announced. Shows the real mode of the AI that checks notes. */}
           <span className="ai-slot" role="status">
             {!onStartScreens && ai.mode !== null && (
               <span
                 className={`ai-pill is-${ai.mode}${ai.mode === 'basic' && ai.background ? ' is-background' : ''}`}
-                title={`${pillHelp(ai)}${DEMO_MODE ? ' Drafts are still placeholders in this build, and nothing is sent anywhere.' : ''}`}
+                title={`${pillHelp(ai)}${realAi ? '' : ' Drafting is in demo mode: placeholders only, and nothing is sent anywhere.'}`}
               >
                 {PILL_TEXT[ai.mode]}
               </span>
@@ -373,6 +401,9 @@ export default function App() {
               error={writeError}
               onBack={() => goTo('review')}
               onWrite={writeTheDraft}
+              estimate={estimate}
+              realAi={realAi}
+              onShowCost={() => setCostOpen(true)}
             />
           )}
 
@@ -385,10 +416,13 @@ export default function App() {
               templateId={templateId}
               onBack={() => goTo('generate')}
               onStartOver={startOver}
+              cost={lastCost}
+              onShowCost={() => setCostOpen(true)}
             />
           )}
         </main>
       </div>
+      <CostDialog open={costOpen} onClose={() => setCostOpen(false)} last={lastCost} realAi={realAi} onRealAiChange={chooseRealAi} version={costVersion} />
       <SpecsNotice
         open={specsOpen}
         device={device}
@@ -422,4 +456,12 @@ function deviceInfo(privateAi: boolean | null): DeviceInfo {
     memoryGb: nav.deviceMemory,
     privateAi,
   }
+}
+
+/** The length of the prompt that would go to the cloud, for the cost estimate. */
+function promptLength(redactedText: string, templateId: TemplateId, employee: string, restrictionsText: string): number {
+  if (TEMPLATES[templateId].input === 'restrictions') {
+    return buildManagerPrompt(employee, restrictionsText.split('\n').map((line) => line.trim()).filter(Boolean)).length
+  }
+  return buildDraftPrompt(redactedText, templateId).length
 }

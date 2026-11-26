@@ -3,18 +3,19 @@
 // Each call also saves a usage record (usage.ts): token counts and the paid-tier price, never any text.
 
 import type { GenerativeModel } from 'firebase/ai'
-import { buildUsageEvent, usageOrigin, type UsageInput } from './usage.ts'
+import { buildUsageEvent, usageOrigin, type UsageEvent, type UsageInput } from './usage.ts'
 
 export interface Generated {
   text: string
   /** Where the SDK says this call ran. "unknown" if the SDK didn't report it. */
   source: string
+  /** What the call used and cost (token counts and the paid-tier price; never any text). Null for an unlisted label. */
+  usage: UsageEvent | null
 }
 
 /** Best effort and never awaited: a usage record that can't be saved never slows or breaks a call. */
-async function recordUsage(input: UsageInput): Promise<void> {
+async function recordUsage(event: UsageEvent | null): Promise<void> {
   try {
-    const event = buildUsageEvent(input)
     if (!event) return
     // Loaded on demand, so Firestore stays out of the first page load.
     await (await import('./usageStore.ts')).saveUsageEvent(event)
@@ -28,7 +29,7 @@ export async function generateLogged(label: string, model: GenerativeModel, prom
   const source = result.response.inferenceSource ?? 'unknown'
   console.info(`[inference] ${label}: ${source}`)
   const text = result.response.text().trim()
-  void recordUsage({
+  const input: UsageInput = {
     label,
     model: model.model,
     source,
@@ -36,6 +37,8 @@ export async function generateLogged(label: string, model: GenerativeModel, prom
     promptChars: prompt.length,
     outputChars: text.length,
     origin: usageOrigin(),
-  })
-  return { text, source }
+  }
+  const usage = buildUsageEvent(input)
+  void recordUsage(usage)
+  return { text, source, usage }
 }
