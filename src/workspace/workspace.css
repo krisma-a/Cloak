@@ -2011,6 +2011,221 @@
   opacity: 1;
 }
 
+/* ---------- Capture: safety note, camera choice, phone as camera ---------- */
+
+.cloak-app .scan-advice {
+  margin: 0 0 14px;
+}
+
+.cloak-app .scan-advice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Under the preview: what the live view sees on the left, the camera tools on the right. */
+.cloak-app .scan-under {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.cloak-app .scan-under .scan-live-hint {
+  flex: 1 1 260px;
+  margin: 0;
+}
+
+.cloak-app .scan-camera-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.cloak-app .scan-camera-pick {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.cloak-app .scan-camera-pick select {
+  max-width: 240px;
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.cloak-app .scan-phone-toggle {
+  min-height: 36px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--teal);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.cloak-app .scan-phone-toggle[aria-expanded='true'] {
+  text-decoration-style: dotted;
+}
+
+.cloak-app .scan-camera-pick select:focus-visible,
+.cloak-app .scan-phone-toggle:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 2px;
+}
+
+/* The ways to use a phone, as a ladder ranked by safety: the rail and its markers show the order. */
+.cloak-app .phone-panel {
+  margin-top: 16px;
+  padding: 18px 20px 6px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fffefb;
+}
+
+.cloak-app .phone-panel h3 {
+  margin: 0 0 14px;
+  font-size: 17px;
+}
+
+.cloak-app .phone-ladder {
+  position: relative;
+  margin: 0;
+  padding: 0 0 0 30px;
+  list-style: none;
+}
+
+/* The rail: teal where it's safe, fading to amber at the one to avoid. */
+.cloak-app .phone-ladder::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 22px;
+  left: 7px;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(var(--teal) 0%, var(--teal) 55%, #9cc9c2 78%, #d9a441 100%);
+}
+
+.cloak-app .rung {
+  position: relative;
+  padding-bottom: 16px;
+}
+
+.cloak-app .rung::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: -29px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.cloak-app .rung.is-safest::before { background: var(--teal); }
+.cloak-app .rung.is-ok::before { background: #9cc9c2; }
+.cloak-app .rung.is-avoid::before { background: #d9a441; }
+
+.cloak-app .rung-rank {
+  margin: 0;
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cloak-app .rung.is-ok .rung-rank { color: var(--text-2); }
+.cloak-app .rung.is-avoid .rung-rank { color: var(--amber-text); }
+
+.cloak-app .rung h4 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.cloak-app .rung p {
+  max-width: 66ch;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.cloak-app .rung.is-avoid h4 {
+  color: var(--amber-text);
+}
+
+.cloak-app .phone-os-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.cloak-app .phone-os {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--teal-soft);
+}
+
+.cloak-app .phone-os h5 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.cloak-app .phone-os ol {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cloak-app .phone-os li + li {
+  margin-top: 4px;
+}
+
+.cloak-app .rung p.phone-small {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.cloak-app .phone-find {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+@media (max-width: 560px) {
+  .cloak-app .scan-camera-tools {
+    margin-left: 0;
+  }
+
+  .cloak-app .phone-panel {
+    padding: 16px 14px 4px;
+  }
+}
+
 /* ---------- Result: check the copy ---------- */
 
 .cloak-app .scan-result {

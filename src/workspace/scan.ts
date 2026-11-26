@@ -93,6 +93,110 @@ export function isPhone(info: { mobile?: boolean; userAgent: string; coarsePoint
   return /Android|iPhone|iPad|iPod|Mobile/i.test(info.userAgent) || (info.coarsePointer && /Macintosh/i.test(info.userAgent))
 }
 
+// ---------- Browser and cameras ----------
+
+export type Platform = 'mac' | 'windows' | 'other'
+
+/** Which computer this is, for showing the matching phone-camera steps first. */
+export function platformOf(userAgent: string, platform = ''): Platform {
+  const both = `${platform} ${userAgent}`
+  if (/Mac/i.test(both) && !/iPhone|iPad|iPod/i.test(both)) return 'mac'
+  if (/Win/i.test(both)) return 'windows'
+  return 'other'
+}
+
+/** Google Chrome itself (not Edge, Brave, Opera or another Chromium browser), where Cloak's private AI can run. */
+export function isChromeBrowser(info: { brands?: ReadonlyArray<{ brand: string }>; userAgent: string }): boolean {
+  if (info.brands && info.brands.length > 0) return info.brands.some((b) => b.brand === 'Google Chrome')
+  return /Chrome\/\d/.test(info.userAgent) && !/Edg\/|OPR\/|Brave|SamsungBrowser|YaBrowser|Vivaldi/.test(info.userAgent)
+}
+
+/** A short note above the camera when this setup is less safe than Chrome on a laptop, or null when it's the safe one. */
+export interface BrowserAdvice {
+  title: string
+  body: string
+  /** Offer the "Use your phone as the camera" panel from the note. */
+  phoneTip: boolean
+  /** Offer to copy Cloak's address, to open it in Chrome. */
+  copyLink: boolean
+}
+
+export function browserAdvice(setup: {
+  chrome: boolean
+  phone: boolean
+  /** Whether Cloak's private AI (Gemini Nano) can run here: null while still checking. */
+  privateAi: boolean | null
+}): BrowserAdvice | null {
+  if (setup.privateAi === true) return null
+  if (setup.phone) {
+    return {
+      title: 'Phones get basic checks',
+      body: 'On a phone, Cloak can’t run its private AI, so photos get basic checks, which catch fewer names. For the safest photo, use your phone as the camera for Chrome on a laptop.',
+      phoneTip: true,
+      copyLink: false,
+    }
+  }
+  if (!setup.chrome) {
+    return {
+      title: 'For the safest photos, use Chrome',
+      body: 'In this browser, Cloak can’t run its private AI, so photos get basic checks, which catch fewer names. Open Cloak in Chrome on a laptop.',
+      phoneTip: false,
+      copyLink: true,
+    }
+  }
+  if (setup.privateAi === false) {
+    return {
+      title: 'This laptop gets basic checks',
+      body: 'Chrome here can’t run Cloak’s private AI (it needs a recent Chrome and enough memory and disk), so photos get basic checks, which catch fewer names. Check each photo carefully.',
+      phoneTip: false,
+      copyLink: false,
+    }
+  }
+  return null
+}
+
+/** One camera to choose from. The label stays on this device. */
+export interface CameraChoice {
+  id: string
+  label: string
+  phone: boolean
+}
+
+const PHONE_CAMERA = /iPhone|iPad|Continuity|Desk View|Android|Pixel|Galaxy|Phone/i
+
+/** The cameras to offer, from enumerateDevices(): video inputs only, once each, with a readable label. */
+export function cameraChoices(devices: ReadonlyArray<{ kind: string; deviceId: string; label: string }>): CameraChoice[] {
+  const seen = new Set<string>()
+  const choices: CameraChoice[] = []
+  for (const device of devices) {
+    if (device.kind !== 'videoinput' || !device.deviceId || seen.has(device.deviceId)) continue
+    seen.add(device.deviceId)
+    const phone = PHONE_CAMERA.test(device.label)
+    const name = device.label.trim() || `Camera ${choices.length + 1}`
+    choices.push({ id: device.deviceId, label: phone && !/phone/i.test(name) ? `${name} (phone)` : name, phone })
+  }
+  return choices
+}
+
+const CAMERA_KEY = 'cloak.cameraId'
+
+/** The camera chosen last time in this browser (a convenience; it never leaves the device), or null. */
+export function loadCameraId(storage: Pick<Storage, 'getItem'> | undefined = globalThis.localStorage): string | null {
+  try {
+    return storage?.getItem(CAMERA_KEY) || null
+  } catch {
+    return null
+  }
+}
+
+export function saveCameraId(id: string, storage: Pick<Storage, 'setItem'> | undefined = globalThis.localStorage): void {
+  try {
+    storage?.setItem(CAMERA_KEY, id)
+  } catch {
+    // Not remembered; the choice still applies now.
+  }
+}
+
 // ---------- Files ----------
 
 export type FileKind = 'image' | 'pdf' | 'unsupported'

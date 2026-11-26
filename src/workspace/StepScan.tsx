@@ -6,6 +6,8 @@ import { LoadingCard } from './components.tsx'
 import { ScanIcon, WhereChip } from './icons.tsx'
 import {
   boxPercent,
+  browserAdvice,
+  cameraChoices,
   CAMERA_MESSAGES,
   containRect,
   RESTING_REGION,
@@ -17,22 +19,26 @@ import {
   fitWithin,
   hiddenByCategory,
   hiddenCountLabel,
+  isChromeBrowser,
   isPhone,
   labelBelow,
   liveHint,
+  loadCameraId,
   ocrFraction,
   pageList,
+  platformOf,
   readingLabel,
   readingProgress,
   redactedFileName,
   resultHeadline,
+  saveCameraId,
   UNREADABLE_MESSAGE,
   UNSUPPORTED_FILE_MESSAGE,
   unreadablePages,
   videoConstraints,
 } from './scan.ts'
-import type { CameraProblem, LiveView, Rect, Region, ScanBox } from './scan.ts'
-import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, previewLines, readText, warmUpPreview } from './scanAi.ts'
+import type { CameraChoice, CameraProblem, LiveView, Platform, Rect, Region, ScanBox } from './scan.ts'
+import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, previewLines, privateAiSupported, readText, warmUpPreview } from './scanAi.ts'
 
 // "Scan a document": take a photo or upload a photo or PDF, read the text ON THIS DEVICE, and show the original
 // next to a blacked-out copy. Pictures live in this tab's memory only (canvases and blob: URLs, freed on leaving).
@@ -103,13 +109,14 @@ const cameraApi = () => typeof navigator !== 'undefined' && typeof navigator.med
  * Runs the camera while the component using it is on screen, and turns it off (the light goes out) when it
  * leaves. `retry` asks again after a problem.
  */
-function useCamera() {
+function useCamera(deviceId: string | null, onMissing: () => void) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [state, setState] = useState<CameraState>(() =>
     cameraApi() ? { status: 'starting' } : { status: 'problem', problem: 'unsupported' },
   )
   const [attempt, setAttempt] = useState(0)
+  const [cameras, setCameras] = useState<CameraChoice[]>([])
 
   // A callback ref, because the <video> comes and goes (it isn't shown while there's a camera problem).
   const attachVideo = useCallback((element: HTMLVideoElement | null) => {
@@ -117,20 +124,43 @@ function useCamera() {
     show(element, streamRef.current)
   }, [])
 
+  /** The cameras on this device. Their names are only shown once the camera is allowed; they stay on this device. */
+  const refreshCameras = useCallback(async (): Promise<CameraChoice[]> => {
+    if (typeof navigator.mediaDevices?.enumerateDevices !== 'function') return []
+    const found = cameraChoices(await navigator.mediaDevices.enumerateDevices())
+    setCameras(found)
+    return found
+  }, [])
+
+  // A phone connected as a camera (Continuity Camera, Phone Link) shows up here without a reload.
+  useEffect(() => {
+    const media = navigator.mediaDevices
+    if (!media?.addEventListener) return
+    const update = () => void refreshCameras().catch(() => undefined)
+    media.addEventListener('devicechange', update)
+    return () => media.removeEventListener('devicechange', update)
+  }, [refreshCameras])
+
   useEffect(() => {
     if (!cameraApi()) return
     let cancelled = false
+    const video = { ...videoConstraints(onPhone()), ...(deviceId ? { deviceId: { exact: deviceId } } : {}) }
     navigator.mediaDevices
-      .getUserMedia({ video: videoConstraints(onPhone()), audio: false })
+      .getUserMedia({ video, audio: false })
       .then((media) => {
         if (cancelled) return stopStream(media) // left the screen while the browser was asking
         streamRef.current = media
         media.getVideoTracks()[0]?.addEventListener('ended', () => setState({ status: 'problem', problem: 'other' }))
         show(videoRef.current, media)
         setState({ status: 'live' })
+        void refreshCameras().catch(() => undefined)
       })
       .catch((error: unknown) => {
-        if (!cancelled) setState({ status: 'problem', problem: cameraProblem(error) })
+        if (cancelled) return
+        // The camera chosen last time isn't here any more (a phone that went away): use the default one instead.
+        const name = typeof error === 'object' && error !== null && 'name' in error ? String(error.name) : ''
+        if (deviceId && (name === 'OverconstrainedError' || name === 'NotFoundError')) return onMissing()
+        setState({ status: 'problem', problem: cameraProblem(error) })
       })
 
     return () => {
@@ -139,14 +169,14 @@ function useCamera() {
       streamRef.current = null
       show(videoRef.current, null)
     }
-  }, [attempt])
+  }, [attempt, deviceId, onMissing, refreshCameras])
 
   function retry() {
     setState(cameraApi() ? { status: 'starting' } : { status: 'problem', problem: 'unsupported' })
     setAttempt((n) => n + 1)
   }
 
-  return { videoRef, attachVideo, state, retry }
+  return { videoRef, attachVideo, state, retry, cameras, refreshCameras }
 }
 
 interface CaptureViewProps {
@@ -268,9 +298,135 @@ function useFrostPane(view: LiveView, pane: RefObject<HTMLDivElement | null>) {
   }, [pane])
 }
 
+/** What this browser is, for the safety note and the phone-camera steps. Read from the browser; nothing is stored. */
+function browserSetup(): { chrome: boolean; phone: boolean; platform: Platform } {
+  const nav = navigator as Navigator & { userAgentData?: { brands?: Array<{ brand: string }>; platform?: string } }
+  return {
+    chrome: isChromeBrowser({ brands: nav.userAgentData?.brands, userAgent: nav.userAgent }),
+    phone: onPhone(),
+    platform: platformOf(nav.userAgent, nav.userAgentData?.platform),
+  }
+}
+
+/**
+ * "Use your phone as the camera": the ways to do it, safest first. Connecting the phone as this laptop's camera is
+ * safest (the picture goes straight into Chrome here, where the private AI checks it, and nothing is saved on the
+ * phone); scanning on the phone itself is next (basic checks only); the phone's camera app is the one to avoid.
+ */
+function PhoneCameraPanel({ platform, onFind }: { platform: Platform; onFind: () => Promise<boolean> }) {
+  const [result, setResult] = useState<'found' | 'none' | null>(null)
+  const mac = (
+    <div className="phone-os" key="mac">
+      <h5>Mac and iPhone</h5>
+      <ol>
+        <li>Use the same Apple Account on both, with Wi-Fi and Bluetooth turned on.</li>
+        <li>Hold or mount your iPhone near the Mac, with its screen locked.</li>
+        <li>
+          Choose “iPhone Camera” in the Camera list. “Desk View” films a page lying flat on the desk.
+        </li>
+      </ol>
+    </div>
+  )
+  const windows = (
+    <div className="phone-os" key="windows">
+      <h5>Windows and Android</h5>
+      <ol>
+        <li>Connect your phone in the Phone Link app.</li>
+        <li>In Settings, open Bluetooth &amp; devices, then Mobile devices, and turn on using it as a connected camera.</li>
+        <li>Choose your phone in the Camera list.</li>
+      </ol>
+    </div>
+  )
+
+  return (
+    <section className="phone-panel" id="phone-camera" aria-labelledby="phone-camera-title">
+      <h3 id="phone-camera-title">Use your phone as the camera</h3>
+      <ol className="phone-ladder">
+        <li className="rung is-safest">
+          <p className="rung-rank">Safest</p>
+          <h4>Connect your phone as this laptop’s camera</h4>
+          <p>
+            The picture goes straight into Chrome on this laptop, where Cloak’s private AI checks it. Nothing is saved on your
+            phone.
+          </p>
+          <div className="phone-os-list">{platform === 'windows' ? [windows, mac] : [mac, windows]}</div>
+          <p className="phone-small">Menu names can differ a little between system versions.</p>
+          <div className="phone-find">
+            <button
+              type="button"
+              className="mini-btn"
+              onClick={async () => setResult((await onFind()) ? 'found' : 'none')}
+            >
+              Find my phone camera
+            </button>
+            {result && (
+              <span role="status">
+                {result === 'found' ? 'Phone camera found and selected.' : 'No phone camera yet. Check the steps above, then try again.'}
+              </span>
+            )}
+          </div>
+        </li>
+        <li className="rung is-ok">
+          <p className="rung-rank">Also safe</p>
+          <h4>Open Cloak on your phone</h4>
+          <p>
+            Go to <strong>{location.host}</strong> in your phone’s browser and scan there. The photo stays on your phone, but phones
+            get basic checks, which catch fewer names.
+          </p>
+        </li>
+        <li className="rung is-avoid">
+          <p className="rung-rank">Avoid</p>
+          <h4>Taking the photo with your phone’s camera app</h4>
+          <p>It saves the page to your camera roll, and your phone may back it up to the cloud before you can delete it.</p>
+        </li>
+      </ol>
+    </section>
+  )
+}
+
 /** The camera preview plus "Upload a photo or PDF". The camera runs only while this is on screen. */
 function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
-  const { videoRef, attachVideo, state, retry } = useCamera()
+  const [cameraId, setCameraId] = useState<string | null>(() => loadCameraId())
+  const forgetCamera = useCallback(() => setCameraId(null), [])
+  const { videoRef, attachVideo, state, retry, cameras, refreshCameras } = useCamera(cameraId, forgetCamera)
+  const [privateAi, setPrivateAi] = useState<boolean | null>(null)
+  const [phoneHelp, setPhoneHelp] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const setup = browserSetup()
+  const advice = browserAdvice({ chrome: setup.chrome, phone: setup.phone, privateAi })
+
+  useEffect(() => {
+    let current = true
+    privateAiSupported().then(
+      (ok) => current && setPrivateAi(ok),
+      () => current && setPrivateAi(false),
+    )
+    return () => {
+      current = false
+    }
+  }, [])
+
+  function chooseCamera(id: string) {
+    saveCameraId(id)
+    setCameraId(id)
+  }
+
+  /** "Find my phone camera": look again, and switch to a phone camera if one has appeared. */
+  async function findPhoneCamera() {
+    const found = await refreshCameras().catch(() => [] as CameraChoice[])
+    const phone = found.find((camera) => camera.phone)
+    if (phone && phone.id !== cameraId) chooseCamera(phone.id)
+    return Boolean(phone)
+  }
+
+  async function copyAddress() {
+    try {
+      await navigator.clipboard.writeText(location.origin)
+      setCopied(true)
+    } catch {
+      setCopied(false)
+    }
+  }
   const [videoReady, setVideoReady] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
 
@@ -304,6 +460,28 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
         Scan a document
       </h2>
       <p className="muted">Hold the page flat in good light. Cloak reads it on this device and blacks out the private details.</p>
+
+      {advice && (
+        <div className="notice warn scan-advice" role="note">
+          <p>
+            <strong>{advice.title}.</strong> {advice.body}
+          </p>
+          {(advice.copyLink || advice.phoneTip) && (
+            <div className="scan-advice-actions">
+              {advice.copyLink && (
+                <button type="button" className="mini-btn" onClick={copyAddress}>
+                  {copied ? 'Address copied' : 'Copy Cloak’s address'}
+                </button>
+              )}
+              {advice.phoneTip && (
+                <button type="button" className="mini-btn" onClick={() => setPhoneHelp(true)} aria-controls="phone-camera">
+                  Show me how
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {problem ? (
         <div className="notice warn scan-camera-problem" role="alert">
@@ -350,11 +528,41 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
         </div>
       )}
 
-      {!problem && canShoot && (
-        <p className={`scan-live-hint${live.kind === 'text' && live.unclear ? ' is-warn' : ''}`} role="status" aria-live="polite">
-          {liveHint(live)}
-        </p>
+      {!problem && (
+        <div className="scan-under">
+          {canShoot && (
+            <p className={`scan-live-hint${live.kind === 'text' && live.unclear ? ' is-warn' : ''}`} role="status" aria-live="polite">
+              {liveHint(live)}
+            </p>
+          )}
+          <div className="scan-camera-tools">
+            {cameras.length > 1 && (
+              <label className="scan-camera-pick">
+                <span>Camera</span>
+                <select value={cameraId && cameras.some((c) => c.id === cameraId) ? cameraId : ''} onChange={(event) => chooseCamera(event.target.value)}>
+                  {!cameras.some((c) => c.id === cameraId) && <option value="">Default camera</option>}
+                  {cameras.map((camera) => (
+                    <option key={camera.id} value={camera.id}>
+                      {camera.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <button
+              type="button"
+              className="scan-phone-toggle"
+              aria-expanded={phoneHelp}
+              aria-controls="phone-camera"
+              onClick={() => setPhoneHelp((open) => !open)}
+            >
+              Use your phone as the camera
+            </button>
+          </div>
+        </div>
       )}
+
+      {phoneHelp && <PhoneCameraPanel platform={setup.platform} onFind={findPhoneCamera} />}
 
       {fileError && (
         <p className="notice warn" role="alert">
