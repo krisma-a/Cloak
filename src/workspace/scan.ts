@@ -139,6 +139,90 @@ export function draftTextFromOcr(ocr: OcrResult, minConfidence = 50): string {
   return text.replace(/(?<=[\p{L}\p{N}._%+-])[ \t]*@[ \t]*(?=[\p{L}\p{N}])/gu, '@')
 }
 
+// ---------- Uploads ----------
+
+/** An iPhone HEIC/HEIF photo: Chrome can't open these, so the person needs to be told how to get a JPEG. */
+export function isHeic(type: string, name: string): boolean {
+  return /^image\/hei[cf]/i.test(type) || /\.hei[cf]$/i.test(name)
+}
+
+export const HEIC_TITLE = 'Chrome can’t open this photo format'
+export const HEIC_MESSAGE =
+  'This is an iPhone HEIC photo. On your iPhone, share it as a JPEG (Settings → Camera → Formats → Most Compatible makes this the default), or take a screenshot of it, then upload that.'
+
+export const PDF_UNSUPPORTED_TITLE = 'Cloak can’t open PDFs yet'
+export const PDF_UNSUPPORTED_MESSAGE =
+  'Open the PDF, take a screenshot or a photo of each page, and upload those pictures instead. They’re read the same way.'
+
+/** Thrown when a PDF is chosen but Cloak has no PDF reader (yet), so the screen can say so instead of faking pages. */
+export class PdfUnsupportedError extends Error {
+  override name = 'PdfUnsupportedError'
+  constructor() {
+    super(PDF_UNSUPPORTED_MESSAGE)
+  }
+}
+
+// ---------- Auto-capture ----------
+
+/** How long the page must stay steady and readable before the photo is taken. */
+export const AUTO_HOLD_MS = 1500
+/** The most any edge of the text area may move between looks and still count as steady (a fraction of the picture). */
+export const AUTO_STEADY_MOVE = 0.04
+/** A look older than this means the page is gone (the live view stopped seeing it). */
+export const AUTO_STALE_MS = 2500
+
+export interface AutoCaptureState {
+  /** Since when the page has been steady, or null when it isn't. */
+  since: number | null
+  /** Where the text area was at the last look. */
+  region: Region | null
+}
+
+export const AUTO_IDLE: AutoCaptureState = { since: null, region: null }
+
+/**
+ * One look of the live view, folded into the auto-capture state: the page counts when real text is found, it isn't
+ * hard to read, and the text area hasn't moved more than AUTO_STEADY_MOVE since the last look. Anything else resets the
+ * hold. Returns the new state.
+ */
+export function stepAutoCapture(state: AutoCaptureState, view: LiveView, now: number): AutoCaptureState {
+  if (view.kind !== 'text' || view.unclear) return AUTO_IDLE
+  const region = textRegion(view.lines, view)
+  if (!region) return AUTO_IDLE
+  const before = state.region
+  const steady =
+    before !== null &&
+    [region.x - before.x, region.y - before.y, region.x + region.width - (before.x + before.width), region.y + region.height - (before.y + before.height)].every(
+      (d) => Math.abs(d) <= AUTO_STEADY_MOVE,
+    )
+  return { since: steady && state.since !== null ? state.since : now, region }
+}
+
+/** How far through the hold we are (0 to 1) at `now`, given the last look at `looked`. 0 when the look is stale. */
+export function autoProgress(state: AutoCaptureState, now: number, looked: number, hold = AUTO_HOLD_MS): number {
+  if (state.since === null || now - looked > AUTO_STALE_MS) return 0
+  return Math.min(1, Math.max(0, (now - state.since) / hold))
+}
+
+const AUTO_KEY = 'cloak.autoCapture'
+
+/** Auto-capture is on unless the person turned it off (a convenience kept in this browser only). */
+export function loadAutoCapture(storage: Pick<Storage, 'getItem'> | undefined = globalThis.localStorage): boolean {
+  try {
+    return storage?.getItem(AUTO_KEY) !== 'off'
+  } catch {
+    return true
+  }
+}
+
+export function saveAutoCapture(on: boolean, storage: Pick<Storage, 'setItem'> | undefined = globalThis.localStorage): void {
+  try {
+    storage?.setItem(AUTO_KEY, on ? 'on' : 'off')
+  } catch {
+    // Not remembered; the choice still applies now.
+  }
+}
+
 // ---------- Blocked pages ----------
 
 /** Why a page got no copy (the same names as blackout's BlockedReason). */

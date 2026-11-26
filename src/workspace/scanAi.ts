@@ -19,15 +19,24 @@
 
 import { redactNotes } from './ai.ts'
 import { loadCheckMode } from './checkMode.ts'
+import { PdfUnsupportedError } from './scan.ts'
 import type { LiveView, OcrProgress, OcrResult, Rect, ScanBlockReason, ScanBox } from './scan.ts'
 
-export { pagesToPdf, pdfToPages } from './fakeScan.ts'
+export { pagesToPdf } from './fakeScan.ts'
+
+/**
+ * Opening a PDF needs a PDF reader, which Cloak doesn't have yet (it must be added as a package). Until then this says
+ * so, instead of the old placeholder that ignored the file and showed made-up pages.
+ */
+export async function pdfToPages(_file: File, _onProgress?: (fraction: number) => void): Promise<HTMLCanvasElement[]> {
+  throw new PdfUnsupportedError()
+}
 
 /** Whether Cloak's private AI (Gemini Nano) can run in this browser. Downloads nothing. */
 export { privateAiSupported } from './ai.ts'
 
 /** True while the PDF functions are the placeholders (made-up pages, whatever the file holds). The result screen says so. */
-export const PDF_DEMO = true
+export const PDF_DEMO = false
 
 /**
  * One page, blacked out. "blocked": a detail couldn't be hidden or placed, so there is no copy and the page can't be
