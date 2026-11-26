@@ -155,7 +155,11 @@ encoder: byte mode, level M, versions 1–10, so no outside QR service or librar
 the safer "use it as this laptop's camera" (Continuity Camera / Phone Link + Find my phone camera, which waits up to 10 s
 for the phone and picks a phone-named camera or one that wasn't there before, `pickPhoneCamera()`; on a miss it lists the
 cameras it can see). Never the phone's camera
-app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. "Draft a report" opens a review-first pop-up (what stays vs what is sent), then hands the page text
+app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. **Hide more** on the result screen lets the person black out what Cloak skipped: click a word (`wordAt()` on the stored OCR words)
+or drag a box (`boxFromCorners()`); boxes are painted onto the copy at once (so downloads have them), listed as "Hidden by you",
+undoable (the copy before hand-made boxes is kept in `baseRef`), and the words under them become `[HIDDEN]` in the text sent for
+drafting (`draftTextWithout()`). The live preview takes the camera's own shape (`--ratio`), as tall as the space left (the safety
+note sits below it), with an upright Letter outline (`paperGuide()`). When a phone's camera appears (a nearby iPhone via Continuity Camera, Phone Link…), a small prompt over the preview asks "Use phone camera instead?" (`phoneCameraToOffer()`: not on a phone, not already in use, once per camera per page visit after "Not now"). "Draft a report" opens a review-first pop-up (what stays vs what is sent), then hands the page text
 (cleaned of OCR noise by `draftTextFromOcr()`; memory only) to the normal note pipeline: hidden on this laptop → check-details screen → report type → send guard. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
 `redactedText` may ever be sent; never the image. Uploading a PDF draws each page (up to 30, ~150 dpi) with pdf.js in `src/camera/pdf.ts` (`pdfjs-dist`,
 Apache-2.0; its worker, standard fonts and JBIG2/JPEG 2000/colour wasm are served from our own `/pdf/` files by

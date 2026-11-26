@@ -20,6 +20,8 @@ export interface Rect {
 /** One blacked-out area and what kind of detail was under it. Never holds the hidden text. */
 export interface ScanBox extends Rect {
   category: Category
+  /** Added by the person ("Hide more"), not found by Cloak. */
+  manual?: boolean
 }
 
 // ---------- Camera ----------
@@ -373,6 +375,20 @@ export function pickPhoneCamera(before: readonly CameraChoice[], now: readonly C
   return now.find((camera) => camera.phone) ?? (before.length > 0 ? now.find((camera) => !known.has(camera.id)) : undefined) ?? null
 }
 
+/**
+ * The phone camera to offer ("Use phone camera instead?"): one is available, it isn't the camera in use, this isn't a
+ * phone itself, and the person hasn't already said "Not now" to it. null when there's nothing to offer.
+ */
+export function phoneCameraToOffer(
+  cameras: readonly CameraChoice[],
+  cameraId: string | null,
+  dismissed: ReadonlySet<string>,
+  onPhone: boolean,
+): CameraChoice | null {
+  if (onPhone) return null
+  return cameras.find((camera) => camera.phone && camera.id !== cameraId && !dismissed.has(camera.id)) ?? null
+}
+
 const CAMERA_KEY = 'cloak.cameraId'
 
 /** The camera chosen last time in this browser (a convenience; it never leaves the device), or null. */
@@ -478,7 +494,7 @@ export function liveHint(view: LiveView): string {
     case 'starting':
       return 'Getting ready to read the page…'
     case 'no-text':
-      return 'Point the camera at the page.'
+      return 'Hold the page upright and fit it inside the outline.'
     case 'text':
       return view.unclear
         ? 'Too hard to read from here. Move closer and hold the page flat.'
@@ -593,12 +609,83 @@ export function summarize(boxes: readonly ScanBox[]): Array<{ label: string; cou
 }
 
 /** The hidden details on one page, one row per category, most first, with the category kept so rows can light up boxes. */
-export function hiddenByCategory(boxes: readonly ScanBox[]): Array<{ category: Category; label: string; count: number }> {
-  const counts = new Map<Category, number>()
-  for (const box of boxes) counts.set(box.category, (counts.get(box.category) ?? 0) + 1)
+export function hiddenByCategory(boxes: readonly ScanBox[]): Array<{ category: Category | 'MANUAL'; label: string; count: number }> {
+  const counts = new Map<Category | 'MANUAL', number>()
+  for (const box of boxes) {
+    const key = box.manual ? 'MANUAL' : box.category
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
   return [...counts]
-    .map(([category, count]) => ({ category, label: CATEGORY_LABELS[category], count }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .map(([category, count]) => ({ category, label: category === 'MANUAL' ? 'Hidden by you' : CATEGORY_LABELS[category], count }))
+    .sort((a, b) => Number(a.category === 'MANUAL') - Number(b.category === 'MANUAL') || b.count - a.count || a.label.localeCompare(b.label))
+}
+
+// ---------- Hide more (the person blacks out what Cloak skipped) ----------
+
+/** The word under a point (image pixels), the smallest one if several overlap, or null. `slop` widens each word a little. */
+export function wordAt(words: readonly OcrWord[], x: number, y: number, slop = 3): number | null {
+  let best: number | null = null
+  let bestArea = Infinity
+  words.forEach((word, index) => {
+    if (x < word.x - slop || x > word.x + word.w + slop || y < word.y - slop || y > word.y + word.h + slop) return
+    const area = word.w * word.h
+    if (area < bestArea) {
+      best = index
+      bestArea = area
+    }
+  })
+  return best
+}
+
+/** A rectangle from two corners in any order, padded and kept inside the picture. null when it's too small to be on purpose. */
+export function boxFromCorners(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+  size: { width: number; height: number },
+  pad = 0,
+  min = 8,
+): Rect | null {
+  const x0 = Math.max(0, Math.floor(Math.min(a.x, b.x) - pad))
+  const y0 = Math.max(0, Math.floor(Math.min(a.y, b.y) - pad))
+  const x1 = Math.min(size.width, Math.ceil(Math.max(a.x, b.x) + pad))
+  const y1 = Math.min(size.height, Math.ceil(Math.max(a.y, b.y) + pad))
+  return x1 - x0 >= min && y1 - y0 >= min ? { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } : null
+}
+
+/** The indexes of words at least half covered by one of `boxes`. */
+export function coveredWords(words: readonly OcrWord[], boxes: readonly Rect[]): Set<number> {
+  const covered = new Set<number>()
+  words.forEach((word, index) => {
+    const area = word.w * word.h
+    if (area <= 0) return
+    for (const box of boxes) {
+      const w = Math.min(word.x + word.w, box.x + box.width) - Math.max(word.x, box.x)
+      const h = Math.min(word.y + word.h, box.y + box.height) - Math.max(word.y, box.y)
+      if (w > 0 && h > 0 && (w * h) / area >= 0.5) {
+        covered.add(index)
+        return
+      }
+    }
+  })
+  return covered
+}
+
+/**
+ * The page text for drafting with the words the person blacked out replaced by "[HIDDEN]" (one per run of hidden words),
+ * so what they hid by hand never reaches the draft. Only removes text.
+ */
+export function draftTextWithout(ocr: OcrResult, boxes: readonly Rect[]): string {
+  if (boxes.length === 0) return draftTextFromOcr(ocr)
+  const covered = coveredWords(ocr.words, boxes)
+  const words = ocr.words.map((word, index) => (covered.has(index) ? { ...word, text: '[HIDDEN]', confidence: 100 } : word))
+  return draftTextFromOcr({ text: '', words }).replace(/(?:\[HIDDEN\][ \t]*){2,}/g, '[HIDDEN] ').replace(/[ \t]+\n/g, '\n').trim()
+}
+
+/** The size of the "fit the page here" outline for a camera frame: an upright US Letter page inside it. */
+export function paperGuide(frame: { width: number; height: number }): { width: number; height: number } {
+  const ratio = 8.5 / 11
+  const height = Math.min(frame.height * 0.92, (frame.width * 0.94) / ratio)
+  return { width: Math.round(height * ratio), height: Math.round(height) }
 }
 
 /** The result screen's headline and the line under it: the outcome first, then what to do. */

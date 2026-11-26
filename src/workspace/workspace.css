@@ -1744,11 +1744,15 @@
 
 /* The live preview. "contain" shows the whole frame, which is exactly what "Take photo" keeps. */
 .cloak-app .scan-camera {
+  /* As tall as the screen allows, in the camera's own shape (--ratio is width / height), so a sheet of paper fills as
+     much of the picture as possible and there are no dark bars. */
+  --cam-max: clamp(240px, calc(100dvh - 340px), 780px);
   position: relative;
   flex: none;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  max-height: min(56vh, 560px);
+  width: min(100%, calc(var(--cam-max) * var(--ratio, 1.78)));
+  aspect-ratio: var(--ratio, 1.78);
+  max-height: var(--cam-max);
+  margin-inline: auto;
   border-radius: 20px;
   background: var(--label-bg);
   overflow: hidden;
@@ -1761,11 +1765,17 @@
   object-fit: contain;
 }
 
+/* The "fit the page here" outline: an upright Letter page, centred (its size is set from the frame's size). */
 .cloak-app .scan-guide {
   position: absolute;
-  inset: 8% 10%;
-  border: 2px dashed rgba(255, 255, 255, 0.7);
-  border-radius: 14px;
+  top: 50%;
+  left: 50%;
+  width: 70%;
+  height: 92%;
+  border: 2px dashed rgba(255, 255, 255, 0.75);
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
@@ -2006,7 +2016,7 @@
 /* ---------- Capture: safety note, camera choice, phone as camera ---------- */
 
 .cloak-app .scan-advice {
-  margin: 0 0 14px;
+  margin: 14px 0 0;
 }
 
 .cloak-app .scan-advice-actions {
@@ -2615,8 +2625,7 @@
   }
 
   .cloak-app .scan-camera {
-    aspect-ratio: 3 / 4;
-    max-height: 52vh;
+    --cam-max: clamp(240px, calc(100dvh - 380px), 620px);
   }
 }
 
@@ -3464,4 +3473,96 @@
 
 .cloak-app .mode-dialog {
   width: min(460px, calc(100vw - 32px));
+}
+
+/* ---------- Hide more: black out what was skipped ---------- */
+
+.cloak-app .scan-hide-more {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.cloak-app .scan-hide-more .scan-ledger-note {
+  margin: 0;
+}
+
+.cloak-app .scan-hide-more-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* While editing, the whole copy is shown: the handle and its tags get out of the way. */
+.cloak-app .scan-frame.is-editing .scan-wipe-handle,
+.cloak-app .scan-frame.is-editing .scan-wipe-line,
+.cloak-app .scan-frame.is-editing .scan-wipe-tag {
+  display: none;
+}
+
+.cloak-app .scan-edit {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+/* Every word that can be clicked, faintly outlined; the one under the pointer is lit. */
+.cloak-app .scan-edit-word {
+  position: absolute;
+  border: 1px solid rgba(15, 118, 110, 0.45);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.cloak-app .scan-edit-word.is-hover {
+  border-color: var(--teal);
+  background: rgba(15, 118, 110, 0.28);
+}
+
+.cloak-app .scan-edit-drag {
+  position: absolute;
+  border: 2px solid var(--teal);
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+/* A box the person added: black at once, before the saved picture catches up. */
+.cloak-app .scan-box.is-manual {
+  background: #000;
+}
+
+/* "Use phone camera instead?": a small prompt over the preview when a phone's camera becomes available. */
+.cloak-app .scan-offer {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  z-index: 4;
+  max-width: 420px;
+  margin-inline: auto;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: 0 8px 28px rgba(31, 42, 46, 0.35);
+}
+
+.cloak-app .scan-offer p {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.cloak-app .scan-offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cloak-app .scan-offer-actions .btn {
+  min-height: 40px;
+  padding: 0 18px;
 }

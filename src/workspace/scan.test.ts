@@ -25,9 +25,15 @@ import {
   videoConstraints,
   blockedMessage,
   browserAdvice,
+  phoneCameraToOffer,
   pickPhoneCamera,
   cameraChoices,
   autoProgress,
+  boxFromCorners,
+  coveredWords,
+  draftTextWithout,
+  paperGuide,
+  wordAt,
   containRect,
   HEIC_MESSAGE,
   PDF_LONG_SIDE,
@@ -243,7 +249,7 @@ describe('live preview', () => {
   })
 
   it('says one plain line for each state', () => {
-    assert.equal(liveHint({ kind: 'no-text' }), 'Point the camera at the page.')
+    assert.equal(liveHint({ kind: 'no-text' }), 'Hold the page upright and fit it inside the outline.')
     const line = { x: 0, y: 0, width: 1, height: 1 }
     assert.match(liveHint({ kind: 'text', lines: [line], width: 1, height: 1, unclear: false }), /^All text is blurred/)
     assert.match(liveHint({ kind: 'text', lines: [line], width: 1, height: 1, unclear: true }), /Move closer/)
@@ -493,5 +499,73 @@ describe('finding the phone camera', () => {
     assert.equal(pickPhoneCamera([laptop], [laptop, cam('c', 'Camera 4K Pro')])?.id, 'c')
     assert.equal(pickPhoneCamera([laptop], [laptop]), null)
     assert.equal(pickPhoneCamera([], [laptop]), null, 'with no earlier list, only a phone-named camera counts')
+  })
+})
+
+describe('hide more', () => {
+  // FAKE DATA: words laid out left to right on two lines.
+  const w = (text: string, x: number, y: number, width = 80) => ({ text, x, y, w: width, h: 20, line: y > 50 ? 1 : 0, confidence: 95 })
+  const words = [w('Met', 10, 10, 40), w('Jordan', 60, 10), w('Example', 150, 10), w('Called', 10, 80, 60), w('today', 80, 80, 60)]
+
+  it('finds the word under a point, with a little slop', () => {
+    assert.equal(wordAt(words, 100, 20), 1)
+    assert.equal(wordAt(words, 58, 20), 1, 'just outside the left edge still counts')
+    assert.equal(wordAt(words, 300, 300), null)
+  })
+
+  it('makes a padded, clamped box from two corners in any order, and ignores accidental tiny drags', () => {
+    assert.deepEqual(boxFromCorners({ x: 200, y: 100 }, { x: 100, y: 50 }, { width: 1000, height: 800 }, 4), { x: 96, y: 46, width: 108, height: 58 })
+    assert.deepEqual(boxFromCorners({ x: 2, y: 2 }, { x: 60, y: 30 }, { width: 50, height: 40 }, 4), { x: 0, y: 0, width: 50, height: 34 })
+    assert.equal(boxFromCorners({ x: 10, y: 10 }, { x: 12, y: 11 }, { width: 100, height: 100 }), null)
+  })
+
+  it('counts a word as covered when at least half of it is under a box', () => {
+    const covered = coveredWords(words, [{ x: 55, y: 5, width: 100, height: 30 }])
+    assert.deepEqual([...covered].sort(), [1], 'Jordan is inside; Example (150-230) is only 5% covered')
+    assert.deepEqual([...coveredWords(words, [{ x: 140, y: 5, width: 120, height: 30 }])], [2])
+  })
+
+  it('swaps covered words for [HIDDEN] in the draft text, one per run, and never adds other words', () => {
+    const ocr = { text: '', words }
+    assert.equal(draftTextWithout(ocr, []), 'Met Jordan Example\nCalled today')
+    assert.equal(draftTextWithout(ocr, [{ x: 55, y: 5, width: 200, height: 30 }]), 'Met [HIDDEN]\nCalled today')
+    const out = draftTextWithout(ocr, [{ x: 5, y: 75, width: 200, height: 30 }])
+    assert.ok(!/called|today/i.test(out))
+  })
+
+  it('counts boxes added by hand in their own row, last', () => {
+    const rows = hiddenByCategory([
+      { x: 0, y: 0, width: 1, height: 1, category: 'PERSON' },
+      { x: 0, y: 0, width: 1, height: 1, category: 'OTHER_ID', manual: true },
+      { x: 0, y: 0, width: 1, height: 1, category: 'OTHER_ID', manual: true },
+    ])
+    assert.deepEqual(rows.map((r) => [r.label, r.count]), [['Name', 1], ['Hidden by you', 2]])
+  })
+})
+
+describe('paper guide', () => {
+  it('fits an upright Letter page inside a landscape or a tall camera frame', () => {
+    const wide = paperGuide({ width: 1000, height: 600 })
+    assert.equal(wide.height, 552)
+    assert.ok(Math.abs(wide.width / wide.height - 8.5 / 11) < 0.01)
+    const tall = paperGuide({ width: 300, height: 900 })
+    assert.ok(tall.width <= 300 * 0.94 + 1, 'never wider than the frame')
+  })
+})
+
+describe('use phone camera instead?', () => {
+  const cams = cameraChoices([
+    { kind: 'videoinput', deviceId: 'lap', label: 'FaceTime HD Camera' },
+    { kind: 'videoinput', deviceId: 'ph', label: 'iPhone Camera' },
+  ])
+  it('offers a phone camera that is available and not in use', () => {
+    assert.equal(phoneCameraToOffer(cams, null, new Set(), false)?.id, 'ph')
+    assert.equal(phoneCameraToOffer(cams, 'lap', new Set(), false)?.id, 'ph')
+  })
+  it('stays quiet when the phone camera is already in use, was dismissed, is absent, or this is a phone', () => {
+    assert.equal(phoneCameraToOffer(cams, 'ph', new Set(), false), null)
+    assert.equal(phoneCameraToOffer(cams, null, new Set(['ph']), false), null)
+    assert.equal(phoneCameraToOffer(cams.slice(0, 1), null, new Set(), false), null)
+    assert.equal(phoneCameraToOffer(cams, null, new Set(), true), null)
   })
 })
