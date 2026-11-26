@@ -107,12 +107,50 @@ export function toggleKept(kept: readonly string[], placeholder: string): string
  * Uses the same code as the real redaction, so numbering and name parts behave the same.
  * Returns the same object when nothing changed.
  */
-export function hideText(base: RedactionResult, text: string, category: Category): RedactionResult {
+export function hideText(base: RedactionResult, text: string, category: Category, prefix?: string | null): RedactionResult {
   const target = text.trim()
   if (target.length < 2) return base
   const { text: redactedText, map } = applyEntities(base.redactedText, [{ text: target, category }], base.map)
   if (redactedText === base.redactedText) return base
-  return refresh({ ...base, redactedText, map })
+  const hidden = refresh({ ...base, redactedText, map })
+  if (!prefix) return hidden
+  // "Other" with the person's own label: rename the new placeholder, e.g. [ID_3] -> [CLIENT_1].
+  const added = Object.keys(hidden.map.originals).filter((p) => base.map.originals[p] === undefined)
+  return added.reduce((result, placeholder) => renamePlaceholder(result, placeholder, prefix), hidden)
+}
+
+/**
+ * The placeholder name for an "Other" label the person typed ("Client" -> "CLIENT", "client team" -> "CLIENT_TEAM"):
+ * English letters and spaces only, 2 to 20 characters, or null when it can't be used.
+ */
+export function customPrefix(label: string): string | null {
+  const words = label.trim().toUpperCase().split(/\s+/).filter(Boolean)
+  const prefix = words.join('_')
+  if (prefix.length < 2 || prefix.length > 20 || !/^[A-Z]+(?:_[A-Z]+)*$/.test(prefix)) return null
+  return prefix
+}
+
+/**
+ * True when a typed label would give away a hidden detail: the label is sent with the text, so it must not contain
+ * (or be part of) anything that is hidden, like "Brightline" for a hidden "Brightline Health".
+ */
+export function labelGivesAway(label: string, base: RedactionResult, text = ''): boolean {
+  const words = label.toLowerCase().trim()
+  if (!words) return false
+  const hidden = [...Object.keys(base.map.lookup), text.toLowerCase().trim()].filter((h) => h.length >= 3)
+  return hidden.some((h) => words.includes(h) || h.includes(words))
+}
+
+/** Renames one placeholder everywhere (text, originals, lookup) to the next free number of `prefix`. */
+function renamePlaceholder(result: RedactionResult, from: string, prefix: string): RedactionResult {
+  let n = 1
+  while (result.map.originals[`[${prefix}_${n}]`] !== undefined) n++
+  const to = `[${prefix}_${n}]`
+  const originals: Record<string, string> = {}
+  for (const [p, original] of Object.entries(result.map.originals)) originals[p === from ? to : p] = original
+  const lookup: Record<string, string> = {}
+  for (const [key, p] of Object.entries(result.map.lookup)) lookup[key] = p === from ? to : p
+  return refresh({ ...result, redactedText: result.redactedText.split(from).join(to), map: { originals, lookup } })
 }
 
 /**

@@ -2949,3 +2949,26 @@
 @media (prefers-reduced-motion: reduce) {
   .cloak-app .draft-dialog[open] { animation: none; }
 }
+
+/* "Hide as Other" with the person's own label. */
+.cloak-app .hide-label {
+  width: 170px;
+}
+
+.cloak-app .field-optional {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.cloak-app .hide-label-hint {
+  margin: 8px 0 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .cloak-app .hide-label {
+    width: auto;
+  }
+}

@@ -133,7 +133,9 @@ checks for now": `redactNotes()` then stops waiting, checks with the backup engi
 background (`nanoInBackground`; later checks use the basic engine until it ends, because Chrome reports progress to the
 first caller only). The pill shows a spinner cue meanwhile, then "Private AI ready", and the next check uses Nano. `review.ts` holds the review screen's pure logic: `base` is the
 redaction with every detail still a placeholder, `kept` is what the user chose to leave visible, and what
-is sent is `outgoing(base, kept)`, not `base`.
+is sent is `outgoing(base, kept)`, not `base`. "Hide as Other" can take the person's own label (`customPrefix()`: "Client" →
+`[CLIENT_1]`, letters only, ≤ 20; refused if it repeats a hidden detail, `labelGivesAway()`). Custom prefixes aren't in
+`PLACEHOLDER_PREFIXES`, so the send log simply doesn't count them.
 
 **Scan a document** (`src/workspace/StepScan.tsx`, imports only `scanAi.ts`). OCR (`src/camera/ocr.ts`, Tesseract.js, own
 files) and blackout are real and on-device. `src/camera/blackoutPlan.ts` (pure, tested) matches every hidden string to OCR
@@ -152,7 +154,7 @@ phone as the camera" pop-up (`<dialog>`) with two ways: a QR code that opens Clo
 encoder: byte mode, level M, versions 1–10, so no outside QR service or library; on localhost it points at cloak.web.app), and
 the safer "use it as this laptop's camera" (Continuity Camera / Phone Link + Find my phone camera). Never the phone's camera
 app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. "Draft a report" opens a review-first pop-up (what stays vs what is sent), then hands the page text
-(memory only) to the normal note pipeline: hidden on this laptop → check-details screen → report type → send guard. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
+(cleaned of OCR noise by `draftTextFromOcr()`; memory only) to the normal note pipeline: hidden on this laptop → check-details screen → report type → send guard. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
 `redactedText` may ever be sent; never the image. PDFs are still `fakeScan.ts` (`PDF_DEMO`): made-up readable pages.
 
 **Specs notice** (`specs.ts` pure, `SpecsNotice.tsx`, shown from `App.tsx`): a one-time pop-up ("Cloak runs best on…") for

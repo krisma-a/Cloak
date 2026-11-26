@@ -11,6 +11,7 @@ import {
   cameraChoices,
   CAMERA_MESSAGES,
   containRect,
+  draftTextFromOcr,
   RESTING_REGION,
   stepRegion,
   textRegion,
@@ -75,7 +76,7 @@ interface ScannedPage {
   review: Rect[]
   /** Too much of the page was read badly: details may have been missed, so the copy is risky to use. */
   unclear: boolean
-  /** The text read from the page, for "Draft a report". In this tab's memory only, like pasted notes; never stored. */
+  /** The text read from the page, cleaned of OCR noise, for "Draft a report". In memory only, like pasted notes; never stored. */
   text: string
 }
 
@@ -909,7 +910,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
         if (!still()) return
         if (result.status === 'blocked') {
           // Fail closed: no copy at all rather than one that might show a detail.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, blockReason: result.reason, boxes: [], review: [], unclear: false, text: ocr.text })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, blockReason: result.reason, boxes: [], review: [], unclear: false, text: draftTextFromOcr(ocr) })
           continue
         }
         const blob = await toBlob(result.redacted)
@@ -923,7 +924,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
           boxes: result.boxes,
           review: result.review,
           unclear: result.unclear,
-          text: ocr.text,
+          text: draftTextFromOcr(ocr),
         })
       }
     } catch {

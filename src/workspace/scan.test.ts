@@ -27,6 +27,7 @@ import {
   browserAdvice,
   cameraChoices,
   containRect,
+  draftTextFromOcr,
   isChromeBrowser,
   loadCameraId,
   platformOf,
@@ -348,5 +349,43 @@ describe('blocked pages', () => {
     assert.match(blockedMessage('redaction-blocked'), /couldn’t hide safely/)
     assert.match(blockedMessage('unplaced'), /couldn’t be matched to a spot/)
     assert.match(blockedMessage('image-mismatch'), /didn’t line up/)
+  })
+})
+
+describe('text for drafting', () => {
+  // FAKE DATA. Words laid out by line, with confidence, like OCR output.
+  const ocr = (lines: Array<Array<[string, number]>>) => ({
+    text: '',
+    words: lines.flatMap((line, row) => line.map(([text, confidence], i) => ({ text, confidence, line: row, x: i * 50, y: row * 30, w: 40, h: 20 }))),
+  })
+
+  it('drops symbol scraps and unsure fragments, keeps real words and meaningful dashes', () => {
+    const out = draftTextFromOcr(
+      ocr([
+        [['|', 40]],
+        [['ahi', 30], ['Date:', 95], ['Mon,', 96], ['Nov', 97], ['16', 96]],
+        [['RE:', 95], ['missed', 96], ['—', 90], ['deadlines', 95], ['=', 30], ['~', 20]],
+        [['¢', 30], ['That', 96], ['may', 95], ['be', 96], ['relevant.', 94]],
+        [['a', 35], ['ees', 30]],
+      ]),
+    )
+    assert.equal(out, 'Date: Mon, Nov 16\nRE: missed — deadlines\nThat may be relevant.')
+  })
+
+  it('reads a lone "|" before a lowercase word as "I", joins wrapped lines, and closes the email gap', () => {
+    const out = draftTextFromOcr(
+      ocr([
+        [['Hi', 96], ['team,', 95], ['|', 80], ['looked', 96], ['at', 96], ['the', 96]],
+        [['sprint', 95], ['reports', 96], ['you', 96], ['sent.', 95]],
+        [['Write', 96], ['to', 96], ['jo.example', 92], ['@example.com', 90]],
+      ]),
+    )
+    assert.equal(out, 'Hi team, I looked at the sprint reports you sent.\nWrite to jo.example@example.com')
+  })
+
+  it('never adds words that weren’t on the page', () => {
+    const source = ocr([[['Riley', 96], ['Sample', 95], ['xq', 20], ['called.', 96]]])
+    const out = draftTextFromOcr(source)
+    for (const word of out.split(/\s+/)) assert.ok(source.words.some((w) => w.text === word), word)
   })
 })

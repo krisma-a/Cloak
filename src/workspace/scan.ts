@@ -93,6 +93,52 @@ export function isPhone(info: { mobile?: boolean; userAgent: string; coarsePoint
   return /Android|iPhone|iPad|iPod|Mobile/i.test(info.userAgent) || (info.coarsePointer && /Macintosh/i.test(info.userAgent))
 }
 
+// ---------- Text for drafting ----------
+
+/** Punctuation that means something on its own between words; any other symbol-only scrap is OCR noise. */
+const KEEP_SYMBOLS = new Set(['-', '–', '—', '&', '+', '/', '•'])
+
+/**
+ * The page's text, cleaned up for drafting. OCR picks up noise from the page edges and shadows: symbol scraps
+ * ("|", "=", "~", "¢") and short, low-confidence fragments ("ahi", "x3"). Those are dropped, a lone "|" before a
+ * lowercase word becomes "I" (how OCR often reads it), empty lines go, lines that wrapped mid-sentence are joined,
+ * and OCR's gap in "name @example.com" is closed. Dropping words only ever removes text, so this is safe for privacy.
+ */
+export function draftTextFromOcr(ocr: OcrResult, minConfidence = 50): string {
+  const lines: OcrWord[][] = []
+  for (const word of ocr.words) (lines[word.line] ??= []).push(word)
+  const kept: string[] = []
+  for (const line of lines) {
+    if (!line) continue
+    const words: string[] = []
+    line.forEach((word, i) => {
+      const text = word.text.trim()
+      const alnum = (text.match(/[\p{L}\p{N}]/gu) ?? []).length
+      if (text === '|') {
+        const next = line[i + 1]?.text ?? ''
+        if (/^\p{Ll}/u.test(next)) words.push('I')
+        return
+      }
+      if (alnum === 0) {
+        if (KEEP_SYMBOLS.has(text)) words.push(text)
+        return
+      }
+      if (word.confidence < minConfidence && alnum <= 3) return // a short, unsure scrap
+      words.push(text)
+    })
+    const joined = words.join(' ').replace(/^[-–—&+/•\s]+|[-–—&+/\s]+$/g, '').trim()
+    if ((joined.match(/[\p{L}\p{N}]/gu) ?? []).length >= 2) kept.push(joined)
+  }
+  // Join a line to the previous one when the previous didn't end a sentence and this one starts in lower case.
+  let text = ''
+  for (const line of kept) {
+    if (!text) text = line
+    else if (!/[.!?:;)>]$/.test(text) && /^\p{Ll}/u.test(line)) text += ` ${line}`
+    else text += `\n${line}`
+  }
+  return text.replace(/(?<=[\p{L}\p{N}._%+-])[ \t]*@[ \t]*(?=[\p{L}\p{N}])/gu, '@')
+}
+
 // ---------- Blocked pages ----------
 
 /** Why a page got no copy (the same names as blackout's BlockedReason). */

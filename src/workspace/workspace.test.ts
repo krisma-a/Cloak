@@ -7,10 +7,12 @@ import { SAMPLE_NOTE } from './sampleNote.ts'
 import { accommodationBlockReason } from '../ai/restrictionPrompt.ts'
 import {
   buildSegments,
+  customPrefix,
   employeeOptions,
   fixLeaks,
   hasWorkToLose,
   hideText,
+  labelGivesAway,
   makeLabeler,
   outgoing,
   reviewItems,
@@ -221,4 +223,33 @@ test('the leave warning is wanted only while there is something to lose', async 
   assert.equal(hasWorkToLose({ notes: SAMPLE_NOTE, base: null, draft: null }), true) // text typed
   assert.equal(hasWorkToLose({ notes: '', base, draft: null }), true) // a redaction with real names in memory
   assert.equal(hasWorkToLose({ notes: '', base: null, draft }), true) // a draft
+})
+
+test('"Other" with your own label hides the text under that name, everywhere, and restores it', async () => {
+  // FAKE DATA.
+  const note = 'Calls with the orchard account were missed. The orchard account asked for a new date.'
+  const base = await redactNotes(note)
+  assert.equal(base.redactedText, note)
+  const prefix = customPrefix('Client')
+  assert.equal(prefix, 'CLIENT')
+  const next = hideText(base, 'orchard account', 'OTHER_ID', prefix)
+  assert.equal(next.redactedText, 'Calls with the [CLIENT_1] were missed. The [CLIENT_1] asked for a new date.')
+  assert.equal(next.map.originals['[CLIENT_1]'], 'orchard account')
+  assert.equal(next.map.lookup['orchard account'], '[CLIENT_1]')
+  assert.equal(makeLabeler(next.map)('[CLIENT_1]'), 'CLIENT')
+  assert.equal(restore(next.redactedText, next.map), note)
+  // A second label of the same kind gets the next number.
+  const two = hideText(next, 'new date', 'OTHER_ID', 'CLIENT')
+  assert.ok(two.redactedText.includes('[CLIENT_2]'))
+})
+
+test('custom labels must be plain words, and must not give away a hidden detail', async () => {
+  assert.equal(customPrefix('client team'), 'CLIENT_TEAM')
+  assert.equal(customPrefix('x'), null)
+  assert.equal(customPrefix('Project #7'), null)
+  assert.equal(customPrefix('a'.repeat(21)), null)
+  const base = await redactNotes('Lee Park met the client.')
+  assert.equal(labelGivesAway('Park', base), true, 'part of a hidden name')
+  assert.equal(labelGivesAway('Brightline', base, 'Brightline Health'), true, 'part of the text being hidden')
+  assert.equal(labelGivesAway('Client', base, 'Brightline Health'), false)
 })

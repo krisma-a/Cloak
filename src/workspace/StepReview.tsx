@@ -5,7 +5,9 @@ import { WhereChip } from './icons.tsx'
 import {
   buildSegments,
   fixLeaks,
+  customPrefix,
   hideText,
+  labelGivesAway,
   HIDE_CHOICES,
   makeLabeler,
   outgoing,
@@ -35,6 +37,8 @@ export function StepReview({ base, kept, onChange, onBack, onContinue }: StepRev
   const [peeking, setPeeking] = useState<string | null>(null)
   const [pending, setPending] = useState<Pending | null>(null)
   const [category, setCategory] = useState<Category>('PERSON')
+  // "Other" can take the person's own label ("Client"), sent as [CLIENT_1] instead of a generic [ID_1].
+  const [otherLabel, setOtherLabel] = useState('')
   const [typed, setTyped] = useState('')
   const [namesInput, setNamesInput] = useState('')
   const [message, setMessage] = useState<string | null>(null)
@@ -45,7 +49,8 @@ export function StepReview({ base, kept, onChange, onBack, onContinue }: StepRev
   const now = outgoing(base, kept)
   const hiddenCount = items.filter((item) => item.hidden).length
   const keptCount = items.length - hiddenCount
-  const choiceLabel = HIDE_CHOICES.find((choice) => choice.category === category)?.label ?? 'Other'
+  const isOther = category === 'OTHER_ID'
+  const choiceLabel = isOther && otherLabel.trim() ? otherLabel.trim() : (HIDE_CHOICES.find((choice) => choice.category === category)?.label ?? 'Other')
   const namesUnchecked = base.names === 'unchecked'
   const canContinue = now.leaks.length === 0 && !namesUnchecked
 
@@ -92,7 +97,19 @@ export function StepReview({ base, kept, onChange, onBack, onContinue }: StepRev
   }, [])
 
   function hide(text: string): boolean {
-    const next = hideText(base, text, category)
+    let prefix: string | null = null
+    if (isOther && otherLabel.trim()) {
+      prefix = customPrefix(otherLabel)
+      if (!prefix) {
+        setMessage('Use a short label of plain words, like “Client” or “Project” (letters only, up to 20).')
+        return false
+      }
+      if (labelGivesAway(otherLabel, base, text)) {
+        setMessage('That label repeats a hidden detail, and labels are sent with the text. Pick a general word, like “Client”.')
+        return false
+      }
+    }
+    const next = hideText(base, text, category, prefix)
     if (next === base) {
       setMessage('We couldn’t hide that. Pick whole words that appear in the notes, outside the dark labels.')
       return false
@@ -265,7 +282,10 @@ export function StepReview({ base, kept, onChange, onBack, onContinue }: StepRev
                 id="hide-as"
                 className="select-input"
                 value={category}
-                onChange={(event) => setCategory(event.target.value as Category)}
+                onChange={(event) => {
+                  setCategory(event.target.value as Category)
+                  setMessage(null)
+                }}
               >
                 {HIDE_CHOICES.map((choice) => (
                   <option key={choice.category} value={choice.category}>
@@ -274,10 +294,38 @@ export function StepReview({ base, kept, onChange, onBack, onContinue }: StepRev
                 ))}
               </select>
             </div>
+            {isOther && (
+              <div className="hide-label">
+                <label className="field-label" htmlFor="hide-label-input">
+                  Label <span className="field-optional">(optional)</span>
+                </label>
+                <input
+                  id="hide-label-input"
+                  className="text-input"
+                  type="text"
+                  value={otherLabel}
+                  onChange={(event) => {
+                    setOtherLabel(event.target.value)
+                    setMessage(null)
+                  }}
+                  placeholder="e.g. Client"
+                  maxLength={20}
+                  spellCheck={false}
+                  autoComplete="off"
+                  aria-describedby="hide-label-hint"
+                />
+              </div>
+            )}
             <button type="submit" className="btn btn-quiet" disabled={typed.trim() === ''}>
               Hide it
             </button>
           </form>
+          {isOther && (
+            <p id="hide-label-hint" className="hide-label-hint">
+              With a label, it’s sent as {customPrefix(otherLabel) ? `[${customPrefix(otherLabel)}_1]` : 'your label'}; without one, as [ID_1].
+              The label goes with the text, so use a general word like “Client”, not the detail itself.
+            </p>
+          )}
           {message && (
             <p className="notice warn" role="alert">
               {message}
