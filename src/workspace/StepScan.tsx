@@ -75,6 +75,8 @@ interface ScannedPage {
   review: Rect[]
   /** Too much of the page was read badly: details may have been missed, so the copy is risky to use. */
   unclear: boolean
+  /** The text read from the page, for "Draft a report". In this tab's memory only, like pasted notes; never stored. */
+  text: string
 }
 
 type Phase =
@@ -706,11 +708,100 @@ function drawScaled(source: CanvasImageSource, width: number, height: number): H
   return canvas
 }
 
-interface StepScanProps {
-  onBack: () => void
+/**
+ * The pop-up before a scanned page goes on to drafting, the only step that sends anything to the cloud. It says what
+ * stays on this laptop (the photo, the real details) and what is sent (the text with placeholders, after a check),
+ * the three steps that come next, and warns harder when the page was hard to read or gets basic checks.
+ */
+function DraftReviewDialog({
+  open,
+  unclear,
+  basicChecks,
+  onClose,
+  onContinue,
+}: {
+  open: boolean
+  unclear: boolean
+  basicChecks: boolean
+  onClose: () => void
+  onContinue: () => void
+}) {
+  const ref = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    const dialog = ref.current
+    if (!dialog) return
+    if (open && !dialog.open) dialog.showModal()
+    if (!open && dialog.open) dialog.close()
+  }, [open])
+
+  return (
+    <dialog
+      ref={ref}
+      className="draft-dialog"
+      aria-labelledby="draft-dialog-title"
+      onClose={onClose}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+    >
+      <div className="draft-dialog-body">
+        <h3 id="draft-dialog-title">Check before anything goes to the cloud</h3>
+
+        <div className="draft-split">
+          <div className="draft-side is-stays">
+            <h4>Stays on this laptop</h4>
+            <ul>
+              <li>The photo</li>
+              <li>The real names, numbers and health details</li>
+            </ul>
+          </div>
+          <div className="draft-side is-sent">
+            <h4>Sent to write the draft</h4>
+            <p>The text, with placeholders instead of private details:</p>
+            <p className="draft-sample">
+              Met with <span className="draft-chip">[EMPLOYEE_1]</span> about a desk move.
+            </p>
+          </div>
+        </div>
+
+        <ol className="draft-steps">
+          <li>Cloak hides the private details in the text it read, on this laptop.</li>
+          <li>You check every hidden detail on the next screen.</li>
+          <li>Only then do you pick a report type and send it.</li>
+        </ol>
+
+        {(unclear || basicChecks) && (
+          <p className="draft-warn" role="note">
+            <strong>Read the next screen closely.</strong>{' '}
+            {unclear ? 'Parts of this page were hard to read, so some private details may not be caught. ' : ''}
+            {basicChecks ? 'This laptop uses basic checks, which catch fewer names. ' : ''}
+            Hide anything Cloak missed before you send.
+          </p>
+        )}
+
+        <div className="draft-actions">
+          <button type="button" className="btn btn-quiet" onClick={onClose}>
+            Back to the photo
+          </button>
+          <button type="button" className="btn btn-primary" onClick={onContinue} autoFocus>
+            Check the text
+          </button>
+        </div>
+      </div>
+    </dialog>
+  )
 }
 
-export function StepScan({ onBack }: StepScanProps) {
+interface StepScanProps {
+  onBack: () => void
+  /** "Draft a report": hand the page text to the note pipeline (hide details on this laptop, check them, then send). */
+  onDraft?: (text: string) => void
+  /** The notes will get basic checks (chosen, or no private AI here): the review pop-up warns about it. */
+  basicChecks?: boolean
+}
+
+export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps) {
+  const [draftAsk, setDraftAsk] = useState(false)
   const [phase, setPhase] = useState<Phase>({ kind: 'capture' })
   const [fileError, setFileError] = useState<string | null>(null)
   const [current, setCurrent] = useState(0)
@@ -804,13 +895,13 @@ export function StepScan({ onBack }: StepScanProps) {
         } catch {
           if (!still()) return
           // Any reading failure is shown the same way: too dark, blurry, blank or not a document.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false, text: '' })
           continue
         }
         if (!still()) return
         if (ocr.words.length === 0) {
           // The reader ran but found no text: a blank, blurry or too-dark shot.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false, text: '' })
           continue
         }
         setPhase({ kind: 'reading', progress: readingProgress(index, pages.length, 1, share), label: 'Finding private details…' })
@@ -818,7 +909,7 @@ export function StepScan({ onBack }: StepScanProps) {
         if (!still()) return
         if (result.status === 'blocked') {
           // Fail closed: no copy at all rather than one that might show a detail.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, blockReason: result.reason, boxes: [], review: [], unclear: false })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, blockReason: result.reason, boxes: [], review: [], unclear: false, text: ocr.text })
           continue
         }
         const blob = await toBlob(result.redacted)
@@ -832,6 +923,7 @@ export function StepScan({ onBack }: StepScanProps) {
           boxes: result.boxes,
           review: result.review,
           unclear: result.unclear,
+          text: ocr.text,
         })
       }
     } catch {
@@ -1004,7 +1096,7 @@ export function StepScan({ onBack }: StepScanProps) {
         text: ` Much of ${isPdf ? pageList(unclear) : 'this photo'} was hard to read, so names, numbers or health details may still show. It’s risky to share this copy or write a draft from it.`,
       }
     } else if (toCheck > 0) {
-      status = { text: 'Some words were hard to read. Check the dashed outlines: they might hide a detail Cloak missed.' }
+      status = { text: 'Some words were hard to read, so they might hide a detail Cloak missed. Check the picture closely before you share it.' }
     }
 
     return (
@@ -1075,9 +1167,6 @@ export function StepScan({ onBack }: StepScanProps) {
                   <span className="scan-wipe-tag is-original" aria-hidden="true">
                     Original
                   </span>
-                  {page.review.map((spot) => (
-                    <span key={`review-${spot.x}-${spot.y}`} className="scan-review" style={boxPercent(spot, page.width, page.height)} aria-hidden="true" />
-                  ))}
                   {page.boxes.map((box, index) => {
                     const label = CATEGORY_LABELS[box.category]
                     return (
@@ -1173,10 +1262,33 @@ export function StepScan({ onBack }: StepScanProps) {
           <button type="button" className="btn btn-quiet" onClick={scanAnother}>
             Scan another
           </button>
+          {onDraft && (
+            <button type="button" className="btn btn-outline" onClick={() => setDraftAsk(true)} disabled={!pages.some((p) => p.text.trim())} aria-haspopup="dialog">
+              Draft a report
+            </button>
+          )}
           <button type="button" className="btn btn-primary" onClick={download} disabled={saving || missing.length > 0}>
             {saving ? 'Saving…' : isPdf ? 'Download redacted PDF' : 'Download redacted photo'}
           </button>
         </div>
+
+        {onDraft && (
+          <DraftReviewDialog
+            open={draftAsk}
+            unclear={unclear.length > 0}
+            basicChecks={basicChecks}
+            onClose={() => setDraftAsk(false)}
+            onContinue={() => {
+              setDraftAsk(false)
+              onDraft(
+                pages
+                  .map((p) => p.text.trim())
+                  .filter(Boolean)
+                  .join('\n\n'),
+              )
+            }}
+          />
+        )}
       </section>
     )
   }

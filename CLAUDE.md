@@ -138,8 +138,8 @@ is sent is `outgoing(base, kept)`, not `base`.
 **Scan a document** (`src/workspace/StepScan.tsx`, imports only `scanAi.ts`). OCR (`src/camera/ocr.ts`, Tesseract.js, own
 files) and blackout are real and on-device. `src/camera/blackoutPlan.ts` (pure, tested) matches every hidden string to OCR
 words (look-alikes 0/O, 1/l folded, across line breaks); found only in the text → whole line blacked + review; found nowhere,
-or boxes outside the image → `blocked` (nothing painted, page can't be downloaded). Words under 60 confidence are outlined
-for review; more than 15% of them → the copy is still made but marked `unclear`, and the result screen warns that details
+or boxes outside the image → `blocked` (nothing painted, page can't be downloaded). Words under 60 confidence trigger a
+"check closely" note (no outlines on the picture); more than 15% of them → the copy is still made but marked `unclear`, and the result screen warns that details
 may have been missed and it's risky to share or draft from. A photo always reaches the result screen (original + copy, or why
 there's no copy). While the camera is live, one frosted pane covers the text on the video (`previewLines()` → `textLines()`
 → `textRegion()`; OCR only, no redaction, so nothing private can show or be missed). `useFrostPane` glides it every frame
@@ -151,7 +151,8 @@ Camera chooser when there are 2+ cameras (`cameraChoices()`, choice kept in loca
 phone as the camera" pop-up (`<dialog>`) with two ways: a QR code that opens Cloak on the phone (drawn by `qr.ts`, our own
 encoder: byte mode, level M, versions 1–10, so no outside QR service or library; on localhost it points at cloak.web.app), and
 the safer "use it as this laptop's camera" (Continuity Camera / Phone Link + Find my phone camera). Never the phone's camera
-app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
+app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. "Draft a report" opens a review-first pop-up (what stays vs what is sent), then hands the page text
+(memory only) to the normal note pipeline: hidden on this laptop → check-details screen → report type → send guard. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
 `redactedText` may ever be sent; never the image. PDFs are still `fakeScan.ts` (`PDF_DEMO`): made-up readable pages.
 
 **Specs notice** (`specs.ts` pure, `SpecsNotice.tsx`, shown from `App.tsx`): a one-time pop-up ("Cloak runs best on…") for
