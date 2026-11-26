@@ -66,6 +66,8 @@ price (`PRICES`, dated `PRICE_VERSION`; on-device = $0). No text, no user id, so
 Best effort, never awaited. The hidden `/usage` page (`src/usage/`) is a live dashboard over them (Firestore `onSnapshot`).
 `firestore.rules` must match `usage.ts` (`usage.test.ts` checks); the /eval page marks its calls `origin: 'eval'`.
 
+**OCR-tolerant rules** (added after the camera tests): phones may miss a bracket or be glued to a word ("phone805) 555-0163"); IDs include 2–4 capitals + "-" + 4–6 digits (BSL-5560, #SR-11407); `medicalTerms()` also matches a term's start (5+ letters: "diabet") or 1 typo (2 for 8+ letters, terms of 6+ letters, same first letter), with a `NOT_MEDICAL` list (cancel, strike, surge, alcohol…) and common medications. `wholeWordRegex()` lets a value that starts/ends with a digit touch a letter on that side.
+
 **Name parts** (`nameParts.ts`, pure): after the first pass (both engines), `hideNameParts()` hides every other spelling of a found name's parts (3+ letters, not in `NAME_TITLES`: Dr, Mrs, RN, van…) with the SAME placeholder: exact, or an OCR typo (`fuzzy.ts` budget, same first letter, capitalised unless the part is 7+ letters, not a `COMMON_WORDS` word). Spellings go into `map.lookup`, so the leak check and photo boxes use them. `redact()`'s `knownNames` are now HIDDEN as PERSON entities up front (they used to only block); the scan passes the names found on earlier pages of the same scan (`caseNames` in scanAi.ts, memory only, cleared by `startScan()`).
 
 **Placeholders** (`placeholders.ts`): the model only *finds* entities; code does the replacing so the same
