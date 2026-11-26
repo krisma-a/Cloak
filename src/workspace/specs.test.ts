@@ -59,3 +59,18 @@ test('"seen" is remembered, and blocked storage never breaks the page', () => {
   assert.equal(specsSeen(blocked), false)
   assert.doesNotThrow(() => markSpecsSeen(blocked))
 })
+
+test('Chrome, Firefox and Edge on an iPhone are named by their own marker, not as Safari', () => {
+  const ios = (app: string) => ({
+    userAgent: `Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) ${app} Mobile/15E148 Safari/604.1`,
+    coarsePointer: true,
+    privateAi: false,
+  })
+  assert.equal(browserName(ios('CriOS/150.0.7000.0')), 'Chrome')
+  assert.equal(browserName(ios('FxiOS/140.0')), 'Firefox')
+  assert.equal(browserName(ios('EdgiOS/150.0')), 'Edge')
+  assert.equal(browserName(ios('Version/18.0')), 'Safari')
+  const chromeOnIphone = ios('CriOS/150.0.7000.0')
+  assert.equal(specRows(chromeOnIphone).find((row) => row.label === 'Browser')?.mark, 'ok')
+  assert.equal(specsTitle(chromeOnIphone), 'Cloak works best on a laptop')
+})
