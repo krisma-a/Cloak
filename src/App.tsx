@@ -22,7 +22,9 @@ import { StepResult } from './workspace/StepResult.tsx'
 import { StepReview } from './workspace/StepReview.tsx'
 import { StepScan } from './workspace/StepScan.tsx'
 import { StepStart } from './workspace/StepStart.tsx'
-import { CostDialog } from './workspace/CostDialog.tsx'
+import { ModeDialog } from './workspace/ModeDialog.tsx'
+import { UsageDialog } from './workspace/UsageDialog.tsx'
+import { draftErrorMessage } from './workspace/draftError.ts'
 import { addDraftRecord, estimateDraftCost } from './workspace/draftCost.ts'
 import { SpecsNotice } from './workspace/SpecsNotice.tsx'
 import { markSpecsSeen, shouldShowSpecs, specsSeen } from './workspace/specs.ts'
@@ -74,12 +76,13 @@ export default function App() {
   const [checkMode, setCheckMode] = useState<CheckMode>(() => loadCheckMode())
   // Whether this browser could run the private AI at all. False: basic checks are the only option, so no choice is shown.
   const [nanoPossible, setNanoPossible] = useState<boolean | null>(null)
-  // Drafting mode (Demo or Real AI) and the cost of the last draft; see workspace/ai.ts and CostDialog.
+  // Drafting mode (Demo or Real AI) and the usage of the last draft; see workspace/ai.ts, ModeDialog and UsageDialog.
   const [realAi, setRealAiState] = useState(() => {
     applyAiParam()
     return realAiEnabled()
   })
-  const [costOpen, setCostOpen] = useState(false)
+  const [usageOpen, setUsageOpen] = useState(false)
+  const [modeOpen, setModeOpen] = useState(false)
   const [lastCost, setLastCost] = useState<{ usage: UsageEvent; demo: boolean } | null>(null)
   const [costVersion, setCostVersion] = useState(0)
   function chooseRealAi(on: boolean) {
@@ -238,7 +241,7 @@ export default function App() {
       })
       setDraftResult(result)
       if (result.usage) {
-        // The cost is kept on this laptop (numbers only), so "What drafts cost" can show the history.
+        // The cost is kept on this laptop (numbers only), so the Usage pop-up can show the history.
         const demo = !realAi
         addDraftRecord({ ...result.usage, at: Date.now(), demo })
         setLastCost({ usage: result.usage, demo })
@@ -249,7 +252,8 @@ export default function App() {
       if (error instanceof SendBlockedError) {
         setBlockedMessage(error.message)
       } else {
-        setWriteError('We couldn’t write the draft just now. Your notes are safe on this laptop. Please try again.')
+        // 429 (the shared free allowance), a busy service, no connection, or anything else: each says what to do next.
+        setWriteError(draftErrorMessage(error, navigator.onLine))
       }
     } finally {
       setBusy(null)
@@ -298,17 +302,17 @@ export default function App() {
           <button
             type="button"
             className={`mode-chip${realAi ? ' is-real' : ''}`}
-            onClick={() => setCostOpen(true)}
+            onClick={() => setModeOpen(true)}
             aria-haspopup="dialog"
-            title="Drafting mode and what drafts cost"
+            title="Switch between demo and real AI drafting"
           >
             <span className="mode-full">{realAi ? 'Real AI drafting' : 'Demo drafting'}</span>
             <span className="mode-short" aria-hidden="true">
               {realAi ? 'Real AI' : 'Demo'}
             </span>
           </button>
-          <button type="button" className="top-link" onClick={() => setCostOpen(true)} aria-haspopup="dialog">
-            Cost
+          <button type="button" className="top-link" onClick={() => setUsageOpen(true)} aria-haspopup="dialog">
+            Usage
           </button>
           {/* Always in the page, so a change of mode is announced. Shows the real mode of the AI that checks notes. */}
           <span className="ai-slot" role="status">
@@ -416,7 +420,7 @@ export default function App() {
               estimate={estimate}
               realAi={realAi}
               onRealAiChange={chooseRealAi}
-              onShowCost={() => setCostOpen(true)}
+              onShowCost={() => setUsageOpen(true)}
             />
           )}
 
@@ -430,12 +434,13 @@ export default function App() {
               onBack={() => goTo('generate')}
               onStartOver={startOver}
               cost={lastCost}
-              onShowCost={() => setCostOpen(true)}
+              onShowCost={() => setUsageOpen(true)}
             />
           )}
         </main>
       </div>
-      <CostDialog open={costOpen} onClose={() => setCostOpen(false)} last={lastCost} realAi={realAi} onRealAiChange={chooseRealAi} version={costVersion} />
+      <UsageDialog open={usageOpen} onClose={() => setUsageOpen(false)} last={lastCost} version={costVersion} />
+      <ModeDialog open={modeOpen} onClose={() => setModeOpen(false)} realAi={realAi} onRealAiChange={chooseRealAi} />
       <SpecsNotice
         open={specsOpen}
         device={device}

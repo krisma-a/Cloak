@@ -217,7 +217,7 @@ export function StepGenerate({
             <>
               {' '}
               <button type="button" className="link-btn" onClick={onShowCost}>
-                See what drafts cost
+                See usage
               </button>
             </>
           )}

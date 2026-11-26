@@ -172,11 +172,11 @@ ready, only cores/memory count, and it offers "Use basic checks"). A spec sheet 
 (Win 10/11, macOS 13+, Linux, Chromebook Plus; GPU > 4 GB or 16 GB RAM + 4 cores; 22 GB free) with this device; disk and
 exact memory say "can't tell". Dismissal is kept in localStorage `cloak.specsSeen` (bump `SEEN_VERSION` to show it again).
 
-**Drafting mode and cost** (`workspace/ai.ts`, `draftCost.ts`, `CostDialog.tsx`). Drafting is **Demo** (fakeAi.ts, nothing sent; the
-default) or **Real AI** (`ai/draft.ts`): switch it with the Demo / Real AI switch under the heading of the "Write the draft" screen (`DraftingMode.tsx`), the header chip, the top of the Cost dialog, or with `?ai=real` / `?ai=demo` in the address
+**Drafting mode and usage** (`workspace/ai.ts`, `draftCost.ts`, `UsageDialog.tsx`, `ModeDialog.tsx`). Drafting is **Demo** (fakeAi.ts, nothing sent; the
+default) or **Real AI** (`ai/draft.ts`): switch it with the Demo / Real AI switch under the heading of the "Write the draft" screen (`DraftingMode.tsx`), the header chip (opens its own small `ModeDialog`), or with `?ai=real` / `?ai=demo` in the address
 (kept in localStorage `cloak.realAi`); flip `DEFAULT_REAL_AI` in ai.ts to make Real the default. `generateLogged()` now returns the
 call's `usage` (token counts + paid-tier price), `draft()` puts it on `DraftResult.usage`, and the screens show an estimate
-before sending (`estimateDraftCost()`), the cost after, and an itemised receipt. A numbers-only history of drafts stays in
+before sending (`estimateDraftCost()`), the cost after, and the header's **Usage** pop-up (last draft's itemised receipt, drafts, tokens and cost on this laptop, monthly planner). A numbers-only history of drafts stays in
 localStorage `cloak.draftCosts` (demo drafts are listed but never counted as spend). First real draft (2026-11-25): 250 in,
 119 out, **622 thinking** tokens = $0.0059 on the paid tier, 80% of it thinking: thinking is the main cost lever.
 

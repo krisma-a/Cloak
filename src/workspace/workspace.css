@@ -3140,7 +3140,7 @@
   outline-offset: 2px;
 }
 
-/* ---------- What drafts cost ---------- */
+/* ---------- Usage and drafting-mode pop-ups ---------- */
 
 /* "Cost" in the header sits just before the AI pill, pushed to the right with it. */
 .cloak-app .top .brand {
@@ -3423,7 +3423,7 @@
   margin: 0;
 }
 
-/* Header chip: always shows the current drafting mode and opens the cost dialog. */
+/* Header chip: always shows the current drafting mode and opens the small drafting-mode pop-up. */
 .cloak-app .mode-chip {
   min-height: 30px;
   padding: 0 12px;
@@ -3460,4 +3460,8 @@
   .cloak-app .mode-chip .mode-short {
     display: inline;
   }
+}
+
+.cloak-app .mode-dialog {
+  width: min(460px, calc(100vw - 32px));
 }
