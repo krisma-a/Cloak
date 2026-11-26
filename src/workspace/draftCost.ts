@@ -144,6 +144,8 @@ export interface HistorySummary {
   average: number | null
   /** The cost of the latest real drafts, oldest first, for the small bars. */
   recent: number[]
+  /** Tokens used by the real drafts: text sent, draft written, thinking. */
+  tokens: { input: number; output: number; thinking: number }
 }
 
 /** Demo drafts are counted but never added to the spend. Drafts with no price are counted but add nothing. */
@@ -157,5 +159,10 @@ export function summarizeHistory(records: readonly DraftRecord[], recentCount = 
     total,
     average: priced.length ? total / priced.length : null,
     recent: priced.slice(-recentCount).map((r) => r.costUsd as number),
+    tokens: {
+      input: real.reduce((sum, r) => sum + r.inputTokens, 0),
+      output: real.reduce((sum, r) => sum + r.outputTokens, 0),
+      thinking: real.reduce((sum, r) => sum + r.thinkingTokens, 0),
+    },
   }
 }

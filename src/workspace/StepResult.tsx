@@ -169,7 +169,7 @@ export function StepResult({ result, notes, base, kept, templateId, onBack, onSt
             <>
               {' '}
               <button type="button" className="link-btn" onClick={onShowCost}>
-                See the receipt
+                See usage
               </button>
             </>
           )}

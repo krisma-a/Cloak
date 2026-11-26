@@ -1,31 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { PRICE_VERSION } from '../ai/usage.ts'
 import type { UsageEvent } from '../ai/usage.ts'
-import { DraftingMode } from './DraftingMode.tsx'
 import { clearHistory, formatTokens, formatUsd, loadHistory, monthlyCost, receiptLines, summarizeHistory } from './draftCost.ts'
 
 /** A typical draft's cost when nothing has been drafted yet (about 1,000 tokens in, 700 out, 500 thinking). */
 const TYPICAL_DRAFT_USD = (1000 * 1.5 + 1200 * 7.5) / 1_000_000
 
 /**
- * "What drafts cost": the receipt for the last draft (what was sent, what was written, the thinking, the total), then the
- * drafts made on this laptop, a monthly planner, and the Demo / Real AI switch for team testing. Everything is a paid-tier
- * figure: on the free tier the real bill is $0. The history holds numbers only and stays in this browser.
+ * "Usage": the receipt for the last draft (what was sent, what was written, the thinking, the total), then everything used
+ * by the drafts made on this laptop (drafts, tokens, cost) and a monthly planner. Every money figure is a paid-tier
+ * price: on the free tier the real bill is $0. The history holds numbers only and stays in this browser. (The Demo / Real
+ * AI switch has its own small pop-up: ModeDialog.tsx.)
  */
-export function CostDialog({
+export function UsageDialog({
   open,
   onClose,
   last,
-  realAi,
-  onRealAiChange,
   version,
 }: {
   open: boolean
   onClose: () => void
   /** The latest draft's usage, and whether it was a demo draft (nothing sent). */
   last: { usage: UsageEvent; demo: boolean } | null
-  realAi: boolean
-  onRealAiChange: (on: boolean) => void
   /** Changes when a draft is added, so the history is read again. */
   version: number
 }) {
@@ -52,7 +48,7 @@ export function CostDialog({
     <dialog
       ref={ref}
       className="cost-dialog"
-      aria-labelledby="cost-title"
+      aria-labelledby="usage-title"
       onClose={onClose}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose()
@@ -60,17 +56,15 @@ export function CostDialog({
     >
       <div className="cost-body">
         <div className="cost-head">
-          <h3 id="cost-title">What drafts cost</h3>
+          <h3 id="usage-title">Usage</h3>
           <button type="button" className="phone-close" onClick={onClose} aria-label="Close">
             <span aria-hidden="true">×</span>
           </button>
         </div>
 
-        <DraftingMode realAi={realAi} onChange={onRealAiChange} />
-
         {last ? (
           <section className="receipt" aria-labelledby="receipt-title">
-            <h4 id="receipt-title">{last.demo ? 'Example: a draft of this size' : 'This draft'}</h4>
+            <h4 id="receipt-title">{last.demo ? 'Last draft (demo): what a real one would use' : 'Last draft'}</h4>
             <dl className="receipt-lines">
               {lines.map((line) => (
                 <div key={line.label} className="receipt-line">
@@ -92,7 +86,7 @@ export function CostDialog({
             </p>
           </section>
         ) : (
-          <p className="cost-empty">Write a draft and its receipt appears here: what was sent, what was written, and what it would cost on a paid plan.</p>
+          <p className="cost-empty">No draft yet. Write one and its usage appears here: what was sent, what was written, and what it would cost on a paid plan.</p>
         )}
 
         <section className="cost-section" aria-labelledby="cost-history-title">
@@ -102,6 +96,10 @@ export function CostDialog({
               <p className="cost-figures">
                 <strong>{summary.drafts}</strong> {summary.drafts === 1 ? 'draft' : 'drafts'} · <strong>{formatUsd(summary.average)}</strong> average ·{' '}
                 <strong>{formatUsd(summary.total)}</strong> total
+              </p>
+              <p className="cost-small">
+                Tokens used: {formatTokens(summary.tokens.input)} sent, {formatTokens(summary.tokens.output)} written, {formatTokens(summary.tokens.thinking)}{' '}
+                thinking.
               </p>
               <div className="cost-bars" role="img" aria-label={`Cost of your last ${summary.recent.length} drafts`}>
                 {summary.recent.map((amount, i) => (
