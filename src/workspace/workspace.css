@@ -1770,8 +1770,9 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 70%;
   height: 92%;
+  aspect-ratio: 8.5 / 11; /* a US Letter page, upright; the exact size comes from paperGuide() once the frame is measured */
+  max-width: 94%;
   border: 2px dashed rgba(255, 255, 255, 0.75);
   border-radius: 10px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
@@ -2624,8 +2625,25 @@
     flex-basis: 100%;
   }
 
+  /* The camera view gets the room: on a phone the intro text and the "On this device" chip step aside (the hint
+     and the safety note stay), so a portrait page isn't squeezed into a thin strip behind the buttons. */
+  .cloak-app .scan:has(.scan-camera) > .muted,
+  .cloak-app .scan:has(.scan-camera) > .where {
+    display: none;
+  }
+
+  .cloak-app .scan:has(.scan-camera) .scan-title {
+    margin: 0 0 12px;
+    font-size: 22px;
+  }
+
   .cloak-app .scan-camera {
-    --cam-max: clamp(240px, calc(100dvh - 380px), 620px);
+    --cam-max: clamp(260px, calc(100dvh - 385px), 720px);
+  }
+
+  .cloak-app .actions .scan-capture-hint {
+    font-size: 13px;
+    line-height: 1.3;
   }
 }
 
