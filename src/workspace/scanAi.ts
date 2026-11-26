@@ -71,63 +71,28 @@ export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promis
 }
 
 // ---------------------------------------------------------------------------------------------
-// Live camera preview. Two quick looks per frame, so the blur appears fast:
-//   1. quickPreview(): rules only (phone, email, IDs, dates of birth...: under a millisecond) plus names remembered from
-//      the last few seconds, right after the text is read.
-//   2. previewBoxes(): the in-browser name model as well (a few hundred ms), which also refreshes the remembered names.
-// Never Gemini Nano (too slow per frame, and it may only start downloading after a click). A preview only: the photo
-// gets the full check from blackOut(). Frames, text and remembered names stay in this tab's memory, never stored.
+// Live camera preview: every line of text is blurred while aiming (only the text reader runs, so it's quick, and
+// nothing private can show or be missed). A preview only: the photo gets the full check from blackOut(), and then
+// only the private details stay hidden. Frames and their text stay in this tab's memory, never stored.
 
-type LiveRedaction = Awaited<ReturnType<typeof redactNotes>>
-
-/** Hidden strings seen in recent frames ("riley sample" -> "[EMPLOYEE_1]"), with when they were last seen. */
-const remembered = new Map<string, { placeholder: string; seenAt: number }>()
-const REMEMBER_MS = 15_000
-
-function rememberedNow(): Record<string, string> {
-  const now = Date.now()
-  for (const [hidden, entry] of remembered) if (now - entry.seenAt > REMEMBER_MS) remembered.delete(hidden)
-  return Object.fromEntries([...remembered].map(([hidden, entry]) => [hidden, entry.placeholder]))
-}
-
-/** Forgets the remembered names. Call when the camera view closes. */
-export function forgetPreview(): void {
-  remembered.clear()
-}
-
-/** Loads the text reader and the in-browser name model together, as soon as the camera view opens. Best effort. */
+/**
+ * Loads the text reader as soon as the camera view opens, and the in-browser name model alongside it, so both the
+ * live blur and the photo's check start sooner. Best effort.
+ */
 export async function warmUpPreview(): Promise<void> {
   const [ocr, redact] = await Promise.all([import('../camera/ocr.ts'), import('../ai/redact.ts')])
   await Promise.all([ocr.prepareOcr(), redact.prepareRedaction(undefined, 'browser-model')])
 }
 
-async function livePreview(frame: HTMLCanvasElement, ocr: OcrResult, find: (text: string) => Promise<LiveRedaction>): Promise<LiveView> {
+/** Where to blur one video frame: a padded box over each line of text. */
+export async function previewLines(frame: HTMLCanvasElement, ocr: OcrResult): Promise<LiveView> {
   if (ocr.words.length === 0) return { kind: 'no-text' }
-  const { detectBoxes, rememberedInText } = await import('../camera/blackoutPlan.ts')
-  const result = await detectBoxes(ocr, frame, async (text) => {
-    const found = await find(text)
-    const now = Date.now()
-    for (const [hidden, placeholder] of Object.entries(found.map.lookup)) remembered.set(hidden, { placeholder, seenAt: now })
-    // Names seen in earlier frames but missed in this one are blurred too, if they are on this frame.
-    const lookup = { ...rememberedInText(rememberedNow(), text), ...found.map.lookup }
-    return { ...found, map: { ...found.map, lookup } }
-  })
-  if (result.status !== 'ok') return { kind: result.status }
+  const { textLines, unclearWords, DEFAULT_MAX_UNCLEAR_SHARE } = await import('../camera/blackoutPlan.ts')
   return {
-    kind: 'found',
-    boxes: result.boxes.map(({ x, y, width, height, category }) => ({ x, y, width, height, category })),
+    kind: 'text',
+    lines: textLines(ocr, frame),
     width: frame.width,
     height: frame.height,
+    unclear: unclearWords(ocr.words).share > DEFAULT_MAX_UNCLEAR_SHARE,
   }
-}
-
-/** First look at a frame: rules and remembered names only, so details blur right after the text is read. */
-export async function quickPreview(frame: HTMLCanvasElement, ocr: OcrResult): Promise<LiveView> {
-  const { redact } = await import('../ai/redact.ts')
-  return livePreview(frame, ocr, (text) => redact(text, { engine: 'rules-only' }))
-}
-
-/** Second look at the same frame: the in-browser name model too (basic engine). */
-export async function previewBoxes(frame: HTMLCanvasElement, ocr: OcrResult): Promise<LiveView> {
-  return livePreview(frame, ocr, (text) => redactNotes(text, undefined, { basicOnly: true }))
 }

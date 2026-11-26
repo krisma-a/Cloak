@@ -24,7 +24,9 @@ import {
   unreadablePages,
   videoConstraints,
   containRect,
+  hiddenByCategory,
   liveHint,
+  resultHeadline,
 } from './scan.ts'
 
 const domError = (name: string) => Object.assign(new Error(name), { name })
@@ -218,10 +220,30 @@ describe('live preview', () => {
 
   it('says one plain line for each state', () => {
     assert.equal(liveHint({ kind: 'no-text' }), 'Point the camera at the page.')
-    assert.match(liveHint({ kind: 'hard-to-read' }), /Move closer/)
-    assert.match(liveHint({ kind: 'found', boxes: [], width: 1, height: 1 }), /No private details/)
-    const box = { x: 0, y: 0, width: 1, height: 1, category: 'PERSON' as const }
-    assert.match(liveHint({ kind: 'found', boxes: [box], width: 1, height: 1 }), /^1 private detail spotted/)
-    assert.match(liveHint({ kind: 'found', boxes: [box, box], width: 1, height: 1 }), /^2 private details spotted/)
+    const line = { x: 0, y: 0, width: 1, height: 1 }
+    assert.match(liveHint({ kind: 'text', lines: [line], width: 1, height: 1, unclear: false }), /^All text is blurred/)
+    assert.match(liveHint({ kind: 'text', lines: [line], width: 1, height: 1, unclear: true }), /Move closer/)
+  })
+})
+
+describe('result screen', () => {
+  it('counts hidden details per category, most first', () => {
+    const box = (category: 'PERSON' | 'PHONE' | 'EMAIL') => ({ x: 0, y: 0, width: 1, height: 1, category })
+    assert.deepEqual(hiddenByCategory([box('PHONE'), box('PERSON'), box('PERSON'), box('EMAIL')]), [
+      { category: 'PERSON', label: 'Name', count: 2 },
+      { category: 'EMAIL', label: 'Email', count: 1 },
+      { category: 'PHONE', label: 'Phone', count: 1 },
+    ])
+    assert.deepEqual(hiddenByCategory([]), [])
+  })
+
+  it('leads with the outcome', () => {
+    const base = { hidden: 3, pages: 1, noCopy: false, unclear: false }
+    assert.equal(resultHeadline(base).title, '3 details blacked out')
+    assert.equal(resultHeadline({ ...base, hidden: 1 }).title, '1 detail blacked out')
+    assert.equal(resultHeadline({ ...base, pages: 3 }).title, '3 details blacked out across 3 pages')
+    assert.equal(resultHeadline({ ...base, hidden: 0 }).title, 'Nothing private found')
+    assert.equal(resultHeadline({ ...base, unclear: true }).title, 'Check this copy before you share it')
+    assert.equal(resultHeadline({ ...base, noCopy: true, unclear: true }).title, 'No safe copy yet')
   })
 })

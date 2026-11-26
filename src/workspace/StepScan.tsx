@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { KeyboardEvent, RefObject } from 'react'
+import type { CSSProperties, KeyboardEvent, RefObject } from 'react'
+import type { Category } from '../ai/placeholders.ts'
 import { downloadBlob } from '../download.ts'
 import { LoadingCard } from './components.tsx'
 import { ScanIcon, WhereChip } from './icons.tsx'
@@ -11,6 +12,7 @@ import {
   CATEGORY_LABELS,
   fileKind,
   fitWithin,
+  hiddenByCategory,
   hiddenCountLabel,
   isPhone,
   labelBelow,
@@ -20,14 +22,14 @@ import {
   readingLabel,
   readingProgress,
   redactedFileName,
-  summarize,
+  resultHeadline,
   UNREADABLE_MESSAGE,
   UNSUPPORTED_FILE_MESSAGE,
   unreadablePages,
   videoConstraints,
 } from './scan.ts'
 import type { CameraProblem, LiveView, Rect, ScanBox } from './scan.ts'
-import { blackOut, forgetPreview, pagesToPdf, PDF_DEMO, pdfToPages, previewBoxes, quickPreview, readText, warmUpPreview } from './scanAi.ts'
+import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, previewLines, readText, warmUpPreview } from './scanAi.ts'
 
 // "Scan a document": take a photo or upload a photo or PDF, read the text ON THIS DEVICE, and show the original
 // next to a blacked-out copy. Pictures live in this tab's memory only (canvases and blob: URLs, freed on leaving).
@@ -42,6 +44,9 @@ const MAX_SIDE = 2400
 const LIVE_SIDE = 960
 /** A short rest between live looks, so the page stays responsive on a slow laptop. */
 const LIVE_PAUSE_MS = 100
+
+/** Where the compare handle rests on the result: mostly the blacked-out copy, with the original just in view. */
+const RESTING_SPLIT = 72
 
 /** Share of the progress bar spent turning PDF pages into pictures. */
 const PDF_RENDER_SHARE = 0.15
@@ -149,18 +154,16 @@ interface CaptureViewProps {
 }
 
 /**
- * While the camera is live: every second or two, reads one frame and finds the private details in it (on this
- * device, basic engine), so they can be blurred on the preview. One look at a time; paused while the tab is hidden;
- * stops when the preview goes away. A preview only: the photo gets its own full check.
+ * While the camera is live: reads one frame at a time and blurs every line of text on the preview (on this device,
+ * text reader only, no redaction). One look at a time; paused while the tab is hidden; stops when the preview goes
+ * away. A preview only: the photo gets its own full check, and then only the private details stay hidden.
  */
 function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boolean): LiveView {
   const [view, setView] = useState<LiveView>({ kind: 'starting' })
 
-  // Load the text reader and the name model together as soon as the camera view opens, before the video is ready,
-  // and forget remembered names when it closes.
+  // Load the text reader (and the name model, for the photo) as soon as the camera view opens, before the video is ready.
   useEffect(() => {
     void warmUpPreview().catch(() => undefined)
-    return () => forgetPreview()
   }, [])
 
   useEffect(() => {
@@ -181,15 +184,8 @@ function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boole
           frame.getContext('2d')?.drawImage(video, 0, 0, size.width, size.height)
           const ocr = await readText(frame)
           if (stopped) return
-          // Rules and remembered names first (instant), then the name model on the same frame.
-          const quick = await quickPreview(frame, ocr)
-          if (stopped) return
-          setView(quick)
-          // No text, too unclear or blocked: nothing for the name model to add.
-          if (quick.kind === 'found') {
-            const seen = await previewBoxes(frame, ocr)
-            if (!stopped) setView(seen)
-          }
+          const seen = await previewLines(frame, ocr)
+          if (!stopped) setView(seen)
         } catch {
           if (!stopped) setView({ kind: 'no-text' }) // a look that fails just tries again; the photo is unaffected
         }
@@ -262,11 +258,11 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
             onLoadedData={() => setVideoReady(true)}
             onEmptied={() => setVideoReady(false)}
           />
-          {canShoot && live.kind === 'found' && frameBox && (
-            // Blurred patches where the private details are, on top of the picture (not the letterbox bars).
+          {canShoot && live.kind === 'text' && frameBox && (
+            // Blurred patches over every line of text, on top of the picture (not the letterbox bars).
             <div className="scan-live" style={containRect(frameBox, live)} aria-hidden="true">
-              {live.boxes.map((box, index) => (
-                <span key={`${box.x}-${box.y}-${index}`} className="scan-live-box" style={boxPercent(box, live.width, live.height)} />
+              {live.lines.map((line, index) => (
+                <span key={`${line.x}-${line.y}-${index}`} className="scan-live-box" style={boxPercent(line, live.width, live.height)} />
               ))}
             </div>
           )}
@@ -282,7 +278,7 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
       )}
 
       {!problem && canShoot && (
-        <p className={`scan-live-hint${live.kind === 'hard-to-read' ? ' is-warn' : ''}`} role="status" aria-live="polite">
+        <p className={`scan-live-hint${live.kind === 'text' && live.unclear ? ' is-warn' : ''}`} role="status" aria-live="polite">
           {liveHint(live)}
         </p>
       )}
@@ -356,6 +352,10 @@ export function StepScan({ onBack }: StepScanProps) {
   const [fileError, setFileError] = useState<string | null>(null)
   const [current, setCurrent] = useState(0)
   const [active, setActive] = useState<number | null>(null)
+  // The category a row of "What's hidden" is pointing at: its boxes light up on the picture.
+  const [litCategory, setLitCategory] = useState<Category | null>(null)
+  // Where the compare handle is: 0 = all original, 100 = all blacked-out copy.
+  const [split, setSplit] = useState(RESTING_SPLIT)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -376,6 +376,23 @@ export function StepScan({ onBack }: StepScanProps) {
     },
     [freeUrls],
   )
+
+  // When the result opens, the blacked-out copy wipes in over the original once, then rests with the original in view,
+  // so the handle explains itself. Skipped when the person prefers less motion.
+  useEffect(() => {
+    if (phase.kind !== 'result') return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return // already at rest (set with the result)
+    let frame = 0
+    const started = performance.now()
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - started) / 900)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setSplit(Math.round(RESTING_SPLIT * eased))
+      if (t < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [phase.kind])
 
   // Move focus to the new heading when the view changes, so keyboard and screen reader users land on it.
   const firstPhase = useRef(true)
@@ -463,6 +480,8 @@ export function StepScan({ onBack }: StepScanProps) {
     // download stays off until every page has one.
     setCurrent(0)
     setActive(null)
+    setLitCategory(null)
+    setSplit(RESTING_SPLIT)
     setPhase({ kind: 'result', source, fileName, pages: scanned })
   }
 
@@ -589,25 +608,49 @@ export function StepScan({ onBack }: StepScanProps) {
     const toCheck = pages.reduce((sum, p) => sum + p.review.length, 0)
     const unclear = unreadablePages(pages.map((p) => ({ unreadable: p.redacted !== null && p.unclear })))
     const totalHidden = pages.reduce((sum, p) => sum + p.boxes.length, 0)
-    const summary = summarize(page.boxes)
-    const activeBox = active === null ? null : page.boxes[active]
     const isPdf = phase.source === 'pdf'
 
     const clearOnEscape = (event: KeyboardEvent<HTMLButtonElement>) => {
       if (event.key === 'Escape') event.currentTarget.blur()
     }
 
+    const headline = resultHeadline({
+      hidden: totalHidden,
+      pages: pages.length,
+      noCopy: missing.length === pages.length,
+      unclear: unclear.length > 0,
+    })
+    const rows = hiddenByCategory(page.boxes)
+    const where = isPdf ? `page ${current + 1}` : 'this photo'
+
+    // One status message for the whole result, the most serious first.
+    let status: { strong?: string; text: string } | null = null
+    if (unreadable.length > 0) {
+      status = isPdf
+        ? {
+            text: `We couldn’t read ${pageList(unreadable)}, so the PDF can’t be downloaded yet. Scan ${unreadable.length === 1 ? 'that page' : 'those pages'} again, flat and close, in good light.`,
+          }
+        : { text: 'We couldn’t read any text in this photo, so there’s no copy to download. Retake it flat and close, in good light.' }
+    } else if (blocked.length > 0) {
+      status = {
+        text: `A private detail on ${isPdf ? pageList(blocked) : 'this photo'} couldn’t be matched to a spot on the picture, so there’s no copy to download. Retake it flatter and in better light.`,
+      }
+    } else if (unclear.length > 0) {
+      status = {
+        strong: 'Cloak may have missed private details.',
+        text: ` Much of ${isPdf ? pageList(unclear) : 'this photo'} was hard to read, so names, numbers or health details may still show. It’s risky to share this copy or write a draft from it.`,
+      }
+    } else if (toCheck > 0) {
+      status = { text: 'Some words were hard to read. Check the dashed outlines: they might hide a detail Cloak missed.' }
+    }
+
     return (
-      <section className="card scan" aria-labelledby="scan-title">
+      <section className="card scan scan-result" aria-labelledby="scan-title">
         <WhereChip where="laptop">On this device</WhereChip>
-        <h2 id="scan-title" tabIndex={-1} className="scan-title">
-          Check the blacked-out copy
+        <h2 id="scan-title" tabIndex={-1} className="scan-title scan-verdict">
+          {headline.title}
         </h2>
-        <p className="muted">
-          {totalHidden === 0
-            ? 'We didn’t find any private details. Check the page yourself before you share it.'
-            : `${totalHidden} ${totalHidden === 1 ? 'detail is' : 'details are'} blacked out${isPdf ? ` across ${pages.length} pages` : ''}. Hover over or tap a box to see what it hides.`}
-        </p>
+        <p className="scan-lead">{headline.lead}</p>
 
         {isPdf && PDF_DEMO && (
           <p className="notice info">Demo: opening PDFs isn’t connected yet, so these are made-up sample pages, read and blacked out for real.</p>
@@ -624,6 +667,7 @@ export function StepScan({ onBack }: StepScanProps) {
                   onClick={() => {
                     setCurrent(index)
                     setActive(null)
+                    setLitCategory(null)
                   }}
                 >
                   <span className="scan-thumb" aria-hidden="true">
@@ -641,110 +685,123 @@ export function StepScan({ onBack }: StepScanProps) {
           </ol>
         )}
 
-        <div className="scan-compare">
-          <figure className="scan-figure">
-            <figcaption>Original{isPdf ? `, page ${current + 1}` : ''}</figcaption>
-            <div className="scan-frame">
-              <img src={page.originalUrl} width={page.width} height={page.height} alt={`Original${isPdf ? ` page ${current + 1}` : ' photo'}`} />
-              {activeBox && <span className="scan-mark" style={boxPercent(activeBox, page.width, page.height)} aria-hidden="true" />}
+        <div className="scan-check">
+          <figure className="scan-wipe">
+            {/* One picture: the blacked-out copy on the left of the handle, the original on the right, so every box
+                can be checked against the exact words it covers. */}
+            <div className="scan-frame" style={{ '--split': split / 100 } as CSSProperties}>
+              <img
+                src={page.originalUrl}
+                width={page.width}
+                height={page.height}
+                alt={`Original${isPdf ? ` page ${current + 1}` : ' photo'}`}
+              />
+              {page.redacted && (
+                <>
+                  <img
+                    className="scan-wipe-copy"
+                    src={page.redacted.url}
+                    width={page.width}
+                    height={page.height}
+                    alt={`Blacked-out copy${isPdf ? ` of page ${current + 1}` : ''}, ${hiddenCountLabel(page.boxes.length).toLowerCase()}`}
+                  />
+                  <span className="scan-wipe-line" aria-hidden="true" />
+                  <span className="scan-wipe-tag is-copy" aria-hidden="true">
+                    Blacked out
+                  </span>
+                  <span className="scan-wipe-tag is-original" aria-hidden="true">
+                    Original
+                  </span>
+                  {page.review.map((spot) => (
+                    <span key={`review-${spot.x}-${spot.y}`} className="scan-review" style={boxPercent(spot, page.width, page.height)} aria-hidden="true" />
+                  ))}
+                  {page.boxes.map((box, index) => {
+                    const label = CATEGORY_LABELS[box.category]
+                    return (
+                      <button
+                        key={`${box.x}-${box.y}-${index}`}
+                        type="button"
+                        className={`scan-box${active === index ? ' is-active' : ''}${litCategory === box.category ? ' is-lit' : ''}${labelBelow(box, page.height) ? ' label-below' : ''}`}
+                        style={boxPercent(box, page.width, page.height)}
+                        aria-label={`Hidden detail ${index + 1} of ${page.boxes.length}: ${label}`}
+                        onMouseEnter={() => setActive(index)}
+                        onMouseLeave={() => setActive((now) => (now === index ? null : now))}
+                        onFocus={() => setActive(index)}
+                        onBlur={() => setActive((now) => (now === index ? null : now))}
+                        onKeyDown={clearOnEscape}
+                      >
+                        <span className="scan-box-label" aria-hidden="true">
+                          {label}
+                        </span>
+                      </button>
+                    )
+                  })}
+                  <input
+                    className="scan-wipe-handle"
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={split}
+                    onChange={(event) => setSplit(Number(event.target.value))}
+                    aria-label="Compare the blacked-out copy with the original"
+                    aria-valuetext={`${split}% blacked-out copy`}
+                  />
+                </>
+              )}
             </div>
+            {!page.redacted && (
+              <figcaption className="scan-wipe-missing">{page.blocked ? BLOCKED_MESSAGE : UNREADABLE_MESSAGE}</figcaption>
+            )}
           </figure>
 
-          <figure className="scan-figure is-redacted">
-            <figcaption>
-              Blacked out · {page.redacted ? hiddenCountLabel(page.boxes.length) : page.blocked ? 'not safe to share' : 'couldn’t read'}
-            </figcaption>
-            {page.redacted ? (
-              <div className="scan-frame">
-                <img
-                  src={page.redacted.url}
-                  width={page.width}
-                  height={page.height}
-                  alt={`Blacked-out copy${isPdf ? ` of page ${current + 1}` : ''}, ${hiddenCountLabel(page.boxes.length).toLowerCase()}`}
-                />
-                {page.review.map((spot) => (
-                  <span key={`review-${spot.x}-${spot.y}`} className="scan-review" style={boxPercent(spot, page.width, page.height)} aria-hidden="true" />
-                ))}
-                {page.boxes.map((box, index) => {
-                  const label = CATEGORY_LABELS[box.category]
-                  return (
+          <aside className="scan-ledger" aria-labelledby="scan-ledger-title">
+            <h3 id="scan-ledger-title">What’s hidden{isPdf ? ` on page ${current + 1}` : ''}</h3>
+            {rows.length > 0 ? (
+              <ul className="scan-ledger-rows">
+                {rows.map((row) => (
+                  <li key={row.category}>
                     <button
-                      key={`${box.x}-${box.y}-${index}`}
                       type="button"
-                      className={`scan-box${active === index ? ' is-active' : ''}${labelBelow(box, page.height) ? ' label-below' : ''}`}
-                      style={boxPercent(box, page.width, page.height)}
-                      aria-label={`Hidden detail ${index + 1} of ${page.boxes.length}: ${label}`}
-                      onMouseEnter={() => setActive(index)}
-                      onMouseLeave={() => setActive((now) => (now === index ? null : now))}
-                      onFocus={() => setActive(index)}
-                      onBlur={() => setActive((now) => (now === index ? null : now))}
-                      onKeyDown={clearOnEscape}
+                      className={`scan-ledger-row${litCategory === row.category ? ' is-lit' : ''}`}
+                      onMouseEnter={() => setLitCategory(row.category)}
+                      onMouseLeave={() => setLitCategory((now) => (now === row.category ? null : now))}
+                      onFocus={() => setLitCategory(row.category)}
+                      onBlur={() => setLitCategory((now) => (now === row.category ? null : now))}
+                      aria-label={`${row.label}: ${row.count} hidden. Shows where on the picture.`}
                     >
-                      <span className="scan-box-label" aria-hidden="true">
-                        {label}
-                      </span>
+                      <span className="scan-ledger-swatch" aria-hidden="true" />
+                      <span className="scan-ledger-label">{row.label}</span>
+                      <span className="scan-ledger-count">{row.count}</span>
                     </button>
-                  )
-                })}
-              </div>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <div className="scan-frame is-missing">
-                <p>{page.blocked ? BLOCKED_MESSAGE : UNREADABLE_MESSAGE}</p>
-              </div>
+              <p className="scan-ledger-empty">
+                {!page.redacted
+                  ? `No copy of ${where}, so nothing is hidden yet.`
+                  : page.unclear
+                    ? 'Nothing found in the parts Cloak could read.'
+                    : `Nothing private found on ${where}.`}
+              </p>
             )}
-          </figure>
+
+            {status ? (
+              <p className="scan-status" role="alert">
+                {status.strong && <strong>{status.strong}</strong>}
+                {status.text}
+              </p>
+            ) : (
+              <p className="scan-ledger-note">Handwriting and faint text can be missed. Read every line before you share it.</p>
+            )}
+            {saveError && (
+              <p className="scan-status" role="alert">
+                {saveError}
+              </p>
+            )}
+
+          </aside>
         </div>
-
-        {summary.length > 0 && (
-          <ul className="scan-summary" aria-label={`Hidden on ${isPdf ? `page ${current + 1}` : 'this photo'}`}>
-            {summary.map(({ label, count }) => (
-              <li key={label}>
-                {label} <span className="count">{count}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {unreadable.length > 0 && (
-          <p className="notice warn" role="alert">
-            {isPdf ? (
-              <>
-                We couldn’t read {pageList(unreadable)}, so there’s no safe copy of {unreadable.length === 1 ? 'it' : 'them'} and the
-                PDF can’t be downloaded yet. Scan {unreadable.length === 1 ? 'that page' : 'those pages'} again, flat and close, in good
-                light.
-              </>
-            ) : (
-              <>We couldn’t read any text in this photo, so there’s no copy to download. Retake it flat and close, in good light.</>
-            )}
-          </p>
-        )}
-        {blocked.length > 0 && (
-          <p className="notice warn" role="alert">
-            We couldn’t black out {isPdf ? pageList(blocked) : 'this photo'} safely: a private detail couldn’t be matched to a spot
-            on the picture, so there’s no copy of {blocked.length === 1 ? 'it' : 'them'} to download. Scan{' '}
-            {blocked.length === 1 ? 'it' : 'them'} again, flatter and in better light.
-          </p>
-        )}
-        {unclear.length > 0 && (
-          <p className="notice warn" role="alert">
-            <strong>Cloak may have missed private details.</strong> Much of {isPdf ? pageList(unclear) : 'this photo'} was hard
-            to read, so some names, numbers or health details may still show. It’s risky to share this copy or write a draft
-            from it. Check every line, or retake it flat and close, in good light.
-          </p>
-        )}
-        {missing.length === 0 && unclear.length === 0 && toCheck > 0 && (
-          <p className="notice warn">
-            Some words were hard to read, so they might hide a detail we missed. Check the dashed outlines before you share it.
-          </p>
-        )}
-        {missing.length === 0 && toCheck === 0 && (
-          <p className="hint">Check every page before you share it. Handwriting and faint text can be missed.</p>
-        )}
-        {saveError && (
-          <p className="notice warn" role="alert">
-            {saveError}
-          </p>
-        )}
 
         <div className="actions">
           <button type="button" className="btn btn-quiet" onClick={onBack}>
@@ -753,12 +810,7 @@ export function StepScan({ onBack }: StepScanProps) {
           <button type="button" className="btn btn-quiet" onClick={scanAnother}>
             Scan another
           </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={download}
-            disabled={saving || missing.length > 0}
-          >
+          <button type="button" className="btn btn-primary" onClick={download} disabled={saving || missing.length > 0}>
             {saving ? 'Saving…' : isPdf ? 'Download redacted PDF' : 'Download redacted photo'}
           </button>
         </div>
