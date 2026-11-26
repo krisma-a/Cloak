@@ -29,6 +29,11 @@ import {
   autoProgress,
   containRect,
   HEIC_MESSAGE,
+  PDF_LONG_SIDE,
+  PDF_MAX_PAGES,
+  PdfScanError,
+  pdfProblem,
+  pdfScale,
   isHeic,
   loadAutoCapture,
   saveAutoCapture,
@@ -449,5 +454,21 @@ describe('auto-capture', () => {
     const blocked = { getItem: () => { throw new Error('no') }, setItem: () => { throw new Error('no') } }
     assert.equal(loadAutoCapture(blocked), true)
     assert.doesNotThrow(() => saveAutoCapture(false, blocked))
+  })
+})
+
+describe('PDF pages', () => {
+  it('draws a Letter page at about 150 dpi, never smaller than the PDF itself', () => {
+    const scale = pdfScale(612, 792)
+    assert.ok(Math.abs(792 * scale - PDF_LONG_SIDE) < 1)
+    assert.equal(pdfScale(4000, 3000), 1, 'a page already bigger than the target is not shrunk below 1')
+  })
+
+  it('says why a PDF could not be opened', () => {
+    assert.match(pdfProblem(new PdfScanError('password')).title, /password protected/)
+    const long = pdfProblem(new PdfScanError('too-many-pages', 80))
+    assert.match(long.message, /80 pages/)
+    assert.match(long.message, new RegExp(`${PDF_MAX_PAGES} at a time`))
+    assert.match(pdfProblem(new Error('anything else')).title, /couldn’t open/)
   })
 })

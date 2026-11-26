@@ -1,66 +1,8 @@
-// PLACEHOLDER PDF FUNCTIONS, until src/camera/pdf.ts exists. Nothing is sent anywhere.
-//
-// Same inputs and output as the real ones will have (see scanAi.ts). pdfToPages() ignores the file and draws three
-// made-up pages of readable text, so the real reader and blackout run on them; pagesToPdf() writes a real PDF.
-
-const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
-
-function context(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
-  const ctx = canvas.getContext('2d', { willReadFrequently: true })
-  if (!ctx) throw new Error('Canvas 2D is not available.')
-  return ctx
-}
-
-function blankCanvas(width: number, height: number): HTMLCanvasElement {
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  return canvas
-}
-
-// Made-up note lines for the fake PDF pages. FAKE DATA ONLY: no real person, ID or case.
-const FAKE_PAGES: ReadonlyArray<readonly string[]> = [
-  [
-    'Case notes - page 1',
-    'Met with Jordan Example (ID E-1042) on Oct 3.',
-    'Jordan asked for a quieter desk near the window.',
-    'Manager Riley Sample agreed to review the seating plan.',
-    'Follow up by phone on 555-010-0199 next week.',
-  ],
-  [
-    'Case notes - page 2',
-    'Riley Sample confirmed the desk move for Oct 10.',
-    'No other changes were requested.',
-  ],
-  ['Case notes - page 3', 'Closed. Email jordan.example@example.com the summary.'],
-]
+// The redacted-PDF writer: one PDF made only from the blacked-out page pictures (no text layer, so nothing hidden survives
+// underneath), written here with no outside library. Opening PDFs is src/camera/pdf.ts. Nothing is sent anywhere.
 
 /**
- * Same inputs and output as the real pdfToPages() (pdf.ts): one picture per PDF page, drawn on this device.
- * The fake can't open PDFs, so it draws three plain made-up pages whatever the file holds.
- */
-export async function pdfToPages(file: File, onProgress?: (fraction: number) => void): Promise<HTMLCanvasElement[]> {
-  void file
-  const pages: HTMLCanvasElement[] = []
-  for (const [n, lines] of FAKE_PAGES.entries()) {
-    await wait(200)
-    const page = blankCanvas(1240, 1754) // A4 at 150 dpi
-    const ctx = context(page)
-    ctx.fillStyle = '#fff'
-    ctx.fillRect(0, 0, page.width, page.height)
-    // Real, readable made-up text, so the real reader and blackout have something to work on.
-    ctx.fillStyle = '#111'
-    ctx.font = '36px Helvetica, Arial, sans-serif'
-    lines.forEach((line, index) => ctx.fillText(line, 124, 180 + index * 80))
-    pages.push(page)
-    onProgress?.((n + 1) / FAKE_PAGES.length)
-  }
-  return pages
-}
-
-/**
- * Same inputs and output as the real pagesToPdf() (pdf.ts): one PDF with each blacked-out page as a picture, so no
- * hidden text survives underneath. This fake writes a real, minimal PDF (JPEG pages), so the download works.
+ * One PDF with each blacked-out page as a picture (JPEG), so no hidden text survives underneath. A real, minimal PDF.
  */
 export async function pagesToPdf(pages: HTMLCanvasElement[]): Promise<Blob> {
   const jpegs = await Promise.all(

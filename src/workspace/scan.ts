@@ -150,15 +150,51 @@ export const HEIC_TITLE = 'Chrome can’t open this photo format'
 export const HEIC_MESSAGE =
   'This is an iPhone HEIC photo. On your iPhone, share it as a JPEG (Settings → Camera → Formats → Most Compatible makes this the default), or take a screenshot of it, then upload that.'
 
-export const PDF_UNSUPPORTED_TITLE = 'Cloak can’t open PDFs yet'
-export const PDF_UNSUPPORTED_MESSAGE =
-  'Open the PDF, take a screenshot or a photo of each page, and upload those pictures instead. They’re read the same way.'
+/** The most pages Cloak reads from one PDF (each page is read and checked on this laptop, which takes a while). */
+export const PDF_MAX_PAGES = 30
 
-/** Thrown when a PDF is chosen but Cloak has no PDF reader (yet), so the screen can say so instead of faking pages. */
-export class PdfUnsupportedError extends Error {
-  override name = 'PdfUnsupportedError'
-  constructor() {
-    super(PDF_UNSUPPORTED_MESSAGE)
+/** The long side, in pixels, each PDF page is drawn at: sharp enough for OCR (about 150 dpi on Letter), not slow. */
+export const PDF_LONG_SIDE = 1800
+
+/** The drawing scale for a PDF page `width` x `height` points so its long side is `longSide` pixels (never below 1). */
+export function pdfScale(width: number, height: number, longSide = PDF_LONG_SIDE): number {
+  return Math.max(1, longSide / Math.max(width, height, 1))
+}
+
+export type PdfProblemKind = 'password' | 'too-many-pages' | 'damaged'
+
+/** Thrown by the PDF reader when a PDF can't be opened, so the screen can say why. */
+export class PdfScanError extends Error {
+  override name = 'PdfScanError'
+  readonly kind: PdfProblemKind
+  /** The page count, for "too-many-pages". */
+  readonly pages?: number
+  constructor(kind: PdfProblemKind, pages?: number) {
+    super(`PDF problem: ${kind}`)
+    this.kind = kind
+    this.pages = pages
+  }
+}
+
+/** The title and message to show for a PDF that couldn't be opened. */
+export function pdfProblem(error: unknown): { title: string; message: string } {
+  const kind = error instanceof PdfScanError ? error.kind : 'damaged'
+  switch (kind) {
+    case 'password':
+      return {
+        title: 'This PDF is password protected',
+        message: 'Cloak can’t open protected PDFs. Remove the password and upload it again, or upload a screenshot of each page.',
+      }
+    case 'too-many-pages':
+      return {
+        title: 'This PDF is too long',
+        message: `It has ${error instanceof PdfScanError ? error.pages : 'many'} pages, and Cloak reads up to ${PDF_MAX_PAGES} at a time. Upload the pages you need, or split the file.`,
+      }
+    default:
+      return {
+        title: 'We couldn’t open this PDF',
+        message: 'It may be damaged or not a real PDF. Try another file, or upload a screenshot of the page instead.',
+      }
   }
 }
 
