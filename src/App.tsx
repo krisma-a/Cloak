@@ -21,6 +21,9 @@ import { StepResult } from './workspace/StepResult.tsx'
 import { StepReview } from './workspace/StepReview.tsx'
 import { StepScan } from './workspace/StepScan.tsx'
 import { StepStart } from './workspace/StepStart.tsx'
+import { SpecsNotice } from './workspace/SpecsNotice.tsx'
+import { markSpecsSeen, shouldShowSpecs, specsSeen } from './workspace/specs.ts'
+import type { DeviceInfo } from './workspace/specs.ts'
 import type { DraftResult, RedactionResult, StepId, TemplateId } from './workspace/types.ts'
 import './workspace/workspace.css'
 import logo from './assets/logo.png'
@@ -68,6 +71,15 @@ export default function App() {
   const [checkMode, setCheckMode] = useState<CheckMode>(() => loadCheckMode())
   // Whether this browser could run the private AI at all. False: basic checks are the only option, so no choice is shown.
   const [nanoPossible, setNanoPossible] = useState<boolean | null>(null)
+  // The one-time "Cloak runs best on…" notice for slower or unsupported setups, once we know what this device can do.
+  const [specsDismissed, setSpecsDismissed] = useState(() => specsSeen())
+  const device = deviceInfo(nanoPossible)
+  const specsOpen = !specsDismissed && shouldShowSpecs(device)
+
+  function closeSpecs() {
+    markSpecsSeen()
+    setSpecsDismissed(true)
+  }
 
   function chooseCheckMode(mode: CheckMode) {
     setCheckMode(mode)
@@ -365,6 +377,37 @@ export default function App() {
           )}
         </main>
       </div>
+      <SpecsNotice
+        open={specsOpen}
+        device={device}
+        onClose={closeSpecs}
+        onUseBasic={
+          nanoPossible
+            ? () => {
+                chooseCheckMode('basic')
+                closeSpecs()
+              }
+            : undefined
+        }
+      />
     </div>
   )
+}
+
+/** What the browser says about this device, for the specs notice. Read each render; nothing is stored or sent. */
+function deviceInfo(privateAi: boolean | null): DeviceInfo {
+  const nav = navigator as Navigator & {
+    userAgentData?: { brands?: Array<{ brand: string }>; platform?: string; mobile?: boolean }
+    deviceMemory?: number
+  }
+  return {
+    brands: nav.userAgentData?.brands,
+    userAgent: nav.userAgent,
+    platform: nav.userAgentData?.platform,
+    mobile: nav.userAgentData?.mobile,
+    coarsePointer: window.matchMedia?.('(pointer: coarse)').matches ?? false,
+    cores: nav.hardwareConcurrency || undefined,
+    memoryGb: nav.deviceMemory,
+    privateAi,
+  }
 }
