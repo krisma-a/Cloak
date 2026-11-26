@@ -155,7 +155,12 @@ encoder: byte mode, level M, versions 1–10, so no outside QR service or librar
 the safer "use it as this laptop's camera" (Continuity Camera / Phone Link + Find my phone camera). Never the phone's camera
 app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. "Draft a report" opens a review-first pop-up (what stays vs what is sent), then hands the page text
 (cleaned of OCR noise by `draftTextFromOcr()`; memory only) to the normal note pipeline: hidden on this laptop → check-details screen → report type → send guard. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
-`redactedText` may ever be sent; never the image. PDFs are still `fakeScan.ts` (`PDF_DEMO`): made-up readable pages.
+`redactedText` may ever be sent; never the image. Uploading a PDF says "Cloak can't open PDFs yet" (`PdfUnsupportedError`): a PDF reader needs a new
+package (pdfjs-dist, Apache-2.0, worker served from our own files like the OCR assets), not added yet; HEIC photos get their own
+message (Chrome can't open them). The redacted-PDF writer (`pagesToPdf`) is still in `fakeScan.ts` and does work. Auto-capture
+(`useAutoCapture`, `stepAutoCapture()`): once real text is steady and readable for 1.5 s the photo is taken by itself, with a
+"Hold still…" ring and an on/off switch (localStorage `cloak.autoCapture`). The finished draft downloads as a PDF made by
+`textPdf.ts` (our own writer: US Letter, built-in Helvetica, no outside library); the phone pop-up opens on the camera list.
 
 **Specs notice** (`specs.ts` pure, `SpecsNotice.tsx`, shown from `App.tsx`): a one-time pop-up ("Cloak runs best on…") for
 slower or unsupported setups: not Chrome, Chrome without Nano, a phone, under 4 cores or under 8 GB reported memory (with Nano

@@ -10,7 +10,19 @@ import {
   browserAdvice,
   cameraChoices,
   CAMERA_MESSAGES,
+  AUTO_HOLD_MS,
+  AUTO_IDLE,
+  autoProgress,
   containRect,
+  loadAutoCapture,
+  saveAutoCapture,
+  stepAutoCapture,
+  HEIC_MESSAGE,
+  HEIC_TITLE,
+  isHeic,
+  PDF_UNSUPPORTED_MESSAGE,
+  PDF_UNSUPPORTED_TITLE,
+  PdfUnsupportedError,
   draftTextFromOcr,
   RESTING_REGION,
   stepRegion,
@@ -39,7 +51,7 @@ import {
   unreadablePages,
   videoConstraints,
 } from './scan.ts'
-import type { CameraChoice, CameraProblem, ScanBlockReason, LiveView, Platform, Rect, Region, ScanBox } from './scan.ts'
+import type { AutoCaptureState, CameraChoice, CameraProblem, ScanBlockReason, LiveView, Platform, Rect, Region, ScanBox } from './scan.ts'
 import { qrMatrix, qrPath } from './qr.ts'
 import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, previewLines, privateAiSupported, readText, warmUpPreview } from './scanAi.ts'
 
@@ -303,6 +315,58 @@ function useFrostPane(view: LiveView, pane: RefObject<HTMLDivElement | null>) {
   }, [pane])
 }
 
+/**
+ * Takes the photo by itself once a readable page has stayed steady for AUTO_HOLD_MS. Each look of the live view feeds
+ * stepAutoCapture(); every animation frame turns that into progress (0 to 1) for the ring, and fires once when it
+ * reaches 1. Moving the page, a hard-to-read view or no page resets it; it only runs while the camera is live and
+ * `enabled`. Progress is written straight to the element, so React doesn't re-render every frame.
+ */
+function useAutoCapture(view: LiveView, enabled: boolean, onFire: () => void, ring: RefObject<HTMLDivElement | null>) {
+  const state = useRef<AutoCaptureState>(AUTO_IDLE)
+  const looked = useRef(0)
+  const fire = useRef(onFire)
+  const [seconds, setSeconds] = useState<number | null>(null)
+
+  useEffect(() => {
+    fire.current = onFire
+  })
+
+  useEffect(() => {
+    const now = performance.now()
+    state.current = enabled ? stepAutoCapture(state.current, view, now) : AUTO_IDLE
+    looked.current = now
+  }, [view, enabled])
+
+  useEffect(() => {
+    if (!enabled) {
+      state.current = AUTO_IDLE
+      return
+    }
+    let frame = 0
+    let fired = false
+    let shown: number | null = null
+    const tick = (now: number) => {
+      const progress = autoProgress(state.current, now, looked.current)
+      ring.current?.style.setProperty('--hold', String(progress))
+      const left = progress > 0 ? Math.max(1, Math.ceil(((1 - progress) * AUTO_HOLD_MS) / 1000)) : null
+      if (left !== shown) {
+        shown = left
+        setSeconds(left)
+      }
+      if (progress >= 1 && !fired) {
+        fired = true
+        fire.current()
+        return
+      }
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [enabled, ring])
+
+  return enabled ? seconds : null
+}
+
 /** What this browser is, for the safety note and the phone-camera steps. Read from the browser; nothing is stored. */
 function browserSetup(): { chrome: boolean; phone: boolean; platform: Platform } {
   const nav = navigator as Navigator & { userAgentData?: { brands?: Array<{ brand: string }>; platform?: string } }
@@ -330,16 +394,32 @@ function PhoneDialog({
   onClose,
   platform,
   onPhone,
+  cameras,
+  cameraId,
+  onUse,
+  onRefresh,
   onFind,
 }: {
   open: boolean
   onClose: () => void
   platform: Platform
   onPhone: boolean
+  /** The cameras this laptop can see right now (names are known once the camera is allowed). */
+  cameras: CameraChoice[]
+  /** The camera chosen, or null for the default one. */
+  cameraId: string | null
+  onUse: (id: string) => void
+  /** Looks for cameras again (a phone just connected). */
+  onRefresh: () => void
   onFind: () => Promise<boolean>
 }) {
   const ref = useRef<HTMLDialogElement>(null)
-  const [way, setWay] = useState<'qr' | 'camera'>(onPhone ? 'camera' : 'qr')
+  // Phone cameras first, so a connected phone is the first thing in the list.
+  const listed = [...cameras].sort((a, b) => Number(b.phone) - Number(a.phone))
+  const hasPhoneCamera = cameras.some((camera) => camera.phone)
+  // The ways open on the one that works best right now: the camera list when a phone camera is already visible.
+  const [chosenWay, setWay] = useState<'qr' | 'camera' | null>(null)
+  const way = onPhone || hasPhoneCamera ? (chosenWay ?? 'camera') : (chosenWay ?? 'qr')
   const [found, setFound] = useState<'found' | 'none' | null>(null)
   const [copied, setCopied] = useState(false)
   const address = phoneAddress()
@@ -353,6 +433,11 @@ function PhoneDialog({
     if (open && !dialog.open) dialog.showModal()
     if (!open && dialog.open) dialog.close()
   }, [open])
+
+  // Opening the pop-up looks for cameras again, so a phone that just connected is already in the list.
+  useEffect(() => {
+    if (open) onRefresh()
+  }, [open, onRefresh])
 
   async function copy() {
     try {
@@ -443,11 +528,46 @@ function PhoneDialog({
               <strong>The safest way.</strong> The picture goes straight into Chrome on this laptop, where Cloak’s private AI
               checks it. Nothing is saved on your phone.
             </p>
-            <h4 className="phone-os-title">{windowsFirst ? 'Windows and Android' : 'Mac and iPhone'}</h4>
-            {windowsFirst ? windowsSteps : macSteps}
-            <details className="phone-other">
-              <summary>{windowsFirst ? 'Using a Mac and iPhone?' : 'Using Windows and Android?'}</summary>
-              {windowsFirst ? macSteps : windowsSteps}
+            {listed.length > 0 && (
+              <ul className="phone-cameras" aria-label="Cameras this laptop can see">
+                {listed.map((camera) => (
+                  <li key={camera.id} className={camera.phone ? 'is-phone' : undefined}>
+                    <span className="phone-camera-name">
+                      {camera.label}
+                      {camera.phone && <span className="phone-camera-tag">Phone</span>}
+                    </span>
+                    {cameraId === camera.id ? (
+                      <span className="phone-camera-using">In use</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={camera.phone ? 'mini-btn is-main' : 'mini-btn'}
+                        onClick={() => {
+                          onUse(camera.id)
+                          onClose()
+                        }}
+                      >
+                        Use this camera
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!hasPhoneCamera && !onPhone && (
+              <p className="phone-none">
+                {listed.length > 0 ? 'No phone camera yet. ' : 'No cameras found yet. '}Connect your phone with the steps below, and it appears in
+                this list by itself.
+              </p>
+            )}
+            <details className="phone-steps-box" open={!hasPhoneCamera}>
+              <summary>{hasPhoneCamera ? 'Not seeing your phone? Setup steps' : 'Setup steps'}</summary>
+              <h4 className="phone-os-title">{windowsFirst ? 'Windows and Android' : 'Mac and iPhone'}</h4>
+              {windowsFirst ? windowsSteps : macSteps}
+              <details className="phone-other">
+                <summary>{windowsFirst ? 'Using a Mac and iPhone?' : 'Using Windows and Android?'}</summary>
+                {windowsFirst ? macSteps : windowsSteps}
+              </details>
             </details>
             {!onPhone && (
               <div className="phone-find">
@@ -500,6 +620,8 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
     setCameraId(id)
   }
 
+  const refreshCameraList = useCallback(() => void refreshCameras().catch(() => undefined), [refreshCameras])
+
   /** "Find my phone camera": look again, and switch to a phone camera if one has appeared. */
   async function findPhoneCamera() {
     const found = await refreshCameras().catch(() => [] as CameraChoice[])
@@ -522,6 +644,8 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
   const problem = state.status === 'problem' ? CAMERA_MESSAGES[state.problem] : null
   const canShoot = state.status === 'live' && videoReady
   const live = useLiveView(videoRef, canShoot)
+  const [autoOn, setAutoOn] = useState(() => loadAutoCapture())
+  const ringRef = useRef<HTMLDivElement>(null)
   const [videoSize, setVideoSize] = useState<{ width: number; height: number } | null>(null)
   const paneRef = useRef<HTMLDivElement>(null)
   useFrostPane(live, paneRef)
@@ -540,6 +664,13 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
     const video = videoRef.current
     if (!video || !video.videoWidth) return
     onPhoto(drawScaled(video, video.videoWidth, video.videoHeight))
+  }
+
+  // Auto-capture waits while the phone pop-up is open, so a photo isn't taken behind it.
+  const holdSeconds = useAutoCapture(live, autoOn && canShoot && !phoneHelp, takePhoto, ringRef)
+  function chooseAuto(on: boolean) {
+    saveAutoCapture(on)
+    setAutoOn(on)
   }
 
   return (
@@ -606,6 +737,12 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
               <div ref={paneRef} className="scan-frost" />
             </div>
           )}
+          {holdSeconds !== null && (
+            <div className="scan-hold" ref={ringRef} role="status" aria-live="polite">
+              <span className="scan-hold-ring" aria-hidden="true" />
+              Hold still… {holdSeconds}
+            </div>
+          )}
           {canShoot ? (
             <span className="scan-guide" aria-hidden="true" />
           ) : (
@@ -638,6 +775,11 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
                 </select>
               </label>
             )}
+            <label className="scan-auto">
+              <input type="checkbox" role="switch" checked={autoOn} onChange={(event) => chooseAuto(event.target.checked)} />
+              <span className="scan-auto-track" aria-hidden="true" />
+              Auto-capture
+            </label>
             {!setup.phone && (
               <button type="button" className="scan-phone-toggle" aria-haspopup="dialog" onClick={() => setPhoneHelp(true)}>
                 Use your phone as the camera
@@ -647,7 +789,17 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
         </div>
       )}
 
-      <PhoneDialog open={phoneHelp} onClose={() => setPhoneHelp(false)} platform={setup.platform} onPhone={setup.phone} onFind={findPhoneCamera} />
+      <PhoneDialog
+        open={phoneHelp}
+        onClose={() => setPhoneHelp(false)}
+        platform={setup.platform}
+        onPhone={setup.phone}
+        cameras={cameras}
+        cameraId={cameraId}
+        onUse={chooseCamera}
+        onRefresh={refreshCameraList}
+        onFind={findPhoneCamera}
+      />
 
       {fileError && (
         <p className="notice warn" role="alert">
@@ -957,7 +1109,9 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
         page = drawScaled(bitmap, bitmap.width, bitmap.height)
         bitmap.close()
       } catch {
-        showProblem('We couldn’t read this', UNREADABLE_MESSAGE) // damaged, or a format this browser can't open
+        // iPhone HEIC photos are the common case Chrome can't open; anything else is damaged or not a picture.
+        if (isHeic(file.type, file.name)) showProblem(HEIC_TITLE, HEIC_MESSAGE)
+        else showProblem('We couldn’t read this', UNREADABLE_MESSAGE)
         return
       }
       void readPages([page], 'photo', file.name)
@@ -971,8 +1125,10 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
       pages = await pdfToPages(file, (fraction) => {
         if (run.current === id) setPhase({ kind: 'reading', progress: fraction * PDF_RENDER_SHARE, label: 'Opening the PDF…' })
       })
-    } catch {
-      if (run.current === id) showProblem('We couldn’t open this PDF', 'It may be damaged or protected with a password. Try another file, or take a photo of the page instead.')
+    } catch (error) {
+      if (run.current !== id) return
+      if (error instanceof PdfUnsupportedError) showProblem(PDF_UNSUPPORTED_TITLE, PDF_UNSUPPORTED_MESSAGE)
+      else showProblem('We couldn’t open this PDF', 'It may be damaged or protected with a password. Try another file, or take a photo of the page instead.')
       return
     }
     if (run.current !== id) return

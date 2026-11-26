@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { TEMPLATES } from '../ai/templates.ts'
+import { downloadBlob } from '../download.ts'
 import { buildComparison } from './compare.ts'
 import { CompareSent } from './CompareSent.tsx'
 import { WhereChip } from './icons.tsx'
+import { textToPdf } from './textPdf.ts'
 import type { DraftResult, RedactionResult, TemplateId } from './types.ts'
 
 const STEP_NAMES: Record<string, string> = {
@@ -65,6 +68,14 @@ export function StepResult({ result, notes, base, kept, templateId, onBack, onSt
     }
     if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(() => setCopied('idle'), 3000)
+  }
+
+  // The draft as a PDF, made on this laptop from the text in the box (including any edits). Never sent anywhere.
+  function downloadPdf() {
+    const label = TEMPLATES[templateId]?.label
+    // No title line when the draft already opens with it.
+    const title = label && !text.trim().toLowerCase().startsWith(label.toLowerCase()) ? label : undefined
+    downloadBlob(`cloak-${templateId}-draft.pdf`, new Blob([textToPdf(text, title)], { type: 'application/pdf' }))
   }
 
   const { receipt } = result
@@ -148,6 +159,9 @@ export function StepResult({ result, notes, base, kept, templateId, onBack, onSt
       <div className="actions">
         <button type="button" className="btn btn-quiet" onClick={onStartOver}>
           Start over
+        </button>
+        <button type="button" className="btn btn-outline" onClick={downloadPdf}>
+          Download PDF
         </button>
         <button type="button" className="btn btn-primary" onClick={copyDraft}>
           {copied === 'done' ? 'Copied ✓' : 'Copy draft'}

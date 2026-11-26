@@ -2972,3 +2972,170 @@
     width: auto;
   }
 }
+
+/* ---------- Auto-capture ---------- */
+
+/* The "Hold still…" pill on the preview: a ring that fills as the page stays steady, then the photo is taken. */
+.cloak-app .scan-hold {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 16px 6px 8px;
+  border-radius: 999px;
+  background: rgba(31, 42, 46, 0.82);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  transform: translateX(-50%);
+  pointer-events: none;
+  --hold: 0;
+}
+
+.cloak-app .scan-hold-ring {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, rgba(31, 42, 46, 0.95) 66%, transparent 70%),
+    conic-gradient(#5fd1c4 calc(var(--hold) * 360deg), rgba(255, 255, 255, 0.25) 0);
+}
+
+/* The on/off switch under the preview. */
+.cloak-app .scan-auto {
+  position: relative;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 36px;
+  color: var(--text-2);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cloak-app .scan-auto input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.cloak-app .scan-auto-track {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: #cfc8bd;
+  transition: background 0.15s;
+}
+
+.cloak-app .scan-auto-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(31, 42, 46, 0.3);
+  transition: transform 0.15s;
+}
+
+.cloak-app .scan-auto input:checked + .scan-auto-track {
+  background: var(--teal);
+}
+
+.cloak-app .scan-auto input:checked + .scan-auto-track::after {
+  transform: translateX(14px);
+}
+
+.cloak-app .scan-auto input:focus-visible + .scan-auto-track {
+  outline: 3px solid var(--teal);
+  outline-offset: 2px;
+}
+
+/* ---------- Phone pop-up: the cameras this laptop can see ---------- */
+
+.cloak-app .phone-cameras {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+
+.cloak-app .phone-cameras li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cloak-app .phone-cameras li.is-phone {
+  background: var(--teal-soft);
+  border-radius: 10px;
+  padding-left: 10px;
+}
+
+.cloak-app .phone-camera-name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cloak-app .phone-camera-tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--teal);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cloak-app .phone-camera-using {
+  flex: none;
+  color: var(--teal-dark);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cloak-app .mini-btn.is-main {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #fff;
+}
+
+.cloak-app .phone-none {
+  margin: 12px 0 0;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.cloak-app .phone-steps-box {
+  margin-top: 14px;
+}
+
+.cloak-app .phone-steps-box > summary {
+  width: fit-content;
+  color: var(--teal);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cloak-app .phone-steps-box > summary:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 2px;
+}

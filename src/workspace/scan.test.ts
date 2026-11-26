@@ -26,7 +26,15 @@ import {
   blockedMessage,
   browserAdvice,
   cameraChoices,
+  autoProgress,
   containRect,
+  HEIC_MESSAGE,
+  isHeic,
+  loadAutoCapture,
+  saveAutoCapture,
+  stepAutoCapture,
+  AUTO_HOLD_MS,
+  AUTO_IDLE,
   draftTextFromOcr,
   isChromeBrowser,
   loadCameraId,
@@ -387,5 +395,59 @@ describe('text for drafting', () => {
     const source = ocr([[['Riley', 96], ['Sample', 95], ['xq', 20], ['called.', 96]]])
     const out = draftTextFromOcr(source)
     for (const word of out.split(/\s+/)) assert.ok(source.words.some((w) => w.text === word), word)
+  })
+})
+
+describe('uploads', () => {
+  it('spots iPhone HEIC photos by type or name', () => {
+    assert.equal(isHeic('image/heic', 'a.jpg'), true)
+    assert.equal(isHeic('', 'IMG_0042.HEIC'), true)
+    assert.equal(isHeic('image/heif', ''), true)
+    assert.equal(isHeic('image/jpeg', 'a.jpg'), false)
+    assert.match(HEIC_MESSAGE, /JPEG/)
+  })
+})
+
+describe('auto-capture', () => {
+  const view = (dx = 0, unclear = false) => ({
+    kind: 'text' as const,
+    lines: [{ x: 100 + dx, y: 100, width: 600, height: 40 }, { x: 100 + dx, y: 160, width: 600, height: 40 }],
+    width: 1000,
+    height: 800,
+    unclear,
+  })
+
+  it('holds while the page stays put, and reaches 1 after the hold', () => {
+    let state = stepAutoCapture(AUTO_IDLE, view(), 1000)
+    assert.equal(state.since, 1000)
+    state = stepAutoCapture(state, view(5), 1600) // moved a little: still steady
+    assert.equal(state.since, 1000)
+    assert.equal(autoProgress(state, 1600, 1600), 0.4)
+    assert.equal(autoProgress(state, 1000 + AUTO_HOLD_MS, 1000 + AUTO_HOLD_MS), 1)
+  })
+
+  it('resets when the page moves a lot, gets hard to read, or disappears', () => {
+    const start = stepAutoCapture(stepAutoCapture(AUTO_IDLE, view(), 1000), view(), 1500)
+    assert.equal(stepAutoCapture(start, view(200), 2000).since, 2000, 'a big move restarts the hold')
+    assert.deepEqual(stepAutoCapture(start, view(0, true), 2000), AUTO_IDLE)
+    assert.deepEqual(stepAutoCapture(start, { kind: 'no-text' }, 2000), AUTO_IDLE)
+  })
+
+  it('counts a stale look as no progress', () => {
+    const state = stepAutoCapture(stepAutoCapture(AUTO_IDLE, view(), 1000), view(), 1500)
+    assert.equal(autoProgress(state, 9000, 1500), 0)
+  })
+
+  it('is on unless turned off, remembered per browser, and blocked storage never breaks it', () => {
+    const store = new Map<string, string>()
+    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) }
+    assert.equal(loadAutoCapture(storage), true)
+    saveAutoCapture(false, storage)
+    assert.equal(loadAutoCapture(storage), false)
+    saveAutoCapture(true, storage)
+    assert.equal(loadAutoCapture(storage), true)
+    const blocked = { getItem: () => { throw new Error('no') }, setItem: () => { throw new Error('no') } }
+    assert.equal(loadAutoCapture(blocked), true)
+    assert.doesNotThrow(() => saveAutoCapture(false, blocked))
   })
 })
