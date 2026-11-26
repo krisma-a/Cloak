@@ -53,3 +53,8 @@ test('allows ordinary "only" phrases and partly hidden ones', () => {
 test('reports each leak once', () => {
   assert.equal(findLeaks('Maria, Maria, MARIA', ['Maria']).length, 1)
 })
+
+test('known strings are not flagged inside placeholders', () => {
+  assert.deepEqual(findLeaks('Spoke with [EMPLOYEE_1] about [PHONE_1].', ['employee', 'phone']), [])
+  assert.deepEqual(findLeaks('The employee called.', ['employee']).map((l) => l.category), ['KNOWN'])
+})

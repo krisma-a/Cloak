@@ -70,7 +70,9 @@ Best effort, never awaited. The hidden `/usage` page (`src/usage/`) is a live da
 thing always gets the same placeholder. Category name ≠ placeholder prefix (`PREFIX` table: `PERSON`→
 `EMPLOYEE`, `MEDICAL`→`MEDICAL_DETAIL`, `DEPARTMENT`→`DEPT`, `DATE_OF_BIRTH`→`DOB`, `EMPLOYEE_ID` and
 `OTHER_ID`→`ID`). `restore()` accepts reformatted placeholders (case, spacing, markdown escapes) but leaves
-look-alikes that aren't in the map alone. Role+team phrases are split into `[ROLE_n] in the [DEPT_n]`.
+look-alikes that aren't in the map alone. Replacing, the note-spelling lookup and the KNOWN leak check all skip text inside
+placeholders (`maskPlaceholders()`), and a bare placeholder name a model echoes back ("PHONE_1") is never an entity: otherwise
+a form label like "Employee" turned `[EMPLOYEE_1]` into `[[ROLE_1]_1]` and dropped the name from the map. Role+team phrases are split into `[ROLE_n] in the [DEPT_n]`.
 
 **Runtime settings (Firebase Remote Config).** `src/policy.ts` (pure) defines four settings: `redact_salary`,
 `medical_mode` (`generalize` | `block`), `max_retries` (0–5), `cloud_model`. Code reads them with `getPolicy()` at
@@ -146,8 +148,10 @@ with `stepRegion()`: edges grow fast (~0.1 s) and shrink slowly (~0.45 s). Only 
 the middle until the first look, holds 1.2 s when text drops out, then fades out (no page in view, no blur). The photo gets the full check, then only private details stay hidden. The capture screen warns
 when the setup is less safe than Chrome with the private AI (`browserAdvice()`: other browser, phone, or no Nano), offers a
 Camera chooser when there are 2+ cameras (`cameraChoices()`, choice kept in localStorage `cloak.cameraId`), and a "Use your
-phone as the camera" panel ranked by safety: phone as this laptop's camera (Continuity Camera / Phone Link) > Cloak on the
-phone > never the phone's camera app. No QR pairing or streaming between devices (it would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
+phone as the camera" pop-up (`<dialog>`) with two ways: a QR code that opens Cloak on the phone (drawn by `qr.ts`, our own
+encoder: byte mode, level M, versions 1–10, so no outside QR service or library; on localhost it points at cloak.web.app), and
+the safer "use it as this laptop's camera" (Continuity Camera / Phone Link + Find my phone camera). Never the phone's camera
+app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
 `redactedText` may ever be sent; never the image. PDFs are still `fakeScan.ts` (`PDF_DEMO`): made-up readable pages.
 
 **Test data.** `scripts/generate-cases.ts` writes 120 deterministic fake notes (seeded; Set A/B use disjoint

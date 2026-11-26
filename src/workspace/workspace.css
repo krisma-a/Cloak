@@ -2091,119 +2091,207 @@
   outline-offset: 2px;
 }
 
-/* The ways to use a phone, as a ladder ranked by safety: the rail and its markers show the order. */
-.cloak-app .phone-panel {
-  margin-top: 16px;
-  padding: 18px 20px 6px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: #fffefb;
+/* "Use your phone as the camera": a pop-up. Two short ways behind a two-way switch, so it never gets long. */
+.cloak-app .phone-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 24px 60px rgba(31, 42, 46, 0.28);
+  overflow: auto;
 }
 
-.cloak-app .phone-panel h3 {
-  margin: 0 0 14px;
-  font-size: 17px;
+.cloak-app .phone-dialog::backdrop {
+  background: rgba(31, 42, 46, 0.45);
+  backdrop-filter: blur(2px);
 }
 
-.cloak-app .phone-ladder {
-  position: relative;
+.cloak-app .phone-dialog[open] {
+  animation: phone-dialog-in 0.18s ease-out;
+}
+
+@keyframes phone-dialog-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.cloak-app .phone-dialog-body {
+  padding: 20px 22px 18px;
+}
+
+.cloak-app .phone-dialog-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.cloak-app .phone-dialog-head h3 {
   margin: 0;
-  padding: 0 0 0 30px;
-  list-style: none;
+  font-size: 19px;
+  letter-spacing: -0.01em;
 }
 
-/* The rail: teal where it's safe, fading to amber at the one to avoid. */
-.cloak-app .phone-ladder::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  bottom: 22px;
-  left: 7px;
-  width: 2px;
-  border-radius: 2px;
-  background: linear-gradient(var(--teal) 0%, var(--teal) 55%, #9cc9c2 78%, #d9a441 100%);
-}
-
-.cloak-app .rung {
-  position: relative;
-  padding-bottom: 16px;
-}
-
-.cloak-app .rung::before {
-  content: '';
-  position: absolute;
-  top: 5px;
-  left: -29px;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--card);
+.cloak-app .phone-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border: 0;
   border-radius: 50%;
-  box-shadow: 0 0 0 1px var(--border);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.cloak-app .rung.is-safest::before { background: var(--teal); }
-.cloak-app .rung.is-ok::before { background: #9cc9c2; }
-.cloak-app .rung.is-avoid::before { background: #d9a441; }
+.cloak-app .phone-close:hover {
+  background: #f1ece5;
+}
 
-.cloak-app .rung-rank {
+/* The two-way switch. */
+.cloak-app .phone-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border-radius: 12px;
+  background: #f1ece5;
+}
+
+.cloak-app .phone-switch button {
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.cloak-app .phone-switch button[aria-pressed='true'] {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(31, 42, 46, 0.14);
+}
+
+.cloak-app .phone-close:focus-visible,
+.cloak-app .phone-switch button:focus-visible,
+.cloak-app .phone-other summary:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 2px;
+}
+
+/* The QR code inside teal viewfinder brackets: "aim here", like the camera guide. */
+.cloak-app .phone-qr-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+}
+
+.cloak-app .phone-qr {
+  position: relative;
+  width: 184px;
   margin: 0;
-  color: var(--teal);
-  font-size: 13px;
+  padding: 10px;
+}
+
+.cloak-app .phone-qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.cloak-app .phone-qr::before,
+.cloak-app .phone-qr::after,
+.cloak-app .phone-qr-corners::before,
+.cloak-app .phone-qr-corners::after {
+  content: '';
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--teal);
+}
+
+.cloak-app .phone-qr::before { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 8px; }
+.cloak-app .phone-qr::after { top: 0; right: 0; border-left: 0; border-bottom: 0; border-top-right-radius: 8px; }
+.cloak-app .phone-qr-corners::before { bottom: 0; left: 0; border-right: 0; border-top: 0; border-bottom-left-radius: 8px; }
+.cloak-app .phone-qr-corners::after { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 8px; }
+
+.cloak-app .phone-steps {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.cloak-app .phone-steps li + li {
+  margin-top: 6px;
+}
+
+.cloak-app .phone-address {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+  margin: 14px 0 0;
   font-weight: 700;
 }
 
-.cloak-app .rung.is-ok .rung-rank { color: var(--text-2); }
-.cloak-app .rung.is-avoid .rung-rank { color: var(--amber-text); }
-
-.cloak-app .rung h4 {
-  margin: 0 0 4px;
-  font-size: 16px;
+.cloak-app .phone-address .mini-btn {
+  min-height: 34px;
+  padding: 0 12px;
 }
 
-.cloak-app .rung p {
-  max-width: 66ch;
-  margin: 0;
+.cloak-app .phone-note,
+.cloak-app .phone-lead {
+  margin: 16px 0 0;
   color: var(--text-2);
   font-size: 14px;
   line-height: 1.55;
 }
 
-.cloak-app .rung.is-avoid h4 {
-  color: var(--amber-text);
+.cloak-app .phone-lead {
+  margin-top: 0;
 }
 
-.cloak-app .phone-os-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
+.cloak-app .phone-lead strong {
+  color: var(--teal);
+}
+
+.cloak-app .phone-os-title {
+  margin: 14px 0 8px;
+  font-size: 15px;
+}
+
+.cloak-app .phone-other {
   margin-top: 12px;
-}
-
-.cloak-app .phone-os {
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--teal-soft);
-}
-
-.cloak-app .phone-os h5 {
-  margin: 0 0 6px;
   font-size: 14px;
 }
 
-.cloak-app .phone-os ol {
-  margin: 0;
-  padding-left: 18px;
-  font-size: 14px;
-  line-height: 1.5;
+.cloak-app .phone-other summary {
+  width: fit-content;
+  color: var(--teal);
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.cloak-app .phone-os li + li {
-  margin-top: 4px;
-}
-
-.cloak-app .rung p.phone-small {
+.cloak-app .phone-other .phone-steps {
   margin-top: 8px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .cloak-app .phone-find {
@@ -2211,19 +2299,38 @@
   flex-wrap: wrap;
   gap: 8px 12px;
   align-items: center;
-  margin-top: 10px;
-  font-size: 14px;
+  margin-top: 14px;
   color: var(--text-2);
+  font-size: 14px;
 }
 
-@media (max-width: 560px) {
+/* The one thing to avoid, set apart at the bottom of both ways. */
+.cloak-app .phone-avoid {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--amber-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 520px) {
+  .cloak-app .phone-qr-row {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .cloak-app .phone-qr-text {
+    justify-self: stretch;
+  }
+
   .cloak-app .scan-camera-tools {
     margin-left: 0;
   }
+}
 
-  .cloak-app .phone-panel {
-    padding: 16px 14px 4px;
-  }
+@media (prefers-reduced-motion: reduce) {
+  .cloak-app .phone-dialog[open] { animation: none; }
 }
 
 /* ---------- Result: check the copy ---------- */

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent, RefObject } from 'react'
 import type { Category } from '../ai/placeholders.ts'
 import { downloadBlob } from '../download.ts'
 import { LoadingCard } from './components.tsx'
 import { ScanIcon, WhereChip } from './icons.tsx'
 import {
+  blockedMessage,
   boxPercent,
   browserAdvice,
   cameraChoices,
@@ -37,15 +38,14 @@ import {
   unreadablePages,
   videoConstraints,
 } from './scan.ts'
-import type { CameraChoice, CameraProblem, LiveView, Platform, Rect, Region, ScanBox } from './scan.ts'
+import type { CameraChoice, CameraProblem, ScanBlockReason, LiveView, Platform, Rect, Region, ScanBox } from './scan.ts'
+import { qrMatrix, qrPath } from './qr.ts'
 import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, previewLines, privateAiSupported, readText, warmUpPreview } from './scanAi.ts'
 
 // "Scan a document": take a photo or upload a photo or PDF, read the text ON THIS DEVICE, and show the original
 // next to a blacked-out copy. Pictures live in this tab's memory only (canvases and blob: URLs, freed on leaving).
 // The camera is on only while the capture view is showing.
 
-const BLOCKED_MESSAGE =
-  'A private detail couldn’t be matched to a spot on the picture, so no copy was made. Try again, flatter and in better light.'
 
 /** Long side of a picture we read. Bigger photos take longer and read no better. */
 const MAX_SIDE = 2400
@@ -68,6 +68,8 @@ interface ScannedPage {
   redacted: { canvas: HTMLCanvasElement; blob: Blob; url: string } | null
   /** True when the text was read but a private detail couldn't be placed on the picture (so no copy was made). */
   blocked: boolean
+  /** Which safety check stopped it, when blocked. */
+  blockReason: ScanBlockReason | null
   boxes: ScanBox[]
   /** Words read with low confidence, outlined so the person checks them. */
   review: Rect[]
@@ -308,79 +310,163 @@ function browserSetup(): { chrome: boolean; phone: boolean; platform: Platform }
   }
 }
 
+/** The address a phone should open: this site, or the live site when running on this laptop (a phone can't open localhost). */
+function phoneAddress(): string {
+  return /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) ? 'https://cloak.web.app' : location.origin
+}
+
 /**
- * "Use your phone as the camera": the ways to do it, safest first. Connecting the phone as this laptop's camera is
- * safest (the picture goes straight into Chrome here, where the private AI checks it, and nothing is saved on the
- * phone); scanning on the phone itself is next (basic checks only); the phone's camera app is the one to avoid.
+ * "Use your phone as the camera", as a pop-up with two short ways:
+ *  - Open on my phone: a QR code (drawn here by qr.ts, so no outside service sees the address) opens Cloak on the phone,
+ *    which then reads the page itself. Phones get basic checks.
+ *  - Use it as this laptop's camera (safest): Continuity Camera or Phone Link, then pick the phone in the Camera list.
+ * Both end with the one thing to avoid: photographing the page with the phone's camera app.
  */
-function PhoneCameraPanel({ platform, onFind }: { platform: Platform; onFind: () => Promise<boolean> }) {
-  const [result, setResult] = useState<'found' | 'none' | null>(null)
-  const mac = (
-    <div className="phone-os" key="mac">
-      <h5>Mac and iPhone</h5>
-      <ol>
-        <li>Use the same Apple Account on both, with Wi-Fi and Bluetooth turned on.</li>
-        <li>Hold or mount your iPhone near the Mac, with its screen locked.</li>
-        <li>
-          Choose “iPhone Camera” in the Camera list. “Desk View” films a page lying flat on the desk.
-        </li>
-      </ol>
-    </div>
+function PhoneDialog({
+  open,
+  onClose,
+  platform,
+  onPhone,
+  onFind,
+}: {
+  open: boolean
+  onClose: () => void
+  platform: Platform
+  onPhone: boolean
+  onFind: () => Promise<boolean>
+}) {
+  const ref = useRef<HTMLDialogElement>(null)
+  const [way, setWay] = useState<'qr' | 'camera'>(onPhone ? 'camera' : 'qr')
+  const [found, setFound] = useState<'found' | 'none' | null>(null)
+  const [copied, setCopied] = useState(false)
+  const address = phoneAddress()
+  const host = address.replace(/^https?:\/\//, '')
+  const matrix = useMemo(() => qrMatrix(address), [address])
+  const side = matrix.length + 8 // with the 4-module light margin on each side
+
+  useEffect(() => {
+    const dialog = ref.current
+    if (!dialog) return
+    if (open && !dialog.open) dialog.showModal()
+    if (!open && dialog.open) dialog.close()
+  }, [open])
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(address)
+      setCopied(true)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  const macSteps = (
+    <ol className="phone-steps">
+      <li>Use the same Apple Account on both, with Wi-Fi and Bluetooth on.</li>
+      <li>Hold or mount your iPhone near the Mac, screen locked.</li>
+      <li>Choose “iPhone Camera” in the Camera list. “Desk View” films a page lying flat.</li>
+    </ol>
   )
-  const windows = (
-    <div className="phone-os" key="windows">
-      <h5>Windows and Android</h5>
-      <ol>
-        <li>Connect your phone in the Phone Link app.</li>
-        <li>In Settings, open Bluetooth &amp; devices, then Mobile devices, and turn on using it as a connected camera.</li>
-        <li>Choose your phone in the Camera list.</li>
-      </ol>
-    </div>
+  const windowsSteps = (
+    <ol className="phone-steps">
+      <li>Connect your phone in the Phone Link app.</li>
+      <li>In Settings, open Bluetooth &amp; devices, then Mobile devices, and turn on using it as a connected camera.</li>
+      <li>Choose your phone in the Camera list.</li>
+    </ol>
   )
+  const windowsFirst = platform === 'windows'
 
   return (
-    <section className="phone-panel" id="phone-camera" aria-labelledby="phone-camera-title">
-      <h3 id="phone-camera-title">Use your phone as the camera</h3>
-      <ol className="phone-ladder">
-        <li className="rung is-safest">
-          <p className="rung-rank">Safest</p>
-          <h4>Connect your phone as this laptop’s camera</h4>
-          <p>
-            The picture goes straight into Chrome on this laptop, where Cloak’s private AI checks it. Nothing is saved on your
-            phone.
-          </p>
-          <div className="phone-os-list">{platform === 'windows' ? [windows, mac] : [mac, windows]}</div>
-          <p className="phone-small">Menu names can differ a little between system versions.</p>
-          <div className="phone-find">
-            <button
-              type="button"
-              className="mini-btn"
-              onClick={async () => setResult((await onFind()) ? 'found' : 'none')}
-            >
-              Find my phone camera
+    <dialog
+      ref={ref}
+      className="phone-dialog"
+      aria-labelledby="phone-dialog-title"
+      onClose={onClose}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose() // a click on the dimmed backdrop
+      }}
+    >
+      <div className="phone-dialog-body">
+        <div className="phone-dialog-head">
+          <h3 id="phone-dialog-title">Use your phone as the camera</h3>
+          <button type="button" className="phone-close" onClick={onClose} aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+
+        {!onPhone && (
+          <div className="phone-switch" role="group" aria-label="How to use your phone">
+            <button type="button" aria-pressed={way === 'qr'} onClick={() => setWay('qr')}>
+              Open on my phone
             </button>
-            {result && (
-              <span role="status">
-                {result === 'found' ? 'Phone camera found and selected.' : 'No phone camera yet. Check the steps above, then try again.'}
-              </span>
+            <button type="button" aria-pressed={way === 'camera'} onClick={() => setWay('camera')}>
+              Use it as this laptop’s camera
+            </button>
+          </div>
+        )}
+
+        {way === 'qr' ? (
+          <div className="phone-way">
+            <div className="phone-qr-row">
+              <figure className="phone-qr">
+                <svg viewBox={`0 0 ${side} ${side}`} role="img" aria-label={`QR code that opens ${host}`} shapeRendering="crispEdges">
+                  <rect width={side} height={side} fill="#fff" />
+                  <path d={qrPath(matrix)} fill="#1f2a2e" />
+                </svg>
+                <span className="phone-qr-corners" aria-hidden="true" />
+              </figure>
+              <div className="phone-qr-text">
+                <ol className="phone-steps">
+                  <li>Point your phone’s camera at the code.</li>
+                  <li>Tap the link that appears.</li>
+                  <li>Choose “Scan a document”.</li>
+                </ol>
+                <p className="phone-address">
+                  <span>{host}</span>
+                  <button type="button" className="mini-btn" onClick={copy}>
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                </p>
+              </div>
+            </div>
+            <p className="phone-note">
+              Your phone reads the page itself, so nothing passes through this laptop. Phones get basic checks, which catch
+              fewer names than Chrome on a laptop.
+            </p>
+          </div>
+        ) : (
+          <div className="phone-way">
+            <p className="phone-lead">
+              <strong>The safest way.</strong> The picture goes straight into Chrome on this laptop, where Cloak’s private AI
+              checks it. Nothing is saved on your phone.
+            </p>
+            <h4 className="phone-os-title">{windowsFirst ? 'Windows and Android' : 'Mac and iPhone'}</h4>
+            {windowsFirst ? windowsSteps : macSteps}
+            <details className="phone-other">
+              <summary>{windowsFirst ? 'Using a Mac and iPhone?' : 'Using Windows and Android?'}</summary>
+              {windowsFirst ? macSteps : windowsSteps}
+            </details>
+            {!onPhone && (
+              <div className="phone-find">
+                <button type="button" className="mini-btn" onClick={async () => setFound((await onFind()) ? 'found' : 'none')}>
+                  Find my phone camera
+                </button>
+                {found && (
+                  <span role="status">
+                    {found === 'found' ? 'Phone camera found and selected.' : 'No phone camera yet. Check the steps, then try again.'}
+                  </span>
+                )}
+              </div>
             )}
           </div>
-        </li>
-        <li className="rung is-ok">
-          <p className="rung-rank">Also safe</p>
-          <h4>Open Cloak on your phone</h4>
-          <p>
-            Go to <strong>{location.host}</strong> in your phone’s browser and scan there. The photo stays on your phone, but phones
-            get basic checks, which catch fewer names.
-          </p>
-        </li>
-        <li className="rung is-avoid">
-          <p className="rung-rank">Avoid</p>
-          <h4>Taking the photo with your phone’s camera app</h4>
-          <p>It saves the page to your camera roll, and your phone may back it up to the cloud before you can delete it.</p>
-        </li>
-      </ol>
-    </section>
+        )}
+
+        <p className="phone-avoid">
+          Don’t photograph the page with your phone’s camera app: it saves it to your camera roll, which may back up to the
+          cloud.
+        </p>
+      </div>
+    </dialog>
   )
 }
 
@@ -474,7 +560,7 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
                 </button>
               )}
               {advice.phoneTip && (
-                <button type="button" className="mini-btn" onClick={() => setPhoneHelp(true)} aria-controls="phone-camera">
+                <button type="button" className="mini-btn" onClick={() => setPhoneHelp(true)} aria-haspopup="dialog">
                   Show me how
                 </button>
               )}
@@ -549,20 +635,16 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
                 </select>
               </label>
             )}
-            <button
-              type="button"
-              className="scan-phone-toggle"
-              aria-expanded={phoneHelp}
-              aria-controls="phone-camera"
-              onClick={() => setPhoneHelp((open) => !open)}
-            >
-              Use your phone as the camera
-            </button>
+            {!setup.phone && (
+              <button type="button" className="scan-phone-toggle" aria-haspopup="dialog" onClick={() => setPhoneHelp(true)}>
+                Use your phone as the camera
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      {phoneHelp && <PhoneCameraPanel platform={setup.platform} onFind={findPhoneCamera} />}
+      <PhoneDialog open={phoneHelp} onClose={() => setPhoneHelp(false)} platform={setup.platform} onPhone={setup.phone} onFind={findPhoneCamera} />
 
       {fileError && (
         <p className="notice warn" role="alert">
@@ -722,13 +804,13 @@ export function StepScan({ onBack }: StepScanProps) {
         } catch {
           if (!still()) return
           // Any reading failure is shown the same way: too dark, blurry, blank or not a document.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, boxes: [], review: [], unclear: false })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false })
           continue
         }
         if (!still()) return
         if (ocr.words.length === 0) {
           // The reader ran but found no text: a blank, blurry or too-dark shot.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, boxes: [], review: [], unclear: false })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false })
           continue
         }
         setPhase({ kind: 'reading', progress: readingProgress(index, pages.length, 1, share), label: 'Finding private details…' })
@@ -736,7 +818,7 @@ export function StepScan({ onBack }: StepScanProps) {
         if (!still()) return
         if (result.status === 'blocked') {
           // Fail closed: no copy at all rather than one that might show a detail.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, boxes: [], review: [], unclear: false })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, blockReason: result.reason, boxes: [], review: [], unclear: false })
           continue
         }
         const blob = await toBlob(result.redacted)
@@ -746,6 +828,7 @@ export function StepScan({ onBack }: StepScanProps) {
           originalUrl: original,
           redacted: { canvas: result.redacted, blob, url: makeUrl(blob) },
           blocked: false,
+          blockReason: null,
           boxes: result.boxes,
           review: result.review,
           unclear: result.unclear,
@@ -913,9 +996,8 @@ export function StepScan({ onBack }: StepScanProps) {
           }
         : { text: 'We couldn’t read any text in this photo, so there’s no copy to download. Retake it flat and close, in good light.' }
     } else if (blocked.length > 0) {
-      status = {
-        text: `A private detail on ${isPdf ? pageList(blocked) : 'this photo'} couldn’t be matched to a spot on the picture, so there’s no copy to download. Retake it flatter and in better light.`,
-      }
+      const reason = pages.find((p) => p.blockReason)?.blockReason ?? 'unplaced'
+      status = { text: `${isPdf ? `${pageList(blocked).replace(/^p/, 'P')}: ` : ''}${blockedMessage(reason)}` }
     } else if (unclear.length > 0) {
       status = {
         strong: 'Cloak may have missed private details.',
@@ -1030,8 +1112,8 @@ export function StepScan({ onBack }: StepScanProps) {
                 </>
               )}
             </div>
-            {!page.redacted && (
-              <figcaption className="scan-wipe-missing">{page.blocked ? BLOCKED_MESSAGE : UNREADABLE_MESSAGE}</figcaption>
+            {!page.redacted && isPdf && (
+              <figcaption className="scan-wipe-missing">{page.blockReason ? blockedMessage(page.blockReason) : UNREADABLE_MESSAGE}</figcaption>
             )}
           </figure>
 

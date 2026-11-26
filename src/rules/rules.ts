@@ -119,10 +119,12 @@ export function findLeaks(
     }
   }
 
+  // Known strings are checked outside placeholders: "employee" is not a leak just because "[EMPLOYEE_1]" contains it.
+  const outside = text.replace(/\[[A-Z]+(?:_[A-Z]+)*_\d+\]/g, (token) => ' '.repeat(token.length))
   for (const value of knownSensitive) {
     const trimmed = value.trim()
     if (trimmed.length < 2) continue
-    const match = text.match(wholeWordRegex(trimmed))
+    const match = outside.match(wholeWordRegex(trimmed))
     if (match) add('KNOWN', match[0])
   }
 
