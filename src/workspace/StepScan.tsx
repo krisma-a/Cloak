@@ -38,6 +38,7 @@ import {
   loadCameraId,
   ocrFraction,
   pageList,
+  pickPhoneCamera,
   platformOf,
   readingLabel,
   readingProgress,
@@ -249,6 +250,9 @@ function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boole
   return view
 }
 
+/** How long "Find my phone camera" keeps looking for a phone that is still connecting. */
+const FIND_SECONDS = 10
+
 /** How long the pane keeps covering where text was after the text drops out of view (a blur, a shake, a hand). */
 const FROST_HOLD_MS = 1200
 
@@ -397,6 +401,7 @@ function PhoneDialog({
   onUse,
   onRefresh,
   onFind,
+  onCancelFind,
 }: {
   open: boolean
   onClose: () => void
@@ -409,7 +414,9 @@ function PhoneDialog({
   onUse: (id: string) => void
   /** Looks for cameras again (a phone just connected). */
   onRefresh: () => void
-  onFind: () => Promise<boolean>
+  onFind: (onWait: (secondsLeft: number) => void) => Promise<{ found: boolean; seen: string[] }>
+  /** Stops a "Find my phone camera" that is still waiting. */
+  onCancelFind: () => void
 }) {
   const ref = useRef<HTMLDialogElement>(null)
   // Phone cameras first, so a connected phone is the first thing in the list.
@@ -418,7 +425,8 @@ function PhoneDialog({
   // The ways open on the one that works best right now: the camera list when a phone camera is already visible.
   const [chosenWay, setWay] = useState<'qr' | 'camera' | null>(null)
   const way = onPhone || hasPhoneCamera ? (chosenWay ?? 'camera') : (chosenWay ?? 'qr')
-  const [found, setFound] = useState<'found' | 'none' | null>(null)
+  const [found, setFound] = useState<{ found: boolean; seen: string[] } | null>(null)
+  const [waiting, setWaiting] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
   const address = phoneAddress()
   const host = address.replace(/^https?:\/\//, '')
@@ -432,10 +440,21 @@ function PhoneDialog({
     if (!open && dialog.open) dialog.close()
   }, [open])
 
-  // Opening the pop-up looks for cameras again, so a phone that just connected is already in the list.
+  // Opening the pop-up looks for cameras again, so a phone that just connected is already in the list. Closing it stops
+  // any search that is still waiting.
   useEffect(() => {
     if (open) onRefresh()
-  }, [open, onRefresh])
+    else onCancelFind()
+  }, [open, onRefresh, onCancelFind])
+
+  async function find() {
+    setFound(null)
+    setWaiting(0)
+    const result = await onFind((left) => setWaiting(left))
+    setWaiting(null)
+    setFound(result)
+    if (result.found) onClose() // switched to the phone: back to the preview
+  }
 
   async function copy() {
     try {
@@ -569,14 +588,16 @@ function PhoneDialog({
             </details>
             {!onPhone && (
               <div className="phone-find">
-                <button type="button" className="mini-btn" onClick={async () => setFound((await onFind()) ? 'found' : 'none')}>
-                  Find my phone camera
+                <button type="button" className="mini-btn" onClick={find} disabled={waiting !== null}>
+                  {waiting !== null ? 'Looking for your phone…' : 'Find my phone camera'}
                 </button>
-                {found && (
-                  <span role="status">
-                    {found === 'found' ? 'Phone camera found and selected.' : 'No phone camera yet. Check the steps, then try again.'}
-                  </span>
-                )}
+                <span role="status" aria-live="polite">
+                  {waiting !== null
+                    ? 'Unlock your phone and keep it near this laptop.'
+                    : found && !found.found
+                      ? `No phone camera found. Cloak can see: ${found.seen.length ? found.seen.join(', ') : 'no cameras'}. Chrome lists a phone only once your system offers it as a camera, so check the steps above, then try again.`
+                      : ''}
+                </span>
               </div>
             )}
           </div>
@@ -620,12 +641,35 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
 
   const refreshCameraList = useCallback(() => void refreshCameras().catch(() => undefined), [refreshCameras])
 
-  /** "Find my phone camera": look again, and switch to a phone camera if one has appeared. */
-  async function findPhoneCamera() {
-    const found = await refreshCameras().catch(() => [] as CameraChoice[])
-    const phone = found.find((camera) => camera.phone)
-    if (phone && phone.id !== cameraId) chooseCamera(phone.id)
-    return Boolean(phone)
+  // Bumped to stop a "Find my phone camera" that is still waiting (the pop-up closed, or it was started again).
+  const findRun = useRef(0)
+  const cancelFind = useCallback(() => {
+    findRun.current++
+  }, [])
+
+  /**
+   * "Find my phone camera": look now, then every second for up to FIND_SECONDS, because a connected phone often takes a
+   * few seconds to appear. Switches to the first phone-named camera or camera that wasn't there when this started.
+   * Reports what it can see, so a miss isn't a mystery.
+   */
+  async function findPhoneCamera(onWait: (secondsLeft: number) => void): Promise<{ found: boolean; seen: string[] }> {
+    const run = ++findRun.current
+    const start = await refreshCameras().catch(() => cameras)
+    let latest = start
+    for (let waited = 0; waited <= FIND_SECONDS; waited++) {
+      if (findRun.current !== run) return { found: false, seen: latest.map((camera) => camera.label) }
+      if (waited > 0) latest = await refreshCameras().catch(() => latest)
+      const phone = pickPhoneCamera(start, latest)
+      if (phone) {
+        if (phone.id !== cameraId) chooseCamera(phone.id)
+        return { found: true, seen: latest.map((camera) => camera.label) }
+      }
+      if (waited < FIND_SECONDS) {
+        onWait(FIND_SECONDS - waited)
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+      }
+    }
+    return { found: false, seen: latest.map((camera) => camera.label) }
   }
 
   async function copyAddress() {
@@ -797,6 +841,7 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
         onUse={chooseCamera}
         onRefresh={refreshCameraList}
         onFind={findPhoneCamera}
+        onCancelFind={cancelFind}
       />
 
       {fileError && (

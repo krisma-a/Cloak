@@ -345,7 +345,9 @@ export interface CameraChoice {
   phone: boolean
 }
 
-const PHONE_CAMERA = /iPhone|iPad|Continuity|Desk View|Android|Pixel|Galaxy|Phone/i
+// Words a phone's camera goes by: Apple's Continuity Camera, Phone Link's connected camera (named after the phone), and
+// the common Android makers and model names (Samsung "SM-S918B", Pixel, OnePlus, Xiaomi, Motorola, ...).
+const PHONE_CAMERA = /iPhone|iPad|Continuity|Desk View|Android|Pixel|Galaxy|Samsung|SM-[A-Z]\d|OnePlus|Xiaomi|Redmi|POCO|Motorola|Moto [a-z]|Oppo|Vivo|Huawei|Honor|Nothing Phone|Phone|Mobile/i
 
 /** The cameras to offer, from enumerateDevices(): video inputs only, once each, with a readable label. */
 export function cameraChoices(devices: ReadonlyArray<{ kind: string; deviceId: string; label: string }>): CameraChoice[] {
@@ -359,6 +361,16 @@ export function cameraChoices(devices: ReadonlyArray<{ kind: string; deviceId: s
     choices.push({ id: device.deviceId, label: phone && !/phone/i.test(name) ? `${name} (phone)` : name, phone })
   }
   return choices
+}
+
+/**
+ * The camera to switch to after "Find my phone camera": a camera whose name says it's a phone, or else one that wasn't
+ * there before (a phone that just connected shows up as a new camera whatever its name). null when nothing fits.
+ */
+export function pickPhoneCamera(before: readonly CameraChoice[], now: readonly CameraChoice[]): CameraChoice | null {
+  const known = new Set(before.map((camera) => camera.id))
+  // "New" only means something against an earlier list; with none, only a phone-named camera counts.
+  return now.find((camera) => camera.phone) ?? (before.length > 0 ? now.find((camera) => !known.has(camera.id)) : undefined) ?? null
 }
 
 const CAMERA_KEY = 'cloak.cameraId'

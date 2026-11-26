@@ -152,7 +152,9 @@ when the setup is less safe than Chrome with the private AI (`browserAdvice()`: 
 Camera chooser when there are 2+ cameras (`cameraChoices()`, choice kept in localStorage `cloak.cameraId`), and a "Use your
 phone as the camera" pop-up (`<dialog>`) with two ways: a QR code that opens Cloak on the phone (drawn by `qr.ts`, our own
 encoder: byte mode, level M, versions 1–10, so no outside QR service or library; on localhost it points at cloak.web.app), and
-the safer "use it as this laptop's camera" (Continuity Camera / Phone Link + Find my phone camera). Never the phone's camera
+the safer "use it as this laptop's camera" (Continuity Camera / Phone Link + Find my phone camera, which waits up to 10 s
+for the phone and picks a phone-named camera or one that wasn't there before, `pickPhoneCamera()`; on a miss it lists the
+cameras it can see). Never the phone's camera
 app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. "Draft a report" opens a review-first pop-up (what stays vs what is sent), then hands the page text
 (cleaned of OCR noise by `draftTextFromOcr()`; memory only) to the normal note pipeline: hidden on this laptop → check-details screen → report type → send guard. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
 `redactedText` may ever be sent; never the image. Uploading a PDF draws each page (up to 30, ~150 dpi) with pdf.js in `src/camera/pdf.ts` (`pdfjs-dist`,
