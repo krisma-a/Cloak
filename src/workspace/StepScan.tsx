@@ -908,6 +908,7 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
       />
 
       <div className="actions">
+        <p className="scan-capture-hint">Hold the page flat and fill the frame. Flat, close photos hide the most.</p>
         <button type="button" className="btn btn-quiet" onClick={onBack}>
           Back
         </button>

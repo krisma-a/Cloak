@@ -3572,12 +3572,27 @@
   margin: 0 0 12px;
   padding: 8px 12px;
   border-radius: 10px;
-  background: var(--label-bg);
+  background: var(--teal-soft);
+  color: var(--teal-dark);
   font-size: 15px;
   font-weight: 600;
 }
 
 .cloak-app .scan-recheck.is-fixed {
-  background: #fdf1d8;
-  color: #6b4a00;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+
+/* One line above the camera and upload buttons: the biggest thing the person can do for a safe copy. */
+.cloak-app .actions:has(.scan-capture-hint) {
+  flex-wrap: wrap;
+}
+
+.cloak-app .actions .scan-capture-hint {
+  order: -2; /* above every button, also on a phone where the main button moves first */
+  flex: 0 0 100%;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
 }
