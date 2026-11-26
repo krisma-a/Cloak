@@ -11,7 +11,7 @@
 //
 // Nothing here is sent anywhere, and the result holds counts and positions only, never the hidden text.
 
-import type { Category } from '../ai/placeholders.ts'
+import { NAME_TITLES, type Category } from '../ai/placeholders.ts'
 import { closeEnough, typoBudget } from '../rules/fuzzy.ts'
 import { boxesAround, categoryOf, matchKey, type Rect } from './blackoutPlan.ts'
 import type { OcrResult, OcrWord } from './ocr.ts'
@@ -24,15 +24,12 @@ export interface MustHide {
   category: Category
 }
 
-// Titles and words that sit next to names but aren't names: never looked for on their own.
-const NOT_NAME_PARTS = new Set(['dr', 'mr', 'mrs', 'ms', 'mx', 'miss', 'rn', 'md', 'np', 'pa', 'phd', 'jr', 'sr', 'rev', 'prof'])
-
 /** Every string the redaction hid (full values, name parts and other spellings), plus each word of a multi-word name. */
 export function mustNotAppear(map: { originals: Readonly<Record<string, string>>; lookup: Readonly<Record<string, string>> }): MustHide[] {
   const found = new Map<string, MustHide>()
   const add = (text: string, placeholder: string) => {
     const key = matchKey(text)
-    if (key.length < 3 || NOT_NAME_PARTS.has(key) || found.has(key)) return
+    if (key.length < 3 || NAME_TITLES.has(key) || found.has(key)) return
     found.set(key, { key, words: Math.max(1, text.trim().split(/\s+/).length), category: categoryOf(placeholder) })
   }
   for (const [placeholder, original] of Object.entries(map.originals)) {

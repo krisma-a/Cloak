@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { test } from 'node:test'
 import { applyEntities } from '../ai/placeholders.ts'
+import { hideNameParts } from '../ai/nameParts.ts'
 import type { Entity } from '../ai/placeholders.ts'
 import { categoryOf, isRealWord, matchKey, ocrText, planBlackout, runBlackout, textLines, unclearWords } from './blackoutPlan.ts'
 import type { BlackoutParts, RedactionLike, Rect } from './blackoutPlan.ts'
@@ -320,4 +321,15 @@ test('a table row read in a different order in the text still gets its line box 
   const box = result.boxes[0] as Rect
   for (const word of ocr.words.filter((w) => w.line === 1)) assert.ok(covers(box, word), word.text)
   for (const word of ocr.words.filter((w) => w.line !== 1)) assert.ok(!covers(box, word), word.text)
+})
+
+test('every spelling of a found name gets a box on the photo, including a part alone and an OCR misspelling', () => {
+  const ocr = page([['Met', 'Dan', 'Reyes'], ['Signed', 'Reyes'], ['cc', 'Reyez', 'today']])
+  const applied = applyEntities(ocr.text, [{ text: 'Dan Reyes', category: 'PERSON' }])
+  const { map } = hideNameParts(applied.text, applied.map)
+  const plan = planBlackout(ocr, map.lookup, SIZE)
+  for (const name of ['Dan', 'Reyes', 'Reyez']) {
+    for (const word of ocr.words.filter((w) => w.text === name)) assert.ok(plan.boxes.some((box) => covers(box, word)), `${name} on line ${word.line}`)
+  }
+  assert.ok(!plan.boxes.some((box) => covers(box, ocr.words.find((w) => w.text === 'Signed') as OcrWord)))
 })

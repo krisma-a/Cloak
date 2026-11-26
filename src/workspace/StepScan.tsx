@@ -59,7 +59,7 @@ import {
 import type { OcrResult } from './scan.ts'
 import type { AutoCaptureState, CameraChoice, CameraProblem, ScanBlockReason, LiveView, Platform, Rect, Region, ScanBox } from './scan.ts'
 import { qrMatrix, qrPath } from './qr.ts'
-import { blackOut, pagesToPdf, pdfToPages, previewLines, privateAiSupported, readText, warmUpPreview } from './scanAi.ts'
+import { blackOut, pagesToPdf, pdfToPages, previewLines, privateAiSupported, readText, startScan, warmUpPreview } from './scanAi.ts'
 
 // "Scan a document": take a photo or upload a photo or PDF, read the text ON THIS DEVICE, and show the original
 // next to a blacked-out copy. Pictures live in this tab's memory only (canvases and blob: URLs, freed on leaving).
@@ -1121,6 +1121,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
     const still = () => run.current === id
 
     const scanned: ScannedPage[] = []
+    startScan()
     try {
       for (const [index, page] of pages.entries()) {
         if (!still()) return

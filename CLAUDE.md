@@ -66,6 +66,8 @@ price (`PRICES`, dated `PRICE_VERSION`; on-device = $0). No text, no user id, so
 Best effort, never awaited. The hidden `/usage` page (`src/usage/`) is a live dashboard over them (Firestore `onSnapshot`).
 `firestore.rules` must match `usage.ts` (`usage.test.ts` checks); the /eval page marks its calls `origin: 'eval'`.
 
+**Name parts** (`nameParts.ts`, pure): after the first pass (both engines), `hideNameParts()` hides every other spelling of a found name's parts (3+ letters, not in `NAME_TITLES`: Dr, Mrs, RN, van…) with the SAME placeholder: exact, or an OCR typo (`fuzzy.ts` budget, same first letter, capitalised unless the part is 7+ letters, not a `COMMON_WORDS` word). Spellings go into `map.lookup`, so the leak check and photo boxes use them. `redact()`'s `knownNames` are now HIDDEN as PERSON entities up front (they used to only block); the scan passes the names found on earlier pages of the same scan (`caseNames` in scanAi.ts, memory only, cleared by `startScan()`).
+
 **Placeholders** (`placeholders.ts`): the model only *finds* entities; code does the replacing so the same
 thing always gets the same placeholder. Category name ≠ placeholder prefix (`PREFIX` table: `PERSON`→
 `EMPLOYEE`, `MEDICAL`→`MEDICAL_DETAIL`, `DEPARTMENT`→`DEPT`, `DATE_OF_BIRTH`→`DOB`, `EMPLOYEE_ID` and
