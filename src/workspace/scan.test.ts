@@ -25,6 +25,7 @@ import {
   videoConstraints,
   blockedMessage,
   browserAdvice,
+  pickPhoneCamera,
   cameraChoices,
   autoProgress,
   containRect,
@@ -470,5 +471,27 @@ describe('PDF pages', () => {
     assert.match(long.message, /80 pages/)
     assert.match(long.message, new RegExp(`${PDF_MAX_PAGES} at a time`))
     assert.match(pdfProblem(new Error('anything else')).title, /couldn’t open/)
+  })
+})
+
+describe('finding the phone camera', () => {
+  const cam = (id: string, label: string) => cameraChoices([{ kind: 'videoinput', deviceId: id, label }])[0] as CameraChoice
+  const laptop = cam('a', 'FaceTime HD Camera')
+
+  it('knows phone cameras by common names, including Android model names', () => {
+    for (const label of ['iPhone 15 Camera', 'Desk View Camera', 'Galaxy S24 Ultra', 'SM-S918B', 'OnePlus 12', 'Xiaomi 14', 'Moto g power', 'Pixel 8 Pro', 'Phone Link camera']) {
+      assert.equal(cam('x', label).phone, true, label)
+    }
+    for (const label of ['FaceTime HD Camera', 'Integrated Webcam', 'Logitech BRIO', 'USB2.0 HD UVC WebCam']) {
+      assert.equal(cam('x', label).phone, false, label)
+    }
+  })
+
+  it('picks a phone by name, or else the camera that just appeared', () => {
+    assert.equal(pickPhoneCamera([laptop], [laptop, cam('b', 'iPhone Camera')])?.id, 'b')
+    // A phone with an unrecognisable name still shows up as a new camera.
+    assert.equal(pickPhoneCamera([laptop], [laptop, cam('c', 'Camera 4K Pro')])?.id, 'c')
+    assert.equal(pickPhoneCamera([laptop], [laptop]), null)
+    assert.equal(pickPhoneCamera([], [laptop]), null, 'with no earlier list, only a phone-named camera counts')
   })
 })
