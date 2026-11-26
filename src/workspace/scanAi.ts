@@ -5,38 +5,24 @@
 // src/camera/blackout.ts with the same on-device redaction as the paste screen (redactNotes() in ai.ts, so the
 // "Basic checks only" choice applies here too). Nothing is sent anywhere: not the picture, not the text.
 //
-// The PDF functions are still the placeholders from fakeScan.ts (src/camera/pdf.ts doesn't exist yet):
-//
-//   pdfToPages(file, onProgress?) -> Promise<HTMLCanvasElement[]>                       src/camera/pdf.ts
-//     One picture per page, on this device. Throw if the file can't be opened.
-//
-//   pagesToPdf(pages) -> Promise<Blob>                                                  src/camera/pdf.ts
-//     One PDF made only from the blacked-out pictures (no text layer), so nothing hidden survives underneath.
-//
-// TO CONNECT THE REAL PDF CODE: replace the fakeScan.ts line below with
-//    export { pdfToPages, pagesToPdf } from '../camera/pdf.ts'
-// and set PDF_DEMO to false.
+// PDFs: pdfToPages() (src/camera/pdf.ts, pdf.js with its files served from Cloak) draws each page to a picture, which goes
+// through the same reading and blackout as a photo; pagesToPdf() (redactedPdf.ts) makes the
+// redacted PDF from the blacked-out pictures only, so no hidden text survives underneath.
 
 import { redactNotes } from './ai.ts'
 import { loadCheckMode } from './checkMode.ts'
-import { PdfUnsupportedError } from './scan.ts'
 import type { LiveView, OcrProgress, OcrResult, Rect, ScanBlockReason, ScanBox } from './scan.ts'
 
-export { pagesToPdf } from './fakeScan.ts'
+export { pagesToPdf } from './redactedPdf.ts'
 
-/**
- * Opening a PDF needs a PDF reader, which Cloak doesn't have yet (it must be added as a package). Until then this says
- * so, instead of the old placeholder that ignored the file and showed made-up pages.
- */
-export async function pdfToPages(_file: File, _onProgress?: (fraction: number) => void): Promise<HTMLCanvasElement[]> {
-  throw new PdfUnsupportedError()
+/** One picture per page of a PDF, on this laptop (pdf.js, loaded on first use). Throws PdfScanError if it can't be opened. */
+export async function pdfToPages(file: File, onProgress?: (fraction: number) => void): Promise<HTMLCanvasElement[]> {
+  const { pdfToPages: read } = await import('../camera/pdf.ts')
+  return read(file, onProgress)
 }
 
 /** Whether Cloak's private AI (Gemini Nano) can run in this browser. Downloads nothing. */
 export { privateAiSupported } from './ai.ts'
-
-/** True while the PDF functions are the placeholders (made-up pages, whatever the file holds). The result screen says so. */
-export const PDF_DEMO = false
 
 /**
  * One page, blacked out. "blocked": a detail couldn't be hidden or placed, so there is no copy and the page can't be

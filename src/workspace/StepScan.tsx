@@ -20,9 +20,7 @@ import {
   HEIC_MESSAGE,
   HEIC_TITLE,
   isHeic,
-  PDF_UNSUPPORTED_MESSAGE,
-  PDF_UNSUPPORTED_TITLE,
-  PdfUnsupportedError,
+  pdfProblem,
   draftTextFromOcr,
   RESTING_REGION,
   stepRegion,
@@ -53,7 +51,7 @@ import {
 } from './scan.ts'
 import type { AutoCaptureState, CameraChoice, CameraProblem, ScanBlockReason, LiveView, Platform, Rect, Region, ScanBox } from './scan.ts'
 import { qrMatrix, qrPath } from './qr.ts'
-import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, previewLines, privateAiSupported, readText, warmUpPreview } from './scanAi.ts'
+import { blackOut, pagesToPdf, pdfToPages, previewLines, privateAiSupported, readText, warmUpPreview } from './scanAi.ts'
 
 // "Scan a document": take a photo or upload a photo or PDF, read the text ON THIS DEVICE, and show the original
 // next to a blacked-out copy. Pictures live in this tab's memory only (canvases and blob: URLs, freed on leaving).
@@ -1127,8 +1125,8 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
       })
     } catch (error) {
       if (run.current !== id) return
-      if (error instanceof PdfUnsupportedError) showProblem(PDF_UNSUPPORTED_TITLE, PDF_UNSUPPORTED_MESSAGE)
-      else showProblem('We couldn’t open this PDF', 'It may be damaged or protected with a password. Try another file, or take a photo of the page instead.')
+      const problem = pdfProblem(error)
+      showProblem(problem.title, problem.message)
       return
     }
     if (run.current !== id) return
@@ -1264,9 +1262,6 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
         </h2>
         <p className="scan-lead">{headline.lead}</p>
 
-        {isPdf && PDF_DEMO && (
-          <p className="notice info">Demo: opening PDFs isn’t connected yet, so these are made-up sample pages, read and blacked out for real.</p>
-        )}
 
         {isPdf && (
           <ol className="scan-pages" aria-label="Pages">
