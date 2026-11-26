@@ -298,9 +298,13 @@ export function platformOf(userAgent: string, platform = ''): Platform {
   return 'other'
 }
 
-/** Google Chrome itself (not Edge, Brave, Opera or another Chromium browser), where Cloak's private AI can run. */
+/**
+ * Google Chrome itself (not Edge, Brave, Opera or another Chromium browser). Chrome on an iPhone says "CriOS/"; it is
+ * Chrome by name, but like every iPhone browser it can't run the private AI (isPhone() covers that).
+ */
 export function isChromeBrowser(info: { brands?: ReadonlyArray<{ brand: string }>; userAgent: string }): boolean {
   if (info.brands && info.brands.length > 0) return info.brands.some((b) => b.brand === 'Google Chrome')
+  if (/CriOS\/\d/.test(info.userAgent)) return true
   return /Chrome\/\d/.test(info.userAgent) && !/Edg\/|OPR\/|Brave|SamsungBrowser|YaBrowser|Vivaldi/.test(info.userAgent)
 }
 

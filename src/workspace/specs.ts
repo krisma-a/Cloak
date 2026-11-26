@@ -35,7 +35,13 @@ export interface DeviceInfo {
   privateAi: boolean | null
 }
 
+// On an iPhone or iPad every browser runs on Safari's engine and its user agent ends in "Safari/", so the app's own
+// marker comes first: CriOS (Chrome), FxiOS (Firefox), EdgiOS (Edge), OPiOS / OPT (Opera).
 const BROWSERS: Array<[RegExp, string]> = [
+  [/CriOS\//, 'Chrome'],
+  [/FxiOS\//, 'Firefox'],
+  [/EdgiOS\//, 'Edge'],
+  [/OPiOS\/|OPT\//, 'Opera'],
   [/Edg\//, 'Edge'],
   [/OPR\//, 'Opera'],
   [/Brave/, 'Brave'],
