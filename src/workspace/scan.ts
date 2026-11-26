@@ -131,13 +131,11 @@ export function containRect(
   return { left: pct((1 - w) / 2), top: pct((1 - h) / 2), width: pct(w), height: pct(h) }
 }
 
-/** What the live preview last saw. Boxes are in the frame's own pixels; they never hold the text. */
+/** What the live preview last saw. Boxes are in the frame's own pixels: one per line of text, never the text itself. */
 export type LiveView =
   | { kind: 'starting' }
   | { kind: 'no-text' }
-  | { kind: 'hard-to-read' }
-  | { kind: 'blocked' }
-  | { kind: 'found'; boxes: ScanBox[]; width: number; height: number }
+  | { kind: 'text'; lines: Rect[]; width: number; height: number; unclear: boolean }
 
 /** The one line under the camera preview. */
 export function liveHint(view: LiveView): string {
@@ -146,14 +144,10 @@ export function liveHint(view: LiveView): string {
       return 'Getting ready to read the page…'
     case 'no-text':
       return 'Point the camera at the page.'
-    case 'hard-to-read':
-      return 'Too hard to read from here. Move closer and hold the page flat.'
-    case 'blocked':
-      return 'Hold steady: a detail can’t be pinned down yet.'
-    case 'found':
-      return view.boxes.length === 0
-        ? 'No private details spotted yet. The photo gets a full check.'
-        : `${view.boxes.length} private ${view.boxes.length === 1 ? 'detail' : 'details'} spotted. They’ll be blacked out when you take the photo.`
+    case 'text':
+      return view.unclear
+        ? 'Too hard to read from here. Move closer and hold the page flat.'
+        : 'All text is blurred while you aim. After the photo, only the private details stay hidden.'
   }
 }
 
@@ -261,6 +255,43 @@ export function summarize(boxes: readonly ScanBox[]): Array<{ label: string; cou
   return [...counts]
     .map(([label, count]) => ({ label, count }))
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+}
+
+/** The hidden details on one page, one row per category, most first, with the category kept so rows can light up boxes. */
+export function hiddenByCategory(boxes: readonly ScanBox[]): Array<{ category: Category; label: string; count: number }> {
+  const counts = new Map<Category, number>()
+  for (const box of boxes) counts.set(box.category, (counts.get(box.category) ?? 0) + 1)
+  return [...counts]
+    .map(([category, count]) => ({ category, label: CATEGORY_LABELS[category], count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+}
+
+/** The result screen's headline and the line under it: the outcome first, then what to do. */
+export function resultHeadline(result: {
+  hidden: number
+  pages: number
+  /** No page has a copy (nothing could be read or blacked out safely). */
+  noCopy: boolean
+  /** Some page was mostly hard to read: details may have been missed. */
+  unclear: boolean
+}): { title: string; lead: string } {
+  const across = result.pages > 1 ? ` across ${result.pages} pages` : ''
+  if (result.noCopy) {
+    return { title: 'No safe copy yet', lead: 'Here’s what the camera captured. Retake it to get a copy you can share.' }
+  }
+  if (result.unclear) {
+    return {
+      title: 'Check this copy before you share it',
+      lead: 'Parts were hard to read. Drag across the picture to compare every line with the original.',
+    }
+  }
+  if (result.hidden === 0) {
+    return { title: 'Nothing private found', lead: 'Drag across the picture and read the page yourself before you share it.' }
+  }
+  return {
+    title: `${result.hidden} ${result.hidden === 1 ? 'detail' : 'details'} blacked out${across}`,
+    lead: 'Drag across the picture to check each box against the original.',
+  }
 }
 
 export function hiddenCountLabel(count: number): string {

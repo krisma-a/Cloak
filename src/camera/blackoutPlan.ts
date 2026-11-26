@@ -345,42 +345,16 @@ export async function runBlackout<Image, Canvas>(
 }
 
 // ---------------------------------------------------------------------------------------------
-// Detect only (the live camera preview): the same checks, no picture made
+// Live camera preview: blur all the text
 
-export type DetectResult =
-  | { status: 'ok'; boxes: BlackoutBox[]; review: Rect[] }
-  /** More than the limit of words were read unclearly (see runBlackout). */
-  | { status: 'hard-to-read' }
-  /** Redaction blocked, a detail couldn't be placed, or the boxes don't fit the frame. */
-  | { status: 'blocked' }
+/** Extra padding around the live blur, because the camera moves between looks. */
+export const LIVE_PADDING = 10
 
 /**
- * Where the private details are in one frame, without painting anything. Same order and limits as runBlackout(),
- * so the preview agrees with what the photo will get (the photo still gets its own full check).
+ * For the live preview: one padded box per line of text, covering every word. Nothing is redacted while aiming, so
+ * nothing private can show and there is nothing to miss; the photo then gets the full check and only the private
+ * details stay hidden.
  */
-export async function detectBoxes(
-  ocr: OcrResult,
-  size: { width: number; height: number },
-  redact: (text: string) => Promise<RedactionLike>,
-  options: PlanOptions = {},
-): Promise<DetectResult> {
-  if (unclearWords(ocr.words, options.minConfidence).share > (options.maxUnclearShare ?? DEFAULT_MAX_UNCLEAR_SHARE)) {
-    return { status: 'hard-to-read' }
-  }
-  const text = ocrText(ocr)
-  const redaction = await redact(text)
-  if (redaction.status !== 'ok') return { status: 'blocked' }
-  const plan = planBlackout({ text, words: ocr.words }, redaction.map.lookup, size, options)
-  if (plan.outside > 0 || plan.unplaced > 0) return { status: 'blocked' }
-  return { status: 'ok', boxes: plan.boxes, review: plan.review }
-}
-
-/**
- * For the live preview: which remembered hidden strings (from earlier frames) appear in this frame's text, so they
- * can be blurred at once, before the slower name model has looked at this frame. Only those that appear are kept,
- * because a string that isn't on the page can't be placed (and would make the frame "blocked").
- */
-export function rememberedInText(remembered: Readonly<Record<string, string>>, text: string): Record<string, string> {
-  const page = matchKey(text)
-  return Object.fromEntries(Object.entries(remembered).filter(([hidden]) => matchKey(hidden).length >= 3 && page.includes(matchKey(hidden))))
+export function textLines(ocr: OcrResult, size: { width: number; height: number }, padding = LIVE_PADDING): Rect[] {
+  return boxesAround(ocr.words, padding, size).filter((rect) => rect.width > 0 && rect.height > 0)
 }

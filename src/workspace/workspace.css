@@ -1774,8 +1774,8 @@
   pointer-events: none;
 }
 
-/* A private detail spotted on the live preview: blurred on the video, so it reads as "being hidden" before the photo
-   blacks it out for good. Where backdrop blur isn't supported, a frosted fill covers it instead. */
+/* A line of text on the live preview: blurred on the video while aiming. After the photo, only private details stay
+   hidden. Where backdrop blur isn't supported, a frosted fill covers it instead. */
 .cloak-app .scan-live-box {
   position: absolute;
   border-radius: 4px;
@@ -1917,39 +1917,6 @@
   font-weight: 600;
 }
 
-/* Before and after, side by side; stacked on narrow screens. */
-.cloak-app .scan-compare {
-  display: grid;
-  flex: none;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-}
-
-.cloak-app .scan-figure {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  margin: 0;
-  padding: 14px;
-  border: 1.5px solid var(--border);
-  border-radius: 20px;
-  background: #fffefd;
-}
-
-.cloak-app .scan-figure.is-redacted {
-  border-color: var(--teal);
-  background: var(--card);
-}
-
-.cloak-app .scan-figure figcaption {
-  align-self: flex-start;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-2);
-}
-
 /* The frame is exactly the size of the picture, so the boxes (in percent) line up at any size. */
 .cloak-app .scan-frame {
   position: relative;
@@ -1966,33 +1933,6 @@
   max-height: min(58vh, 620px);
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(31, 42, 46, 0.12);
-}
-
-.cloak-app .scan-frame.is-missing {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 200px;
-  padding: 20px;
-  border-radius: 6px;
-  background: var(--amber-bg);
-  color: var(--amber-text);
-  line-height: 1.5;
-  text-align: center;
-}
-
-.cloak-app .scan-frame.is-missing p {
-  margin: 0;
-}
-
-/* Where the hovered box is, outlined on the original. */
-.cloak-app .scan-mark {
-  position: absolute;
-  border: 2px solid var(--teal);
-  border-radius: 3px;
-  background: rgba(15, 118, 110, 0.12);
-  pointer-events: none;
 }
 
 /* A word read with low confidence: outlined on the copy so the person checks it. Not part of the picture. */
@@ -2066,47 +2006,279 @@
   opacity: 1;
 }
 
-.cloak-app .scan-summary {
-  display: flex;
+/* ---------- Result: check the copy ---------- */
+
+.cloak-app .scan-result {
+  --ink: #000; /* the redaction black: used only for the boxes and their swatches, so black always means hidden */
+}
+
+.cloak-app .scan-verdict {
+  margin-bottom: 4px;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.cloak-app .scan-lead {
+  max-width: 60ch;
+  margin: 0 0 18px;
+  color: var(--text-2);
+}
+
+/* The picture takes most of the width; "What's hidden" sits beside it, and below it on narrow screens. */
+.cloak-app .scan-check {
+  display: grid;
   flex: none;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 14px 0 0;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+  gap: 28px;
+  align-items: start;
+}
+
+.cloak-app .scan-wipe {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+}
+
+.cloak-app .scan-frame img {
+  max-height: min(62vh, 640px);
+  border-radius: 10px;
+}
+
+/* The copy lies exactly on the original and is cut off at the handle. --at is where the handle's centre is. */
+.cloak-app .scan-wipe .scan-frame {
+  --knob: 44px;
+  --at: calc(var(--knob) / 2 + (100% - var(--knob)) * var(--split, 1));
+}
+
+.cloak-app .scan-wipe-copy {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: none;
+  clip-path: inset(0 calc(100% - var(--at)) 0 0);
+}
+
+.cloak-app .scan-wipe-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--at);
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(31, 42, 46, 0.35);
+  pointer-events: none;
+}
+
+.cloak-app .scan-wipe-tag {
+  position: absolute;
+  top: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(31, 42, 46, 0.78);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  pointer-events: none;
+}
+
+.cloak-app .scan-wipe-tag.is-copy {
+  left: 10px;
+}
+
+.cloak-app .scan-wipe-tag.is-original {
+  right: 10px;
+}
+
+/* The handle is a range input across the middle of the picture. Only its knob takes the pointer, so the boxes
+   underneath can still be hovered and tapped. */
+.cloak-app .scan-wipe-handle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: var(--knob);
+  margin: 0;
+  background: transparent;
+  transform: translateY(-50%);
+  appearance: none;
+  -webkit-appearance: none;
+  pointer-events: none;
+  cursor: ew-resize;
+}
+
+.cloak-app .scan-wipe-handle::-webkit-slider-runnable-track {
+  height: var(--knob);
+  background: transparent;
+}
+
+.cloak-app .scan-wipe-handle::-moz-range-track {
+  height: var(--knob);
+  background: transparent;
+}
+
+.cloak-app .scan-wipe-handle::-webkit-slider-thumb {
+  width: var(--knob);
+  height: var(--knob);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--teal) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='12' viewBox='0 0 22 12'%3E%3Cpath d='M6 1 1 6l5 5M16 1l5 5-5 5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 22px 12px no-repeat;
+  box-shadow: 0 2px 8px rgba(31, 42, 46, 0.35);
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  cursor: ew-resize;
+}
+
+.cloak-app .scan-wipe-handle::-moz-range-thumb {
+  width: var(--knob);
+  height: var(--knob);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--teal) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='12' viewBox='0 0 22 12'%3E%3Cpath d='M6 1 1 6l5 5M16 1l5 5-5 5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 22px 12px no-repeat;
+  box-shadow: 0 2px 8px rgba(31, 42, 46, 0.35);
+  pointer-events: auto;
+  cursor: ew-resize;
+}
+
+.cloak-app .scan-wipe-handle:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid var(--teal);
+  outline-offset: 3px;
+}
+
+.cloak-app .scan-wipe-handle:focus-visible::-moz-range-thumb {
+  outline: 3px solid var(--teal);
+  outline-offset: 3px;
+}
+
+/* No copy of this page: the original is shown alone, with the reason underneath. */
+.cloak-app .scan-wipe-missing {
+  max-width: 60ch;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* A box lit from its row in "What's hidden": outlined, without opening its label. */
+.cloak-app .scan-box.is-lit {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(15, 118, 110, 0.22);
+}
+
+/* "What's hidden": a ruled list like a case file's redaction log. */
+.cloak-app .scan-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.cloak-app .scan-ledger h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cloak-app .scan-ledger-rows {
+  margin: 0;
   padding: 0;
   list-style: none;
+  border-top: 1px solid var(--border);
 }
 
-.cloak-app .scan-summary li {
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: #f1ece5;
-  font-size: 14px;
-  font-weight: 600;
+.cloak-app .scan-ledger-rows li {
+  border-bottom: 1px solid var(--border);
 }
 
-.cloak-app .scan-summary .count {
-  margin-left: 4px;
-  font-weight: 700;
+.cloak-app .scan-ledger-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
   color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: default;
 }
 
-.cloak-app .scan > .hint {
-  margin-top: 14px;
+.cloak-app .scan-ledger-row:hover,
+.cloak-app .scan-ledger-row.is-lit {
+  background: var(--teal-soft);
 }
 
-@media (max-width: 640px) {
-  .cloak-app .scan-compare {
+.cloak-app .scan-ledger-row:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 1px;
+}
+
+.cloak-app .scan-ledger-swatch {
+  width: 22px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+
+.cloak-app .scan-ledger-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cloak-app .scan-ledger-empty,
+.cloak-app .scan-ledger-note {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cloak-app .scan-status {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (max-width: 860px) {
+  .cloak-app .scan-check {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .cloak-app .scan-figure {
-    padding: 10px;
+    gap: 20px;
   }
 
   .cloak-app .scan-frame img {
     max-height: none;
   }
 }
+
+@media (max-width: 560px) {
+  .cloak-app .scan-verdict {
+    font-size: 24px;
+  }
+}
+
+.cloak-app .scan > .hint {
+  margin-top: 14px;
+}
+
 
 /* On a phone the main action takes the whole first row, and the others share the row under it. */
 @media (max-width: 560px) {
