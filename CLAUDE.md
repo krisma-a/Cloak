@@ -154,6 +154,12 @@ the safer "use it as this laptop's camera" (Continuity Camera / Phone Link + Fin
 app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
 `redactedText` may ever be sent; never the image. PDFs are still `fakeScan.ts` (`PDF_DEMO`): made-up readable pages.
 
+**Specs notice** (`specs.ts` pure, `SpecsNotice.tsx`, shown from `App.tsx`): a one-time pop-up ("Cloak runs best on…") for
+slower or unsupported setups: not Chrome, Chrome without Nano, a phone, under 4 cores or under 8 GB reported memory (with Nano
+ready, only cores/memory count, and it offers "Use basic checks"). A spec sheet compares Chrome's built-in AI requirements
+(Win 10/11, macOS 13+, Linux, Chromebook Plus; GPU > 4 GB or 16 GB RAM + 4 cores; 22 GB free) with this device; disk and
+exact memory say "can't tell". Dismissal is kept in localStorage `cloak.specsSeen` (bump `SEEN_VERSION` to show it again).
+
 **Test data.** `scripts/generate-cases.ts` writes 120 deterministic fake notes (seeded; Set A/B use disjoint
 name pools) with a planted-item answer key whose `type` values are the app's `Category` names. Output must
 stay byte-identical for the same seed. The generated sets are not yet scored against redaction, and the
