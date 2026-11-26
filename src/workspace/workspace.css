@@ -3506,6 +3506,91 @@
   margin: 0;
 }
 
+/* Pinned bar while "Hide more" is on: Done never scrolls out of reach. */
+.cloak-app .scan-edit-bar {
+  position: sticky;
+  top: calc(var(--pad) * -1);
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 calc(var(--pad) * -1) 16px;
+  padding: 10px var(--pad);
+  border-bottom: 1px solid var(--border);
+  background: var(--teal-soft);
+}
+
+/* On touch screens the picture fills the width, so a finger on it must still scroll the card. Tap a word to hide it. */
+@media (pointer: coarse) {
+  .cloak-app .scan-edit {
+    touch-action: pan-y;
+  }
+
+  .cloak-app .scan-edit.is-drawing {
+    touch-action: none;
+  }
+}
+
+/* Only touch screens need the switch; with a mouse, dragging always draws. */
+.cloak-app .scan-draw-toggle {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .cloak-app .scan-draw-toggle {
+    display: inline-flex;
+  }
+
+  .cloak-app .scan-draw-toggle[aria-pressed='true'] {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: #fff;
+  }
+}
+
+/* Phones: no hint, just Undo and Done, so the bar stays one short row. */
+@media (max-width: 560px) {
+  .cloak-app .scan-edit-bar-text {
+    display: none;
+  }
+
+  .cloak-app .scan-edit-bar {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* One compact row, so the bar leaves room for the picture. */
+  .cloak-app .scan-edit-bar .mini-btn,
+  .cloak-app .scan-edit-bar .btn {
+    min-height: 0;
+    padding: 9px 12px;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .cloak-app .scan-edit-bar .btn {
+    margin-left: auto;
+  }
+
+  /* The bar already has Undo and Done, so the copies in the side panel go. */
+  .cloak-app .scan-hide-more-actions {
+    display: none;
+  }
+}
+
+.cloak-app .scan-edit-bar-text {
+  flex: 1 1 180px;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
 .cloak-app .scan-hide-more-actions {
   display: flex;
   gap: 10px;
