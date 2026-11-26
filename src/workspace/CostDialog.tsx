@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { PRICE_VERSION } from '../ai/usage.ts'
 import type { UsageEvent } from '../ai/usage.ts'
+import { DraftingMode } from './DraftingMode.tsx'
 import { clearHistory, formatTokens, formatUsd, loadHistory, monthlyCost, receiptLines, summarizeHistory } from './draftCost.ts'
 
 /** A typical draft's cost when nothing has been drafted yet (about 1,000 tokens in, 700 out, 500 thinking). */
@@ -64,6 +65,8 @@ export function CostDialog({
             <span aria-hidden="true">×</span>
           </button>
         </div>
+
+        <DraftingMode realAi={realAi} onChange={onRealAiChange} />
 
         {last ? (
           <section className="receipt" aria-labelledby="receipt-title">
@@ -131,23 +134,6 @@ export function CostDialog({
             <span>a month</span>
           </label>
           <p className="cost-small">At {formatUsd(perDraft)} a draft ({basis}), 22 working days. Google may charge less: the free tier costs nothing, and its paid price for this model is lower until 2026-12-31.</p>
-        </section>
-
-        <section className="cost-section" aria-labelledby="cost-test-title">
-          <h4 id="cost-test-title">Testing</h4>
-          <div className="phone-switch" role="group" aria-label="Drafting mode">
-            <button type="button" aria-pressed={!realAi} onClick={() => onRealAiChange(false)}>
-              Demo drafting
-            </button>
-            <button type="button" aria-pressed={realAi} onClick={() => onRealAiChange(true)}>
-              Real AI drafting
-            </button>
-          </div>
-          <p className="cost-small">
-            {realAi
-              ? 'Real AI sends the placeholder text (never the photo or the real details) to Gemini after you approve. The free tier is shared by everyone using Cloak, so it can answer “too many requests”.'
-              : 'Demo writes a placeholder draft and sends nothing. Switch to Real AI to test the cloud model.'}
-          </p>
         </section>
 
         <div className="cost-foot">

@@ -295,6 +295,18 @@ export default function App() {
             Cloak
             {onStartScreens ? null : <span className="brand-sub">Case workspace</span>}
           </h1>
+          <button
+            type="button"
+            className={`mode-chip${realAi ? ' is-real' : ''}`}
+            onClick={() => setCostOpen(true)}
+            aria-haspopup="dialog"
+            title="Drafting mode and what drafts cost"
+          >
+            <span className="mode-full">{realAi ? 'Real AI drafting' : 'Demo drafting'}</span>
+            <span className="mode-short" aria-hidden="true">
+              {realAi ? 'Real AI' : 'Demo'}
+            </span>
+          </button>
           <button type="button" className="top-link" onClick={() => setCostOpen(true)} aria-haspopup="dialog">
             Cost
           </button>
@@ -403,6 +415,7 @@ export default function App() {
               onWrite={writeTheDraft}
               estimate={estimate}
               realAi={realAi}
+              onRealAiChange={chooseRealAi}
               onShowCost={() => setCostOpen(true)}
             />
           )}

@@ -1,3 +1,4 @@
+import { DraftingMode } from './DraftingMode.tsx'
 import { formatUsd } from './draftCost.ts'
 import type { DraftCost } from './draftCost.ts'
 import { accommodationBlockReason } from '../ai/restrictionPrompt.ts'
@@ -30,6 +31,8 @@ interface StepGenerateProps {
   estimate?: DraftCost | null
   /** Real AI sends the text to the cloud; Demo doesn't, and says so. */
   realAi?: boolean
+  /** Switches between Demo and Real AI drafting (shown here, because this is where the draft is sent). */
+  onRealAiChange?: (on: boolean) => void
   onShowCost?: () => void
 }
 
@@ -53,6 +56,7 @@ export function StepGenerate({
   onWrite,
   estimate = null,
   realAi = false,
+  onRealAiChange,
   onShowCost,
 }: StepGenerateProps) {
   const template = TEMPLATES[templateId]
@@ -79,6 +83,8 @@ export function StepGenerate({
         Review exactly what will be sent to the cloud. Real names and details stay on this laptop. You’ll get:{' '}
         <strong>{template.label}</strong>.
       </p>
+
+      {onRealAiChange && <DraftingMode realAi={realAi} onChange={onRealAiChange} />}
 
       {sendsRestrictions ? (
         <>

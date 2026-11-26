@@ -173,7 +173,7 @@ ready, only cores/memory count, and it offers "Use basic checks"). A spec sheet 
 exact memory say "can't tell". Dismissal is kept in localStorage `cloak.specsSeen` (bump `SEEN_VERSION` to show it again).
 
 **Drafting mode and cost** (`workspace/ai.ts`, `draftCost.ts`, `CostDialog.tsx`). Drafting is **Demo** (fakeAi.ts, nothing sent; the
-default) or **Real AI** (`ai/draft.ts`): switch it in the header's "Cost" dialog, or with `?ai=real` / `?ai=demo` in the address
+default) or **Real AI** (`ai/draft.ts`): switch it with the Demo / Real AI switch under the heading of the "Write the draft" screen (`DraftingMode.tsx`), the header chip, the top of the Cost dialog, or with `?ai=real` / `?ai=demo` in the address
 (kept in localStorage `cloak.realAi`); flip `DEFAULT_REAL_AI` in ai.ts to make Real the default. `generateLogged()` now returns the
 call's `usage` (token counts + paid-tier price), `draft()` puts it on `DraftResult.usage`, and the screens show an estimate
 before sending (`estimateDraftCost()`), the cost after, and an itemised receipt. A numbers-only history of drafts stays in

@@ -3392,3 +3392,72 @@
 @media (prefers-reduced-motion: reduce) {
   .cloak-app .cost-dialog[open] { animation: none; }
 }
+
+/* The Demo / Real AI switch, visible where the draft is written and at the top of the cost dialog. */
+.cloak-app .drafting-mode {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: #fffefb;
+}
+
+.cloak-app .cost-body .drafting-mode {
+  margin: 0 0 14px;
+}
+
+.cloak-app .drafting-mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+}
+
+.cloak-app .drafting-mode-label {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cloak-app .drafting-mode .phone-switch {
+  min-width: 220px;
+  margin: 0;
+}
+
+/* Header chip: always shows the current drafting mode and opens the cost dialog. */
+.cloak-app .mode-chip {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cloak-app .mode-chip.is-real {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+}
+
+.cloak-app .mode-chip .mode-short {
+  display: none;
+}
+
+@media (max-width: 520px) {
+  .cloak-app .top {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .cloak-app .mode-chip .mode-full {
+    display: none;
+  }
+
+  .cloak-app .mode-chip .mode-short {
+    display: inline;
+  }
+}
