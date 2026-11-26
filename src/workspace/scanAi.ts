@@ -23,6 +23,9 @@ import type { LiveView, OcrProgress, OcrResult, Rect, ScanBox } from './scan.ts'
 
 export { pagesToPdf, pdfToPages } from './fakeScan.ts'
 
+/** Whether Cloak's private AI (Gemini Nano) can run in this browser. Downloads nothing. */
+export { privateAiSupported } from './ai.ts'
+
 /** True while the PDF functions are the placeholders (made-up pages, whatever the file holds). The result screen says so. */
 export const PDF_DEMO = true
 

@@ -23,7 +23,13 @@ import {
   UnreadableScanError,
   unreadablePages,
   videoConstraints,
+  browserAdvice,
+  cameraChoices,
   containRect,
+  isChromeBrowser,
+  loadCameraId,
+  platformOf,
+  saveCameraId,
   hiddenByCategory,
   liveHint,
   resultHeadline,
@@ -278,5 +284,60 @@ describe('frosted pane', () => {
     let r = now
     for (let i = 0; i < 200; i++) r = stepRegion(r, target, 16)
     assert.ok(Math.abs(r.x - 0.1) < 1e-3 && Math.abs(r.y + r.height - 0.5) < 1e-3)
+  })
+})
+
+describe('browser and cameras', () => {
+  it('tells Chrome apart from other Chromium browsers', () => {
+    assert.equal(isChromeBrowser({ brands: [{ brand: 'Google Chrome' }, { brand: 'Chromium' }], userAgent: '' }), true)
+    assert.equal(isChromeBrowser({ brands: [{ brand: 'Brave' }, { brand: 'Chromium' }], userAgent: '' }), false)
+    assert.equal(isChromeBrowser({ brands: [{ brand: 'Microsoft Edge' }, { brand: 'Chromium' }], userAgent: '' }), false)
+    assert.equal(isChromeBrowser({ userAgent: 'Mozilla/5.0 (Macintosh) AppleWebKit/605 Version/18 Safari/605' }), false)
+    assert.equal(isChromeBrowser({ userAgent: 'Mozilla/5.0 (Windows NT 10.0) Chrome/150.0 Safari/537' }), true)
+    assert.equal(isChromeBrowser({ userAgent: 'Mozilla/5.0 (Windows NT 10.0) Chrome/150.0 Safari/537 Edg/150.0' }), false)
+  })
+
+  it('finds the computer type', () => {
+    assert.equal(platformOf('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'), 'mac')
+    assert.equal(platformOf('Mozilla/5.0 (Windows NT 10.0; Win64; x64)'), 'windows')
+    assert.equal(platformOf('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'), 'other')
+    assert.equal(platformOf('', 'macOS'), 'mac')
+  })
+
+  it('advises only when the setup is less safe than Chrome with the private AI', () => {
+    assert.equal(browserAdvice({ chrome: true, phone: false, privateAi: true }), null)
+    assert.equal(browserAdvice({ chrome: true, phone: false, privateAi: null }), null)
+    assert.equal(browserAdvice({ chrome: false, phone: false, privateAi: null })?.title, 'For the safest photos, use Chrome')
+    assert.equal(browserAdvice({ chrome: false, phone: false, privateAi: false })?.copyLink, true)
+    assert.equal(browserAdvice({ chrome: true, phone: true, privateAi: false })?.phoneTip, true)
+    assert.equal(browserAdvice({ chrome: true, phone: false, privateAi: false })?.title, 'This laptop gets basic checks')
+  })
+
+  it('lists cameras once each, marks phones, and labels unnamed ones', () => {
+    const choices = cameraChoices([
+      { kind: 'videoinput', deviceId: 'a', label: 'FaceTime HD Camera' },
+      { kind: 'audioinput', deviceId: 'm', label: 'Microphone' },
+      { kind: 'videoinput', deviceId: 'b', label: 'Desk View Camera' },
+      { kind: 'videoinput', deviceId: 'c', label: 'iPhone Camera' },
+      { kind: 'videoinput', deviceId: 'c', label: 'iPhone Camera' },
+      { kind: 'videoinput', deviceId: 'd', label: '' },
+    ])
+    assert.deepEqual(choices, [
+      { id: 'a', label: 'FaceTime HD Camera', phone: false },
+      { id: 'b', label: 'Desk View Camera (phone)', phone: true },
+      { id: 'c', label: 'iPhone Camera', phone: true },
+      { id: 'd', label: 'Camera 4', phone: false },
+    ])
+  })
+
+  it('remembers the chosen camera, and blocked storage never breaks the page', () => {
+    const store = new Map<string, string>()
+    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) }
+    assert.equal(loadCameraId(storage), null)
+    saveCameraId('cam-1', storage)
+    assert.equal(loadCameraId(storage), 'cam-1')
+    const blocked = { getItem: () => { throw new Error('no') }, setItem: () => { throw new Error('no') } }
+    assert.equal(loadCameraId(blocked), null)
+    assert.doesNotThrow(() => saveCameraId('x', blocked))
   })
 })

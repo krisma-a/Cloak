@@ -143,7 +143,11 @@ there's no copy). While the camera is live, one frosted pane covers the text on 
 → `textRegion()`; OCR only, no redaction, so nothing private can show or be missed). `useFrostPane` glides it every frame
 with `stepRegion()`: edges grow fast (~0.1 s) and shrink slowly (~0.45 s). Only real words count (`isRealWord()`: confidence
 ≥ 60, two+ letters/digits, at least 3 words), so junk "words" OCR finds in faces don't pull the blur onto a person. It rests over
-the middle until the first look, holds 1.2 s when text drops out, then fades out (no page in view, no blur). The photo gets the full check, then only private details stay hidden. The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
+the middle until the first look, holds 1.2 s when text drops out, then fades out (no page in view, no blur). The photo gets the full check, then only private details stay hidden. The capture screen warns
+when the setup is less safe than Chrome with the private AI (`browserAdvice()`: other browser, phone, or no Nano), offers a
+Camera chooser when there are 2+ cameras (`cameraChoices()`, choice kept in localStorage `cloak.cameraId`), and a "Use your
+phone as the camera" panel ranked by safety: phone as this laptop's camera (Continuity Camera / Phone Link) > Cloak on the
+phone > never the phone's camera app. No QR pairing or streaming between devices (it would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
 `redactedText` may ever be sent; never the image. PDFs are still `fakeScan.ts` (`PDF_DEMO`): made-up readable pages.
 
 **Test data.** `scripts/generate-cases.ts` writes 120 deterministic fake notes (seeded; Set A/B use disjoint
