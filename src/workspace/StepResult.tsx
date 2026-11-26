@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { TEMPLATES } from '../ai/templates.ts'
+import type { UsageEvent } from '../ai/usage.ts'
+import { formatUsd } from './draftCost.ts'
 import { downloadBlob } from '../download.ts'
 import { buildComparison } from './compare.ts'
 import { CompareSent } from './CompareSent.tsx'
@@ -34,9 +36,12 @@ interface StepResultProps {
   /** Back to the "Write the draft" screen, for when the cloud sent nothing back. */
   onBack: () => void
   onStartOver: () => void
+  /** What this draft used and cost (a demo draft's is an estimate). Opens the cost dialog from the link beside it. */
+  cost?: { usage: UsageEvent; demo: boolean } | null
+  onShowCost?: () => void
 }
 
-export function StepResult({ result, notes, base, kept, templateId, onBack, onStartOver }: StepResultProps) {
+export function StepResult({ result, notes, base, kept, templateId, onBack, onStartOver, cost = null, onShowCost }: StepResultProps) {
   const comparison = useMemo(
     () =>
       buildComparison({
@@ -155,6 +160,21 @@ export function StepResult({ result, notes, base, kept, templateId, onBack, onSt
       <p className="sr-only" aria-live="polite">
         {copied === 'done' ? 'Draft copied.' : ''}
       </p>
+
+      {cost && (
+        <p className="cost-line">
+          {cost.demo ? 'Demo draft: nothing was sent. A real one would have cost about ' : 'This draft cost about '}
+          <strong>{formatUsd(cost.usage.costUsd)}</strong> on a paid plan ($0.00 on the free tier).
+          {onShowCost && (
+            <>
+              {' '}
+              <button type="button" className="link-btn" onClick={onShowCost}>
+                See the receipt
+              </button>
+            </>
+          )}
+        </p>
+      )}
 
       <div className="actions">
         <button type="button" className="btn btn-quiet" onClick={onStartOver}>

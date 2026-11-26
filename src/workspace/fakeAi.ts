@@ -16,14 +16,14 @@ import type { Restriction } from '../ai/restrictionPrompt.ts'
 import { medicalTerms, ruleEntities } from '../ai/ruleEntities.ts'
 import { buildDraftPrompt, buildManagerPrompt, checkDraft, TEMPLATES } from '../ai/templates.ts'
 import { findLeaks } from '../rules/rules.ts'
+import { SendBlockedError } from '../ai/errors.ts'
+import { buildUsageEvent } from '../ai/usage.ts'
 import type { AccommodationPlan, DraftResult, RedactionResult, TemplateId } from './types.ts'
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
-/** Thrown when the guard refuses to send. Same name and meaning as the real one in draft.ts. */
-export class SendBlockedError extends Error {
-  override name = 'SendBlockedError'
-}
+// The same class the real draft() throws, so the screens recognise a refused send in either mode.
+export { SendBlockedError }
 
 // A stand-in for the name finder: two or three capitalised words in a row ("Maria Santos").
 // The real engines (Gemini Nano, the in-browser name model) do this much better.
@@ -161,5 +161,7 @@ export async function writeDraft(
     { step: 'restore', ranOn: 'on_device' },
   ]
   const receipt = await buildReceipt(prompt, 'demo-placeholder', steps)
-  return { draftWithPlaceholders: cloudText, restoredDraft, warnings: checked.warnings, receipt }
+  // What a real draft of this size would have used (an estimate from the lengths; nothing was sent).
+  const usage = buildUsageEvent({ label: 'draft', model: 'gemini-3.6-flash', source: 'in_cloud', usage: null, promptChars: prompt.length, outputChars: cloudText.length })
+  return { draftWithPlaceholders: cloudText, restoredDraft, warnings: checked.warnings, receipt, usage: usage ?? undefined }
 }
