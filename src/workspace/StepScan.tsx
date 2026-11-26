@@ -8,6 +8,9 @@ import {
   boxPercent,
   CAMERA_MESSAGES,
   containRect,
+  RESTING_REGION,
+  stepRegion,
+  textRegion,
   cameraProblem,
   CATEGORY_LABELS,
   fileKind,
@@ -28,7 +31,7 @@ import {
   unreadablePages,
   videoConstraints,
 } from './scan.ts'
-import type { CameraProblem, LiveView, Rect, ScanBox } from './scan.ts'
+import type { CameraProblem, LiveView, Rect, Region, ScanBox } from './scan.ts'
 import { blackOut, pagesToPdf, PDF_DEMO, pdfToPages, previewLines, readText, warmUpPreview } from './scanAi.ts'
 
 // "Scan a document": take a photo or upload a photo or PDF, read the text ON THIS DEVICE, and show the original
@@ -201,6 +204,51 @@ function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boole
   return view
 }
 
+/** How long the pane keeps covering where text was after the text drops out of view (a blur, a shake, a hand). */
+const FROST_HOLD_MS = 1200
+
+/**
+ * Moves the frosted pane smoothly toward the text the live view last found, every animation frame: edges that must
+ * grow to cover more text move fast, edges that shrink move slowly, so new text is covered at once and the pane never
+ * flickers open. With no text for a moment it holds still, then returns to rest over the middle. Positions are
+ * written straight to the element, so React doesn't re-render 60 times a second.
+ */
+function useFrostPane(view: LiveView, pane: RefObject<HTMLDivElement | null>) {
+  const target = useRef<Region>(RESTING_REGION)
+  const seenAt = useRef(0)
+
+  useEffect(() => {
+    if (view.kind !== 'text') return
+    const region = textRegion(view.lines, view)
+    if (!region) return
+    target.current = region
+    seenAt.current = performance.now()
+  }, [view])
+
+  useEffect(() => {
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+    let current: Region = { ...RESTING_REGION }
+    let last = performance.now()
+    let frame = 0
+    const pct = (n: number) => `${(n * 100).toFixed(2)}%`
+    const tick = (now: number) => {
+      const goal = seenAt.current > 0 && now - seenAt.current > FROST_HOLD_MS ? RESTING_REGION : target.current
+      current = still ? goal : stepRegion(current, goal, now - last)
+      last = now
+      const el = pane.current
+      if (el) {
+        el.style.left = pct(current.x)
+        el.style.top = pct(current.y)
+        el.style.width = pct(current.width)
+        el.style.height = pct(current.height)
+      }
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [pane])
+}
+
 /** The camera preview plus "Upload a photo or PDF". The camera runs only while this is on screen. */
 function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
   const { videoRef, attachVideo, state, retry } = useCamera()
@@ -210,6 +258,9 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
   const problem = state.status === 'problem' ? CAMERA_MESSAGES[state.problem] : null
   const canShoot = state.status === 'live' && videoReady
   const live = useLiveView(videoRef, canShoot)
+  const [videoSize, setVideoSize] = useState<{ width: number; height: number } | null>(null)
+  const paneRef = useRef<HTMLDivElement>(null)
+  useFrostPane(live, paneRef)
   const [frameBox, setFrameBox] = useState<{ width: number; height: number } | null>(null)
   // The preview frame's size, kept current, so the outlines line up with the picture at any window size.
   const watchFrame = useCallback((element: HTMLDivElement | null) => {
@@ -255,15 +306,18 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
             playsInline
             autoPlay
             aria-label="Camera preview"
-            onLoadedData={() => setVideoReady(true)}
+            onLoadedData={(event) => {
+              setVideoReady(true)
+              setVideoSize({ width: event.currentTarget.videoWidth, height: event.currentTarget.videoHeight })
+            }}
+            onResize={(event) => setVideoSize({ width: event.currentTarget.videoWidth, height: event.currentTarget.videoHeight })}
             onEmptied={() => setVideoReady(false)}
           />
-          {canShoot && live.kind === 'text' && frameBox && (
-            // Blurred patches over every line of text, on top of the picture (not the letterbox bars).
-            <div className="scan-live" style={containRect(frameBox, live)} aria-hidden="true">
-              {live.lines.map((line, index) => (
-                <span key={`${line.x}-${line.y}-${index}`} className="scan-live-box" style={boxPercent(line, live.width, live.height)} />
-              ))}
+          {canShoot && frameBox && videoSize && (
+            // One frosted pane over the text, on the picture itself (not the letterbox bars). It is there from the
+            // first frame, resting over the middle, and glides onto the text once it is found.
+            <div className="scan-live" style={containRect(frameBox, videoSize)} aria-hidden="true">
+              <div ref={paneRef} className="scan-frost" />
             </div>
           )}
           {canShoot ? (

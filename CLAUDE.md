@@ -139,9 +139,10 @@ words (look-alikes 0/O, 1/l folded, across line breaks); found only in the text 
 or boxes outside the image → `blocked` (nothing painted, page can't be downloaded). Words under 60 confidence are outlined
 for review; more than 15% of them → the copy is still made but marked `unclear`, and the result screen warns that details
 may have been missed and it's risky to share or draft from. A photo always reaches the result screen (original + copy, or why
-there's no copy). While the camera is live, every line of text is blurred on the video (`previewLines()` → `textLines()`:
-OCR only, no redaction, so nothing private can show or be missed); the photo gets the full check, then only private details
-stay hidden. The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
+there's no copy). While the camera is live, one frosted pane covers the text on the video (`previewLines()` → `textLines()`
+→ `textRegion()`; OCR only, no redaction, so nothing private can show or be missed). `useFrostPane` glides it every frame
+with `stepRegion()`: edges grow fast (~0.1 s) and shrink slowly (~0.45 s), it holds 1.2 s when text drops out, and rests over
+the middle before any text is found. The photo gets the full check, then only private details stay hidden. The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
 `redactedText` may ever be sent; never the image. PDFs are still `fakeScan.ts` (`PDF_DEMO`): made-up readable pages.
 
 **Test data.** `scripts/generate-cases.ts` writes 120 deterministic fake notes (seeded; Set A/B use disjoint
