@@ -126,7 +126,7 @@ export default function App() {
   }, [])
 
   // Runs from the "Hide private details" click, which is what lets Chrome start the one-time model download.
-  async function hidePrivateDetails() {
+  async function hidePrivateDetails(text = notes) {
     setBusy('hiding')
     setPasteError(null)
     setProgress(null)
@@ -135,7 +135,7 @@ export default function App() {
     skipRef.current = skip
     try {
       const result = await redactNotes(
-        notes,
+        text,
         (fraction) => {
           const percent = Math.round(fraction * 100)
           if (percent !== lastPercent.current) {
@@ -313,7 +313,19 @@ export default function App() {
             />
           )}
 
-          {busy === null && step === 'scan' && <StepScan onBack={() => goTo('start')} />}
+          {busy === null && step === 'scan' && (
+            <StepScan
+              onBack={() => goTo('start')}
+              basicChecks={checkMode === 'basic' || nanoPossible === false}
+              onDraft={(text) => {
+                // The scanned text becomes the notes (in memory only) and goes through the same steps as pasted
+                // notes: hidden on this laptop, checked on the review screen, and only then sent. This runs from the
+                // pop-up's click, which Chrome needs to start the private AI download.
+                setNotes(text)
+                void hidePrivateDetails(text)
+              }}
+            />
+          )}
 
           {busy === null && step === 'paste' && (
             <StepPaste
@@ -321,7 +333,7 @@ export default function App() {
               onNotesChange={setNotes}
               templateId={templateId}
               onTemplateChange={setTemplateId}
-              onContinue={hidePrivateDetails}
+              onContinue={() => void hidePrivateDetails()}
               onBack={() => goTo('start')}
               error={pasteError}
               checkMode={nanoPossible === false ? null : checkMode}
