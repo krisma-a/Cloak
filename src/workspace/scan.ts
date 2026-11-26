@@ -264,7 +264,7 @@ export function saveAutoCapture(on: boolean, storage: Pick<Storage, 'setItem'> |
 // ---------- Blocked pages ----------
 
 /** Why a page got no copy (the same names as blackout's BlockedReason). */
-export type ScanBlockReason = 'redaction-blocked' | 'unplaced' | 'image-mismatch'
+export type ScanBlockReason = 'redaction-blocked' | 'unplaced' | 'image-mismatch' | 'recheck-failed'
 
 /** What the screen says when a page got no copy, for each reason. Never names the detail. */
 export function blockedMessage(reason: ScanBlockReason): string {
@@ -275,7 +275,15 @@ export function blockedMessage(reason: ScanBlockReason): string {
       return 'A private detail couldn’t be matched to a spot on the picture, so no copy was made. Retake it flatter and in better light.'
     case 'image-mismatch':
       return 'The text Cloak read didn’t line up with the picture, so no copy was made. Please take the photo again.'
+    case 'recheck-failed':
+      return 'Some private details may still show. Retake the photo flat and closer.'
   }
+}
+
+/** The line on the result screen after the blacked-out copy was read again. Counts only, never the detail. */
+export function recheckLine(fixed: number): string {
+  if (fixed <= 0) return 'Rechecked the photo: 0 private details left.'
+  return `Rechecked the photo: fixed ${fixed} missed detail${fixed === 1 ? '' : 's'}, 0 left.`
 }
 
 // ---------- Browser and cameras ----------

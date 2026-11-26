@@ -16,6 +16,7 @@ import {
   pageList,
   readingLabel,
   readingProgress,
+  recheckLine,
   redactedFileName,
   summarize,
   tooDarkOrFlat,
@@ -567,5 +568,14 @@ describe('use phone camera instead?', () => {
     assert.equal(phoneCameraToOffer(cams, null, new Set(['ph']), false), null)
     assert.equal(phoneCameraToOffer(cams.slice(0, 1), null, new Set(), false), null)
     assert.equal(phoneCameraToOffer(cams, null, new Set(), true), null)
+  })
+})
+
+describe('photo recheck line', () => {
+  it('says plainly how many missed details were fixed, never which', () => {
+    assert.equal(recheckLine(0), 'Rechecked the photo: 0 private details left.')
+    assert.equal(recheckLine(1), 'Rechecked the photo: fixed 1 missed detail, 0 left.')
+    assert.equal(recheckLine(3), 'Rechecked the photo: fixed 3 missed details, 0 left.')
+    assert.equal(blockedMessage('recheck-failed'), 'Some private details may still show. Retake the photo flat and closer.')
   })
 })

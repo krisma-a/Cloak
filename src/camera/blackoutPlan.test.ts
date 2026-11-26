@@ -307,3 +307,17 @@ test('textLines ignores junk words OCR finds in faces and backgrounds', () => {
   assert.equal(isRealWord({ text: 'A1', x: 0, y: 0, w: 1, h: 1, line: 0, confidence: 80 }), true)
   assert.equal(isRealWord({ text: '|', x: 0, y: 0, w: 1, h: 1, line: 0, confidence: 99 }), false)
 })
+
+test('a table row read in a different order in the text still gets its line box on the right row, not one below', async () => {
+  // Tesseract's text lists the rows in another order than its word lines (tables do this), and the row with the
+  // diagnosis is garbled in the words, so the box must come from matching the line by content.
+  const ocr = page([['Patient', 'note'], ['Dlagnosls:', 'rnlgralnes'], ['Return', 'Monday'], ['Signed', 'by', 'clinic']])
+  ocr.text = 'Patient note\nReturn Monday\nDiagnosis: migraines\nSigned by clinic'
+  const { parts } = fakeParts((text) => redaction(text, [{ text: 'migraines', category: 'MEDICAL' }]))
+  const result = await runBlackout('page', ocr, parts)
+  assert.equal(result.status, 'ok')
+  if (result.status !== 'ok') return
+  const box = result.boxes[0] as Rect
+  for (const word of ocr.words.filter((w) => w.line === 1)) assert.ok(covers(box, word), word.text)
+  for (const word of ocr.words.filter((w) => w.line !== 1)) assert.ok(!covers(box, word), word.text)
+})

@@ -3566,3 +3566,18 @@
   min-height: 40px;
   padding: 0 18px;
 }
+
+/* "Rechecked the photo: 0 private details left": the blacked-out copy was read again. Plain and always visible. */
+.cloak-app .scan-recheck {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--label-bg);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cloak-app .scan-recheck.is-fixed {
+  background: #fdf1d8;
+  color: #6b4a00;
+}

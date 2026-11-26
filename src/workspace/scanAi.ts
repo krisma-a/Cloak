@@ -39,6 +39,8 @@ export type ScanPageResult =
       needsReview: boolean
       /** More than 15% of the words were read badly: details may have been missed, so this copy is risky to use. */
       unclear: boolean
+      /** The copy was read again after blackout: how many missed details that covered (0 = it was already clean). */
+      rechecked: { fixed: number }
     }
   | { status: 'blocked'; reason: ScanBlockReason }
 
@@ -50,11 +52,17 @@ export async function readText(image: HTMLCanvasElement, options?: { onProgress?
   return ocr.readText(image, options)
 }
 
-/** Finds the private details in `ocr` on this device and paints each one solid black on a COPY of `image`. */
-export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promise<ScanPageResult> {
+/**
+ * Finds the private details in `ocr` on this device and paints each one solid black on a COPY of `image`, then reads
+ * that copy again and covers any hidden detail that still shows (src/camera/recheck.ts). Still showing after 2 rounds
+ * of fixes: blocked. `onRecheck` is called when the second read starts.
+ */
+export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult, onRecheck?: () => void): Promise<ScanPageResult> {
   const { blackOut: run } = await import('../camera/blackout.ts')
   const result = await run(image, ocr, {
     redact: (text) => redactNotes(text, undefined, { basicOnly: loadCheckMode() === 'basic' }),
+    reread: (canvas) => readText(canvas as HTMLCanvasElement),
+    onRecheck,
   })
   if (result.status !== 'ok') {
     // Counts only, never text: enough to tell which safety check stopped the page.
@@ -69,6 +77,7 @@ export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promis
     review: result.review,
     needsReview: result.needsReview,
     unclear: result.unclear,
+    rechecked: { fixed: result.recheck?.fixed ?? 0 },
   }
 }
 

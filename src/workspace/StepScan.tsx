@@ -47,6 +47,7 @@ import {
   platformOf,
   readingLabel,
   readingProgress,
+  recheckLine,
   redactedFileName,
   resultHeadline,
   saveCameraId,
@@ -97,6 +98,8 @@ interface ScannedPage {
   text: string
   /** The words read from the page with their boxes, so the person can black out more by clicking them ("Hide more"). */
   ocr: OcrResult | null
+  /** The blacked-out copy was read again: how many missed details that covered. Null when there is no copy. */
+  rechecked: { fixed: number } | null
 }
 
 type Phase =
@@ -1138,21 +1141,23 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
         } catch {
           if (!still()) return
           // Any reading failure is shown the same way: too dark, blurry, blank or not a document.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false, text: '', ocr: null })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false, text: '', ocr: null, rechecked: null })
           continue
         }
         if (!still()) return
         if (ocr.words.length === 0) {
           // The reader ran but found no text: a blank, blurry or too-dark shot.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false, text: '', ocr: null })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false, text: '', ocr: null, rechecked: null })
           continue
         }
         setPhase({ kind: 'reading', progress: readingProgress(index, pages.length, 1, share), label: 'Finding private details…' })
-        const result = await blackOut(page, ocr)
+        const result = await blackOut(page, ocr, () => {
+          if (still()) setPhase({ kind: 'reading', progress: readingProgress(index, pages.length, 1, share), label: 'Rechecking the photo…' })
+        })
         if (!still()) return
         if (result.status === 'blocked') {
           // Fail closed: no copy at all rather than one that might show a detail.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, blockReason: result.reason, boxes: [], review: [], unclear: false, text: draftTextFromOcr(ocr), ocr })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, blockReason: result.reason, boxes: [], review: [], unclear: false, text: draftTextFromOcr(ocr), ocr, rechecked: null })
           continue
         }
         const blob = await toBlob(result.redacted)
@@ -1168,6 +1173,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
           unclear: result.unclear,
           text: draftTextFromOcr(ocr),
           ocr,
+          rechecked: result.rechecked,
         })
       }
     } catch {
@@ -1598,6 +1604,11 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
 
           <aside className="scan-ledger" aria-labelledby="scan-ledger-title">
             <h3 id="scan-ledger-title">What’s hidden{isPdf ? ` on page ${current + 1}` : ''}</h3>
+            {page.rechecked && (
+              <p className={`scan-recheck${page.rechecked.fixed > 0 ? ' is-fixed' : ''}`} role="status">
+                {recheckLine(page.rechecked.fixed)}
+              </p>
+            )}
             {rows.length > 0 ? (
               <ul className="scan-ledger-rows">
                 {rows.map((row) => (
