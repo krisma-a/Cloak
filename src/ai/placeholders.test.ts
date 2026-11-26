@@ -167,3 +167,26 @@ test('counts placeholders by type without content', () => {
   const { map } = applyEntities(note, entities)
   assert.deepEqual(countByPrefix(map), { EMPLOYEE: 2, EMAIL: 1, MEDICAL_DETAIL: 1 })
 })
+
+test('hiding a label word never rewrites the inside of a placeholder (table-style forms)', () => {
+  // FAKE DATA. A form whose labels ("Employee", "Phone") share a word with placeholder names.
+  const text = 'Employee James Whitfield. Phone (805) 555-0124. Employee ID NG-77304.'
+  const { text: out, map } = applyEntities(text, [
+    { text: 'James Whitfield', category: 'PERSON' },
+    { text: '(805) 555-0124', category: 'PHONE' },
+    { text: 'Employee', category: 'ROLE' },
+    { text: 'Phone', category: 'ROLE' },
+  ])
+  assert.ok(!out.includes('[['), out)
+  assert.match(out, /\[EMPLOYEE_1\]/)
+  assert.match(out, /\[PHONE_1\]/)
+  assert.equal(map.originals['[EMPLOYEE_1]'], 'James Whitfield', 'the name stays in the map')
+  assert.equal(map.originals['[PHONE_1]'], '(805) 555-0124')
+})
+
+test('a placeholder name echoed back by a model ("PHONE_1") is not taken as a detail', () => {
+  const first = applyEntities('Call (805) 555-0124 today.', [{ text: '(805) 555-0124', category: 'PHONE' }])
+  const second = applyEntities(first.text, [{ text: 'PHONE_1', category: 'OTHER_ID' }, { text: 'phone', category: 'ROLE' }], first.map)
+  assert.equal(second.text, 'Call [PHONE_1] today.')
+  assert.deepEqual(Object.keys(second.map.lookup).sort(), ['(805) 555-0124'])
+})

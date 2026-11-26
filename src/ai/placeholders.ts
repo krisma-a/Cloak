@@ -88,7 +88,24 @@ function nextPlaceholder(map: PlaceholderMap, prefix: string): string {
 }
 
 function isUsable(value: string): boolean {
-  return value.length >= 2 && !/\[[A-Z_]+_\d+\]/.test(value)
+  // Not a placeholder, and not a placeholder's name without its brackets ("PHONE_1"), which a model may echo back.
+  return value.length >= 2 && !/\[[A-Z_]+_\d+\]/.test(value) && !/^[A-Z]+(?:_[A-Z]+)*_\d+$/i.test(value)
+}
+
+/** Our placeholders as they appear in text: [EMPLOYEE_1], [MEDICAL_DETAIL_2]. */
+const PLACEHOLDER_TOKEN = /\[[A-Z]+(?:_[A-Z]+)*_\d+\]/g
+
+/** The text with each placeholder blanked to spaces of the same length, so searches skip them but positions still line up. */
+export function maskPlaceholders(text: string): string {
+  return text.replace(PLACEHOLDER_TOKEN, (token) => ' '.repeat(token.length))
+}
+
+/** Replaces matches of `pattern` only in the parts of `text` outside placeholders. */
+function replaceOutsidePlaceholders(text: string, pattern: RegExp, value: string): string {
+  return text
+    .split(/(\[[A-Z]+(?:_[A-Z]+)*_\d+\])/)
+    .map((part, i) => (i % 2 === 1 ? part : part.replace(pattern, value)))
+    .join('')
 }
 
 const HAS_YEAR = /\b(?:19|20)\d{2}\b/
@@ -154,7 +171,8 @@ function atSentenceStart(text: string, index: number): boolean {
  * "The"/"A"/... is stored in lower case; restore() capitalizes it again at a sentence start.
  */
 function noteSpelling(text: string, value: string, category: Category): string | undefined {
-  const matches = [...text.matchAll(wholeWordRegex(value))]
+  // Search outside placeholders only: "PHONE_1" inside "[PHONE_1]" is not something the note says.
+  const matches = [...maskPlaceholders(text).matchAll(wholeWordRegex(value))]
   if (!matches.length) return undefined
   if (!SENTENCE_CASE.has(category)) return matches[0][0]
   const mid = matches.find((m) => !atSentenceStart(text, m.index))
@@ -226,7 +244,8 @@ export function applyEntities(
   // Replace, longest strings first.
   let result = text
   const keys = Object.keys(map.lookup).sort((a, b) => b.length - a.length)
-  for (const key of keys) result = result.replace(wholeWordRegex(key), map.lookup[key])
+  // Never inside a placeholder: hiding "Employee" must not turn "[EMPLOYEE_1]" into "[[ROLE_1]_1]".
+  for (const key of keys) result = replaceOutsidePlaceholders(result, wholeWordRegex(key), map.lookup[key])
 
   // Forget placeholders made in this call that ended up nowhere in the text (a department that
   // sat inside a longer phrase), so counts and the map only describe what is really hidden.

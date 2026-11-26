@@ -23,6 +23,7 @@ import {
   UnreadableScanError,
   unreadablePages,
   videoConstraints,
+  blockedMessage,
   browserAdvice,
   cameraChoices,
   containRect,
@@ -339,5 +340,13 @@ describe('browser and cameras', () => {
     const blocked = { getItem: () => { throw new Error('no') }, setItem: () => { throw new Error('no') } }
     assert.equal(loadCameraId(blocked), null)
     assert.doesNotThrow(() => saveCameraId('x', blocked))
+  })
+})
+
+describe('blocked pages', () => {
+  it('says why a page got no copy, without naming the detail', () => {
+    assert.match(blockedMessage('redaction-blocked'), /couldn’t hide safely/)
+    assert.match(blockedMessage('unplaced'), /couldn’t be matched to a spot/)
+    assert.match(blockedMessage('image-mismatch'), /didn’t line up/)
   })
 })

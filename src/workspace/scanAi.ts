@@ -19,7 +19,7 @@
 
 import { redactNotes } from './ai.ts'
 import { loadCheckMode } from './checkMode.ts'
-import type { LiveView, OcrProgress, OcrResult, Rect, ScanBox } from './scan.ts'
+import type { LiveView, OcrProgress, OcrResult, Rect, ScanBlockReason, ScanBox } from './scan.ts'
 
 export { pagesToPdf, pdfToPages } from './fakeScan.ts'
 
@@ -45,7 +45,7 @@ export type ScanPageResult =
       /** More than 15% of the words were read badly: details may have been missed, so this copy is risky to use. */
       unclear: boolean
     }
-  | { status: 'blocked' }
+  | { status: 'blocked'; reason: ScanBlockReason }
 
 // Tesseract.js and the redaction code are large, so they load on first use, not with the first screen.
 
@@ -61,7 +61,11 @@ export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promis
   const result = await run(image, ocr, {
     redact: (text) => redactNotes(text, undefined, { basicOnly: loadCheckMode() === 'basic' }),
   })
-  if (result.status !== 'ok') return { status: 'blocked' }
+  if (result.status !== 'ok') {
+    // Counts only, never text: enough to tell which safety check stopped the page.
+    console.info('Cloak scan: no copy made', { reason: result.reason, count: result.count, engine: result.engine })
+    return { status: 'blocked', reason: result.reason }
+  }
   if (!(result.canvas instanceof HTMLCanvasElement)) throw new Error('The blacked-out copy isn’t a page canvas.')
   return {
     status: 'ok',

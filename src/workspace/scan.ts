@@ -93,6 +93,23 @@ export function isPhone(info: { mobile?: boolean; userAgent: string; coarsePoint
   return /Android|iPhone|iPad|iPod|Mobile/i.test(info.userAgent) || (info.coarsePointer && /Macintosh/i.test(info.userAgent))
 }
 
+// ---------- Blocked pages ----------
+
+/** Why a page got no copy (the same names as blackout's BlockedReason). */
+export type ScanBlockReason = 'redaction-blocked' | 'unplaced' | 'image-mismatch'
+
+/** What the screen says when a page got no copy, for each reason. Never names the detail. */
+export function blockedMessage(reason: ScanBlockReason): string {
+  switch (reason) {
+    case 'redaction-blocked':
+      return 'Cloak found private details it couldn’t hide safely, so no copy was made. Retake the photo, or type the notes on the paste screen instead.'
+    case 'unplaced':
+      return 'A private detail couldn’t be matched to a spot on the picture, so no copy was made. Retake it flatter and in better light.'
+    case 'image-mismatch':
+      return 'The text Cloak read didn’t line up with the picture, so no copy was made. Please take the photo again.'
+  }
+}
+
 // ---------- Browser and cameras ----------
 
 export type Platform = 'mac' | 'windows' | 'other'
