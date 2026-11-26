@@ -4,6 +4,37 @@ Run on 2026-11-24. Set B is the holdout set: 60 fake notes with 516 planted priv
 
 **Biggest weakness:** nothing catches what Gemini Nano misses: the send guard blocked 0 of 60 notes, so all 11 missed details (1 name, 2 misspelled medical terms, 2 salaries, 2 ages and 4 job or team phrases) would still have been sent to the cloud.
 
+## Update: after the camera tests (2026-11-26)
+
+**The rules changed after the camera tests** (13 photos of fake documents leaked through OCR misspellings, lone surnames
+and letter-prefixed IDs), so these numbers come after a fix driven by photo results, not by Set B.
+
+What changed: medical keywords also match OCR typos and cut-off words ("diabet", "sertral") and common medications;
+phones may miss a bracket or be glued to a word; IDs like `BSL-5560` / `#SR-11407`; every part of a found name is hidden
+everywhere, typos included, with the same placeholder ([src/ai/nameParts.ts](../src/ai/nameParts.ts)). Photos are also
+read again after blackout ([src/camera/recheck.ts](../src/camera/recheck.ts)); the eval scores text only, so that
+recheck is not in these numbers.
+
+Gemini Nano is not available on the machine used for this run, so "Full Cloak" ran on the **backup engine**
+(`browser-model` × 60, in-browser name model + rules). Before and after were run side by side on the same machine (the
+"before" is commit `338bb6d`). These are not comparable with the Nano numbers below; Nano was not re-run.
+
+Set A first (to check nothing broke), then Set B once:
+
+| Method | Set A before → after | Set B before → after | Over-redacted (Set B) |
+| --- | --- | --- | --- |
+| Rules only | 33.2% → **33.6%** (168 → 170 of 506) | 31.8% → **32.6%** (164 → 168 of 516) | 0 → 0 of 182 |
+| Full Cloak, backup engine | 80.2% → **81.0%** (406 → 410 of 506) | 79.5% → **80.4%** (410 → 415 of 516) | 0 → 0 of 182 |
+
+No item that was caught before is missed now, on either set. Set B, Full Cloak (backup engine) per category, where it
+changed: MEDICAL 22 → 26 of 33 (`mltiple sclerosis`, `epilepssy`, `sertraline 50 mg daily`, `multiple slerosis`),
+PERSON 189 → 190 of 199 (`OBI, KAYODE`). The send guard blocked 0 of 60 notes in both runs.
+
+Still missed on Set B, among the kinds this fix targeted: `scciatica`, `sciatica`, `ceilac disease`, `lupuus`, `PTSSD`
+(sciatica and celiac are not in the keyword list; lupus and PTSD are too short for typo matching), and reversed or
+lower-case names the name model doesn't see (`VILLALOBOS, DANIELA`, `Uchenna gunleye`, `Noor aNsser`). Not changed:
+no Set B-only fix was added.
+
 ## Update: after strengthening the guard (same day, second run)
 
 What changed (developed on Set A only, then Set B was scored once; raw report in
