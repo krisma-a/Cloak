@@ -5,9 +5,12 @@
 // - Redaction blocked            -> status "blocked", nothing is painted, no text is returned.
 // - Hidden text found in the words (exact, or with OCR look-alikes such as 0/O and 1/l, across line breaks)
 //                                -> those words are painted over.
-// - Found in the OCR text but not in the words -> its whole line is painted over, and the page needs review.
+// - Found in the OCR text but not in the words -> its whole line is painted over, and the page needs review. The line
+//   is matched to the words by its content, not its number (in tables the two numberings drift apart).
 // - Not found anywhere, or a word box lies outside the image -> "blocked": we can't say where it is.
 // - Words read with low confidence (under 60 by default) are flagged for review (their boxes only, never their text).
+// - After painting, the copy is read again (recheck.ts): a hidden detail still readable is covered too, up to 2
+//   rounds, and anything left after that blocks the page.
 // - More than 15% of the words read with low confidence -> the copy is still made, but marked `unclear`: private
 //   details in garbled words can't be found, so the screen warns that it may have missed some and is risky to use.
 //   (The live preview just says it's too hard to read.)
@@ -16,7 +19,9 @@
 // words: a box carries a category and a position, nothing else.
 
 import type { Category } from '../ai/placeholders.ts'
+import { editDistance } from '../rules/fuzzy.ts'
 import type { OcrResult, OcrWord } from './ocr.ts'
+import type { RecheckResult } from './recheck.ts'
 
 /** A rectangle in the image's own pixels. */
 export interface Rect {
@@ -30,7 +35,7 @@ export interface Rect {
  * How a box was placed: "word" (the hidden text lines up with whole words), "partial" (it sits inside a longer
  * word, so the whole word is covered), "line" (found only in the OCR text, so its whole line is covered).
  */
-export type BoxSource = 'word' | 'partial' | 'line'
+export type BoxSource = 'word' | 'partial' | 'line' | 'recheck'
 
 /** One black box. Never holds the hidden text. */
 export interface BlackoutBox extends Rect {
@@ -136,11 +141,29 @@ function findInWords(stream: Stream, key: string): Array<{ words: number[]; sour
   return found
 }
 
-/** The OCR lines (numbered like OcrWord.line) whose text holds `key`. Blank lines don't count, as in wordsFromBlocks. */
-function findInLines(ocrText: string, key: string): number[] {
+/**
+ * The word lines (OcrWord.line) holding `key` in the OCR text. Each matching text line is matched to the word line
+ * whose words read most like it, never by its position: in tables Tesseract's text and its word lines are numbered
+ * differently, and going by position put boxes one or two rows too low. A text line no word line resembles (more than
+ * half different) is skipped, so the caller blocks the page instead of guessing.
+ */
+export function findInLines(ocrText: string, words: readonly OcrWord[], key: string): number[] {
   if (key === '') return []
-  const lines = ocrText.split('\n').filter((line) => line.trim() !== '')
-  return lines.flatMap((line, index) => (matchKey(line).includes(key) ? [index] : []))
+  const wordLines = new Map<number, string>()
+  for (const word of words) wordLines.set(word.line, (wordLines.get(word.line) ?? '') + matchKey(word.text))
+  const found = new Set<number>()
+  for (const line of ocrText.split('\n')) {
+    const lineKey = matchKey(line)
+    if (lineKey === '' || !lineKey.includes(key)) continue
+    let best: { line: number; distance: number } | null = null
+    for (const [number, wordKey] of wordLines) {
+      const limit = Math.floor(Math.max(lineKey.length, wordKey.length) / 2)
+      const distance = editDistance(lineKey, wordKey, limit)
+      if (distance <= limit && (best === null || distance < best.distance)) best = { line: number, distance }
+    }
+    if (best) found.add(best.line)
+  }
+  return [...found]
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -175,7 +198,7 @@ function clampRect(rect: Rect, size: { width: number; height: number }): Rect {
 }
 
 /** One padded box per line around the given words (so the gap between "Maria" and "Santos" is covered too). */
-function boxesAround(words: readonly OcrWord[], padding: number, size: { width: number; height: number }): Rect[] {
+export function boxesAround(words: readonly OcrWord[], padding: number, size: { width: number; height: number }): Rect[] {
   const byLine = new Map<number, OcrWord[]>()
   for (const word of words) byLine.set(word.line, [...(byLine.get(word.line) ?? []), word])
   return [...byLine.values()].map((line) => {
@@ -228,7 +251,7 @@ export function planBlackout(
       }
       continue
     }
-    const lines = findInLines(ocr.text, key)
+    const lines = findInLines(ocr.text, ocr.words, key)
     const lineWords = ocr.words.filter((word) => lines.includes(word.line))
     if (lineWords.length === 0) {
       unplaced += 1
@@ -258,6 +281,11 @@ export interface BlackoutParts<Image, Canvas> {
   /** On-device redaction of the OCR text. */
   redact(text: string): Promise<RedactionLike>
   open(image: Image): Promise<OpenedImage<Canvas>>
+  /**
+   * Reads the painted copy again and covers any hidden detail still readable (recheck.ts). Gets the redaction's map
+   * (memory only). Left out, no recheck runs.
+   */
+  recheck?(canvas: Canvas, map: RedactionLike['map'], size: { width: number; height: number }): Promise<RecheckResult<Canvas>>
 }
 
 export type BlockedReason =
@@ -267,6 +295,8 @@ export type BlockedReason =
   | 'unplaced'
   /** The OCR boxes don't fit this image, so the boxes would land in the wrong place. */
   | 'image-mismatch'
+  /** Reading the blacked-out copy again still found a hidden detail after the fixes. */
+  | 'recheck-failed'
 
 export type BlackoutResult<Canvas> =
   | {
@@ -288,6 +318,8 @@ export type BlackoutResult<Canvas> =
        */
       unclear: boolean
       engine: string
+      /** The photo recheck: how many missed details it covered. Null when no recheck ran. */
+      recheck: { fixed: number } | null
     }
   | {
       status: 'blocked'
@@ -330,17 +362,29 @@ export async function runBlackout<Image, Canvas>(
   if (plan.outside > 0) return { status: 'blocked', reason: 'image-mismatch', count: plan.outside, engine: redaction.engine }
   if (plan.unplaced > 0) return { status: 'blocked', reason: 'unplaced', count: plan.unplaced, engine: redaction.engine }
 
-  const { blob, canvas } = await opened.paint(plan.boxes)
+  let { blob, canvas } = await opened.paint(plan.boxes)
+  const boxes: BlackoutBox[] = [...plan.boxes]
+  let recheck: { fixed: number } | null = null
+  if (parts.recheck) {
+    const checked = await parts.recheck(canvas, redaction.map, opened)
+    if (checked.status === 'blocked') return { status: 'blocked', reason: 'recheck-failed', count: checked.left, engine: redaction.engine }
+    canvas = checked.canvas
+    if (checked.blob) blob = checked.blob
+    boxes.push(...checked.boxes.map((box) => ({ ...box, source: 'recheck' as const })))
+    recheck = { fixed: checked.fixed }
+  }
   return {
     status: 'ok',
     blob,
     canvas,
     redactedText: redaction.redactedText,
-    boxes: plan.boxes,
+    boxes,
     review: plan.review,
-    needsReview: unclear || plan.review.length > 0 || plan.boxes.some((box) => box.source === 'line') || redaction.needsCarefulReview,
+    needsReview:
+      unclear || plan.review.length > 0 || boxes.some((box) => box.source === 'line' || box.source === 'recheck') || redaction.needsCarefulReview,
     unclear,
     engine: redaction.engine,
+    recheck,
   }
 }
 

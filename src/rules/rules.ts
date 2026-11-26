@@ -44,10 +44,12 @@ const PATTERNS: Array<{ category: LeakCategory; regex: RegExp }> = [
   // 123-45-6789 or 123 45 6789
   { category: 'SSN', regex: /\b\d{3}[- ]\d{2}[- ]\d{4}\b/g },
   { category: 'EMAIL', regex: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g },
-  // (555) 201-7788, 555-201-7788, 555.201.7788, +1 555 201 7788, +63 917 123 4567
+  // (555) 201-7788, 555-201-7788, 555.201.7788, +1 555 201 7788, +63 917 123 4567. OCR drops a bracket and glues
+  // the number to the word before it, so "phone805) 555-0163" and "(805)555-0163" count too. Never inside a longer
+  // run of digits.
   {
     category: 'PHONE',
-    regex: /(?:\+\d{1,3}[\s.-]?)?(?:\(\d{3}\)|\b\d{3})[\s.-]?\d{3}[\s.-]?\d{4}\b/g,
+    regex: /(?:\+\d{1,3}[\s.-]?)?(?<!\d)\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}(?!\d)/g,
   },
   // Full dates with a 4-digit year (likely birth dates): 03/14/1988, 14-03-1988, 1988-03-14.
   // Dates without a year ("Oct 3") are allowed because case timelines need them.
@@ -78,15 +80,21 @@ const PATTERNS: Array<{ category: LeakCategory; regex: RegExp }> = [
   },
   // EMP-40912, EID 55120, ID#88231, E10293
   { category: 'EMPLOYEE_ID', regex: /\b(?:EMP|EID|ID|E)[-#: ]?\d{4,}\b/gi },
+  // Letter-prefixed IDs: BSL-5560, PCH-30981, SR-11407, #NG-77304. Capitals only, so "a 60-day PIP" and "Mon" stay.
+  { category: 'EMPLOYEE_ID', regex: /(?<![\p{L}\p{N}#])#?[A-Z]{2,4}-\d{4,6}(?!\d)/gu },
 ]
 
 function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-// Matches a known string as a whole word, ignoring case ("Maria" does not match "Mariana").
+// Matches a known string as a whole word, ignoring case ("Maria" does not match "Mariana"). A value that starts or
+// ends with a digit may touch a letter on that side, because OCR glues numbers to words ("phone805) 555-0163"), but
+// never another digit.
 export function wholeWordRegex(s: string): RegExp {
-  return new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegex(s)}(?![\\p{L}\\p{N}])`, 'giu')
+  const before = /^\d/.test(s) ? '(?<!\\p{N})' : '(?<![\\p{L}\\p{N}])'
+  const after = /\d$/.test(s) ? '(?!\\p{N})' : '(?![\\p{L}\\p{N}])'
+  return new RegExp(`${before}${escapeRegex(s)}${after}`, 'giu')
 }
 
 /**

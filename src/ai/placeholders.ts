@@ -92,6 +92,15 @@ function isUsable(value: string): boolean {
   return value.length >= 2 && !/\[[A-Z_]+_\d+\]/.test(value) && !/^[A-Z]+(?:_[A-Z]+)*_\d+$/i.test(value)
 }
 
+/**
+ * Titles and particles that sit inside a written name but are not the person: "Dr", "Mrs", "RN", "van". A name's
+ * parts are hidden everywhere, so these must never be one of them (or every "Mrs" in the note would vanish).
+ */
+export const NAME_TITLES: ReadonlySet<string> = new Set([
+  'dr', 'mr', 'mrs', 'ms', 'mx', 'miss', 'rn', 'md', 'np', 'pa', 'lpn', 'cna', 'phd', 'jr', 'sr', 'ii', 'iii', 'iv',
+  'rev', 'prof', 'esq', 'dds', 'van', 'von', 'del', 'der', 'den', 'des', 'las', 'los', 'the', 'and',
+])
+
 /** Our placeholders as they appear in text: [EMPLOYEE_1], [MEDICAL_DETAIL_2]. */
 const PLACEHOLDER_TOKEN = /\[[A-Z]+(?:_[A-Z]+)*_\d+\]/g
 
@@ -101,7 +110,7 @@ export function maskPlaceholders(text: string): string {
 }
 
 /** Replaces matches of `pattern` only in the parts of `text` outside placeholders. */
-function replaceOutsidePlaceholders(text: string, pattern: RegExp, value: string): string {
+export function replaceOutsidePlaceholders(text: string, pattern: RegExp, value: string): string {
   return text
     .split(/(\[[A-Z]+(?:_[A-Z]+)*_\d+\])/)
     .map((part, i) => (i % 2 === 1 ? part : part.replace(pattern, value)))
@@ -236,7 +245,7 @@ export function applyEntities(
     if (entity.category === 'PERSON') {
       for (const part of entity.text.split(/\s+/)) {
         const partKey = part.toLowerCase().replace(/[^\p{L}\p{N}'-]/gu, '')
-        if (partKey.length >= 3 && !map.lookup[partKey]) map.lookup[partKey] = placeholder
+        if (partKey.length >= 3 && !NAME_TITLES.has(partKey) && !map.lookup[partKey]) map.lookup[partKey] = placeholder
       }
     }
   }

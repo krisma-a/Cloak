@@ -7,7 +7,8 @@
 import type { Engine, RedactionResult } from '../ai/redact.ts'
 import type { OcrImage, OcrResult } from './ocr.ts'
 import { runBlackout } from './blackoutPlan.ts'
-import type { BlackoutResult, OpenedImage, PlanOptions, Rect } from './blackoutPlan.ts'
+import type { BlackoutParts, BlackoutResult, OpenedImage, PlanOptions, Rect } from './blackoutPlan.ts'
+import { mustNotAppear, recheckPhoto } from './recheck.ts'
 
 export type { BlackoutBox, BlackoutResult, BlockedReason, BoxSource, Rect } from './blackoutPlan.ts'
 
@@ -23,6 +24,13 @@ export interface BlackoutOptions extends PlanOptions {
    * as the paste screen). `engine` and `knownNames` are then ignored.
    */
   redact?: (text: string) => Promise<RedactionResult>
+  /**
+   * Reads a blacked-out copy again (the same on-device text reader). Given, the copy is rechecked after painting and
+   * any hidden detail still readable is covered too (recheck.ts); a detail still there after 2 rounds blocks the page.
+   */
+  reread?: (canvas: PageCanvas) => Promise<OcrResult>
+  /** Called when the recheck starts, so the screen can say so. */
+  onRecheck?: () => void
 }
 
 function newCanvas(width: number, height: number): PageCanvas {
@@ -76,7 +84,26 @@ export async function blackOut(
   options: BlackoutOptions = {},
 ): Promise<BlackoutResult<PageCanvas>> {
   const redactText = options.redact ?? (await defaultRedact(options))
-  return runBlackout(image, ocr, { redact: redactText, open: openImage }, options)
+  const parts: BlackoutParts<OcrImage, PageCanvas> = { redact: redactText, open: openImage }
+  const reread = options.reread
+  if (reread) {
+    parts.recheck = (canvas, map, size) => {
+      options.onRecheck?.()
+      return recheckPhoto(canvas, mustNotAppear(map), { read: reread, paint: paintOver, size })
+    }
+  }
+  return runBlackout(image, ocr, parts, options)
+}
+
+/** A copy of `canvas` with black boxes on it (the recheck's fixes). */
+async function paintOver(canvas: PageCanvas, rects: readonly Rect[]): Promise<{ canvas: PageCanvas; blob: Blob }> {
+  const copy = newCanvas(canvas.width, canvas.height)
+  const ctx = copy.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null
+  if (!ctx) throw new Error('Canvas 2D is not available.')
+  ctx.drawImage(canvas, 0, 0)
+  ctx.fillStyle = '#000'
+  for (const rect of rects) ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
+  return { canvas: copy, blob: await toPng(copy) }
 }
 
 async function defaultRedact(options: BlackoutOptions): Promise<(text: string) => Promise<RedactionResult>> {

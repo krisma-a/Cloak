@@ -24,6 +24,8 @@ export interface RedactHooks {
    * Gemini Nano. Catches less, so the review screen asks for a careful read (needsCarefulReview).
    */
   basicOnly?: boolean
+  /** Names already found for this case (an earlier page of the same scan): hidden as people wherever they appear. */
+  knownNames?: string[]
 }
 
 // Drafting has two modes, switched at run time so the team can test the real AI without a new build:
@@ -137,7 +139,7 @@ export async function redactNotes(
     hooks.onStage?.('basic')
     const { engine } = await prepareRedaction(onProgress, 'browser-model')
     hooks.onEngine?.(engine)
-    return redact(notes, { engine })
+    return redact(notes, { engine, knownNames: hooks.knownNames })
   }
 
   hooks.onStage?.((await nanoSupported()) ? 'nano' : 'basic')
@@ -161,9 +163,9 @@ export async function redactNotes(
     )
     const { engine } = await prepareRedaction(onProgress, 'browser-model')
     hooks.onEngine?.(engine)
-    return redact(notes, { engine })
+    return redact(notes, { engine, knownNames: hooks.knownNames })
   }
 
   hooks.onEngine?.(first.engine)
-  return redact(notes, { engine: first.engine })
+  return redact(notes, { engine: first.engine, knownNames: hooks.knownNames })
 }

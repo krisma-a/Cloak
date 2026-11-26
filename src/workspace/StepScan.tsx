@@ -13,6 +13,10 @@ import {
   AUTO_HOLD_MS,
   AUTO_IDLE,
   autoProgress,
+  paperGuide,
+  boxFromCorners,
+  draftTextWithout,
+  wordAt,
   containRect,
   loadAutoCapture,
   saveAutoCapture,
@@ -38,10 +42,12 @@ import {
   loadCameraId,
   ocrFraction,
   pageList,
+  phoneCameraToOffer,
   pickPhoneCamera,
   platformOf,
   readingLabel,
   readingProgress,
+  recheckLine,
   redactedFileName,
   resultHeadline,
   saveCameraId,
@@ -50,9 +56,10 @@ import {
   unreadablePages,
   videoConstraints,
 } from './scan.ts'
+import type { OcrResult } from './scan.ts'
 import type { AutoCaptureState, CameraChoice, CameraProblem, ScanBlockReason, LiveView, Platform, Rect, Region, ScanBox } from './scan.ts'
 import { qrMatrix, qrPath } from './qr.ts'
-import { blackOut, pagesToPdf, pdfToPages, previewLines, privateAiSupported, readText, warmUpPreview } from './scanAi.ts'
+import { blackOut, pagesToPdf, pdfToPages, previewLines, privateAiSupported, readText, startScan, warmUpPreview } from './scanAi.ts'
 
 // "Scan a document": take a photo or upload a photo or PDF, read the text ON THIS DEVICE, and show the original
 // next to a blacked-out copy. Pictures live in this tab's memory only (canvases and blob: URLs, freed on leaving).
@@ -89,6 +96,10 @@ interface ScannedPage {
   unclear: boolean
   /** The text read from the page, cleaned of OCR noise, for "Draft a report". In memory only, like pasted notes; never stored. */
   text: string
+  /** The words read from the page with their boxes, so the person can black out more by clicking them ("Hide more"). */
+  ocr: OcrResult | null
+  /** The blacked-out copy was read again: how many missed details that covered. Null when there is no copy. */
+  rechecked: { fixed: number } | null
 }
 
 type Phase =
@@ -249,6 +260,9 @@ function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boole
 
   return view
 }
+
+/** Phone cameras the person declined, kept for as long as the page is open (not stored). */
+const declinedPhoneCameras = new Set<string>()
 
 /** How long "Find my phone camera" keeps looking for a phone that is still connecting. */
 const FIND_SECONDS = 10
@@ -619,6 +633,8 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
   const { videoRef, attachVideo, state, retry, cameras, refreshCameras } = useCamera(cameraId, forgetCamera)
   const [privateAi, setPrivateAi] = useState<boolean | null>(null)
   const [phoneHelp, setPhoneHelp] = useState(false)
+  // Phone cameras the person has said "Not now" to, so the prompt doesn't come back this visit.
+  const [declined, setDeclined] = useState<ReadonlySet<string>>(() => new Set(declinedPhoneCameras))
   const [copied, setCopied] = useState(false)
   const setup = browserSetup()
   const advice = browserAdvice({ chrome: setup.chrome, phone: setup.phone, privateAi })
@@ -640,6 +656,13 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
   }
 
   const refreshCameraList = useCallback(() => void refreshCameras().catch(() => undefined), [refreshCameras])
+
+  // "Use phone camera instead?": a phone's camera has appeared (it's nearby and connected), so offer it once.
+  const offered = phoneHelp ? null : phoneCameraToOffer(cameras, cameraId, declined, setup.phone)
+  function declinePhone(id: string) {
+    declinedPhoneCameras.add(id)
+    setDeclined(new Set(declinedPhoneCameras))
+  }
 
   // Bumped to stop a "Find my phone camera" that is still waiting (the pop-up closed, or it was started again).
   const findRun = useRef(0)
@@ -723,28 +746,6 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
       </h2>
       <p className="muted">Hold the page flat in good light. Cloak reads it on this device and blacks out the private details.</p>
 
-      {advice && (
-        <div className="notice warn scan-advice" role="note">
-          <p>
-            <strong>{advice.title}.</strong> {advice.body}
-          </p>
-          {(advice.copyLink || advice.phoneTip) && (
-            <div className="scan-advice-actions">
-              {advice.copyLink && (
-                <button type="button" className="mini-btn" onClick={copyAddress}>
-                  {copied ? 'Address copied' : 'Copy Cloak’s address'}
-                </button>
-              )}
-              {advice.phoneTip && (
-                <button type="button" className="mini-btn" onClick={() => setPhoneHelp(true)} aria-haspopup="dialog">
-                  Show me how
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
       {problem ? (
         <div className="notice warn scan-camera-problem" role="alert">
           <p>
@@ -758,7 +759,12 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
           )}
         </div>
       ) : (
-        <div className="scan-camera" ref={watchFrame}>
+        <div
+          className="scan-camera"
+          ref={watchFrame}
+          // The frame takes the camera's own shape, so the preview is exactly what the photo will show, with no dark bars.
+          style={{ '--ratio': videoSize ? videoSize.width / videoSize.height : 16 / 9 } as CSSProperties}
+        >
           <video
             ref={attachVideo}
             muted
@@ -779,6 +785,21 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
               <div ref={paneRef} className="scan-frost" />
             </div>
           )}
+          {offered && canShoot && (
+            <div className="scan-offer" role="region" aria-label="Phone camera available" aria-live="polite">
+              <p>
+                <strong>{offered.label.replace(/ \(phone\)$/, '')}</strong> is available. Use phone camera instead?
+              </p>
+              <div className="scan-offer-actions">
+                <button type="button" className="btn btn-primary" onClick={() => chooseCamera(offered.id)}>
+                  Use phone camera
+                </button>
+                <button type="button" className="btn btn-quiet" onClick={() => declinePhone(offered.id)}>
+                  Not now
+                </button>
+              </div>
+            </div>
+          )}
           {holdSeconds !== null && (
             <div className="scan-hold" ref={ringRef} role="status" aria-live="polite">
               <span className="scan-hold-ring" aria-hidden="true" />
@@ -786,7 +807,7 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
             </div>
           )}
           {canShoot ? (
-            <span className="scan-guide" aria-hidden="true" />
+            <span className="scan-guide" aria-hidden="true" style={frameBox ? paperGuide(frameBox) : undefined} />
           ) : (
             <span className="scan-camera-status" role="status">
               <span className="loading-ring" aria-hidden="true" />
@@ -831,6 +852,28 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
         </div>
       )}
 
+      {advice && (
+        <div className="notice warn scan-advice" role="note">
+          <p>
+            <strong>{advice.title}.</strong> {advice.body}
+          </p>
+          {(advice.copyLink || advice.phoneTip) && (
+            <div className="scan-advice-actions">
+              {advice.copyLink && (
+                <button type="button" className="mini-btn" onClick={copyAddress}>
+                  {copied ? 'Address copied' : 'Copy Cloak’s address'}
+                </button>
+              )}
+              {advice.phoneTip && (
+                <button type="button" className="mini-btn" onClick={() => setPhoneHelp(true)} aria-haspopup="dialog">
+                  Show me how
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       <PhoneDialog
         open={phoneHelp}
         onClose={() => setPhoneHelp(false)}
@@ -865,6 +908,7 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
       />
 
       <div className="actions">
+        <p className="scan-capture-hint">Hold the page flat and fill the frame. Flat, close photos hide the most.</p>
         <button type="button" className="btn btn-quiet" onClick={onBack}>
           Back
         </button>
@@ -1003,7 +1047,14 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
   const [current, setCurrent] = useState(0)
   const [active, setActive] = useState<number | null>(null)
   // The category a row of "What's hidden" is pointing at: its boxes light up on the picture.
-  const [litCategory, setLitCategory] = useState<Category | null>(null)
+  const [litCategory, setLitCategory] = useState<Category | 'MANUAL' | null>(null)
+  // "Hide more": the person blacks out words or areas Cloak skipped. `drag` is the box being drawn, in picture pixels.
+  const [editing, setEditing] = useState(false)
+  const [drag, setDrag] = useState<{ from: { x: number; y: number }; to: { x: number; y: number } } | null>(null)
+  const [hoverWord, setHoverWord] = useState<number | null>(null)
+  const manualRef = useRef(new Map<number, ScanBox[]>()) // boxes added by hand, per page
+  const baseRef = useRef(new Map<number, HTMLCanvasElement>()) // each page's copy before any hand-made box
+  const refreshRef = useRef(new Map<number, number>()) // which saved picture is newest, per page
   // Where the compare handle is: 0 = all original, 100 = all blacked-out copy.
   const [split, setSplit] = useState(RESTING_SPLIT)
   const [saving, setSaving] = useState(false)
@@ -1071,6 +1122,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
     const still = () => run.current === id
 
     const scanned: ScannedPage[] = []
+    startScan()
     try {
       for (const [index, page] of pages.entries()) {
         if (!still()) return
@@ -1091,21 +1143,23 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
         } catch {
           if (!still()) return
           // Any reading failure is shown the same way: too dark, blurry, blank or not a document.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false, text: '' })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false, text: '', ocr: null, rechecked: null })
           continue
         }
         if (!still()) return
         if (ocr.words.length === 0) {
           // The reader ran but found no text: a blank, blurry or too-dark shot.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false, text: '' })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: false, blockReason: null, boxes: [], review: [], unclear: false, text: '', ocr: null, rechecked: null })
           continue
         }
         setPhase({ kind: 'reading', progress: readingProgress(index, pages.length, 1, share), label: 'Finding private details…' })
-        const result = await blackOut(page, ocr)
+        const result = await blackOut(page, ocr, () => {
+          if (still()) setPhase({ kind: 'reading', progress: readingProgress(index, pages.length, 1, share), label: 'Rechecking the photo…' })
+        })
         if (!still()) return
         if (result.status === 'blocked') {
           // Fail closed: no copy at all rather than one that might show a detail.
-          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, blockReason: result.reason, boxes: [], review: [], unclear: false, text: draftTextFromOcr(ocr) })
+          scanned.push({ width: page.width, height: page.height, originalUrl: original, redacted: null, blocked: true, blockReason: result.reason, boxes: [], review: [], unclear: false, text: draftTextFromOcr(ocr), ocr, rechecked: null })
           continue
         }
         const blob = await toBlob(result.redacted)
@@ -1120,6 +1174,8 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
           review: result.review,
           unclear: result.unclear,
           text: draftTextFromOcr(ocr),
+          ocr,
+          rechecked: result.rechecked,
         })
       }
     } catch {
@@ -1130,6 +1186,10 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
 
     // Always show what was captured, next to whatever copy could be made: a page with no safe copy says why, and the
     // download stays off until every page has one.
+    manualRef.current.clear()
+    baseRef.current.clear()
+    refreshRef.current.clear()
+    setEditing(false)
     setCurrent(0)
     setActive(null)
     setLitCategory(null)
@@ -1184,10 +1244,88 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
 
   function scanAnother() {
     run.current++
+    manualRef.current.clear()
+    baseRef.current.clear()
+    refreshRef.current.clear()
+    stopEditing()
     freeUrls()
     setFileError(null)
     setSaveError(null)
     setPhase({ kind: 'capture' })
+  }
+
+  /** A copy of a canvas, so the copy before hand-made boxes can be repainted (Undo). */
+  function cloneCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
+    const copy = canvasOf(source.width, source.height)
+    copy.getContext('2d')?.drawImage(source, 0, 0)
+    return copy
+  }
+
+  /**
+   * Sets the boxes the person added by hand on one page: they're painted onto the copy at once (so the next download has
+   * them), counted in "What's hidden", and the words under them are kept out of the text sent for drafting.
+   */
+  function setManualBoxes(index: number, boxes: ScanBox[]) {
+    if (phase.kind !== 'result') return
+    const red = phase.pages[index]?.redacted
+    const context = red?.canvas.getContext('2d')
+    if (!red || !context) return
+    manualRef.current.set(index, boxes)
+    let base = baseRef.current.get(index)
+    if (!base) {
+      base = cloneCanvas(red.canvas)
+      baseRef.current.set(index, base)
+    }
+    context.drawImage(base, 0, 0)
+    context.fillStyle = '#000'
+    for (const box of boxes) context.fillRect(box.x, box.y, box.width, box.height)
+    setPhase((now) =>
+      now.kind !== 'result'
+        ? now
+        : {
+            ...now,
+            pages: now.pages.map((p, i) =>
+              i !== index ? p : { ...p, boxes: [...p.boxes.filter((b) => !b.manual), ...boxes], text: p.ocr ? draftTextWithout(p.ocr, boxes) : p.text },
+            ),
+          },
+    )
+    // The shown picture is a saved copy: refresh it (the newest save wins if several finish out of order).
+    const id = (refreshRef.current.get(index) ?? 0) + 1
+    refreshRef.current.set(index, id)
+    void toBlob(red.canvas).then((blob) => {
+      if (refreshRef.current.get(index) !== id) return
+      const url = makeUrl(blob)
+      setPhase((now) =>
+        now.kind !== 'result'
+          ? now
+          : { ...now, pages: now.pages.map((p, i) => (i !== index || !p.redacted ? p : { ...p, redacted: { canvas: p.redacted.canvas, blob, url } })) },
+      )
+    })
+  }
+
+  const manualBoxes = (index: number): ScanBox[] => manualRef.current.get(index) ?? []
+  function addManualBox(rect: Rect) {
+    setManualBoxes(current, [...manualBoxes(current), { ...rect, category: 'OTHER_ID', manual: true }])
+  }
+  function undoManualBox() {
+    setManualBoxes(current, manualBoxes(current).slice(0, -1))
+  }
+  function startEditing() {
+    setEditing(true)
+    setSplit(100) // show the whole copy: whatever is still readable is what might have been missed
+    setActive(null)
+  }
+  function stopEditing() {
+    setEditing(false)
+    setDrag(null)
+    setHoverWord(null)
+    setSplit(RESTING_SPLIT)
+  }
+
+  /** Pointer position as picture pixels. */
+  function pictureAt(event: React.PointerEvent<HTMLElement>, page: ScannedPage) {
+    const rect = event.currentTarget.getBoundingClientRect()
+    return { x: ((event.clientX - rect.left) / rect.width) * page.width, y: ((event.clientY - rect.top) / rect.height) * page.height }
   }
 
   async function download() {
@@ -1200,8 +1338,9 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
         if (canvases.some((canvas) => !canvas)) return // never: the button is off while a page is unreadable
         downloadBlob(redactedFileName(phase.fileName, 'pdf'), await pagesToPdf(canvases as HTMLCanvasElement[]))
       } else {
-        const blob = phase.pages[0]?.redacted?.blob
-        if (blob) downloadBlob(redactedFileName(phase.fileName, 'png'), blob)
+        // From the canvas, not the saved picture: a box added a moment ago is already on the canvas.
+        const canvas = phase.pages[0]?.redacted?.canvas
+        if (canvas) downloadBlob(redactedFileName(phase.fileName, 'png'), await toBlob(canvas))
       }
     } catch {
       setSaveError('We couldn’t make the file. Please try again.')
@@ -1320,6 +1459,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
                     setCurrent(index)
                     setActive(null)
                     setLitCategory(null)
+                    stopEditing()
                   }}
                 >
                   <span className="scan-thumb" aria-hidden="true">
@@ -1341,7 +1481,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
           <figure className="scan-wipe">
             {/* One picture: the blacked-out copy on the left of the handle, the original on the right, so every box
                 can be checked against the exact words it covers. */}
-            <div className="scan-frame" style={{ '--split': split / 100 } as CSSProperties}>
+            <div className={`scan-frame${editing ? ' is-editing' : ''}`} style={{ '--split': split / 100 } as CSSProperties}>
               <img
                 src={page.originalUrl}
                 width={page.width}
@@ -1365,12 +1505,12 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
                     Original
                   </span>
                   {page.boxes.map((box, index) => {
-                    const label = CATEGORY_LABELS[box.category]
+                    const label = box.manual ? 'Hidden by you' : CATEGORY_LABELS[box.category]
                     return (
                       <button
                         key={`${box.x}-${box.y}-${index}`}
                         type="button"
-                        className={`scan-box${active === index ? ' is-active' : ''}${litCategory === box.category ? ' is-lit' : ''}${labelBelow(box, page.height) ? ' label-below' : ''}`}
+                        className={`scan-box${box.manual ? ' is-manual' : ''}${active === index ? ' is-active' : ''}${litCategory === (box.manual ? 'MANUAL' : box.category) ? ' is-lit' : ''}${labelBelow(box, page.height) ? ' label-below' : ''}`}
                         style={boxPercent(box, page.width, page.height)}
                         aria-label={`Hidden detail ${index + 1} of ${page.boxes.length}: ${label}`}
                         onMouseEnter={() => setActive(index)}
@@ -1395,6 +1535,67 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
                     aria-label="Compare the blacked-out copy with the original"
                     aria-valuetext={`${split}% blacked-out copy`}
                   />
+                  {editing && (
+                    // Hide more: click a word, or drag a box over anything else (handwriting, a logo, a signature).
+                    <div
+                      className="scan-edit"
+                      onPointerDown={(event) => {
+                        event.currentTarget.setPointerCapture(event.pointerId)
+                        const at = pictureAt(event, page)
+                        setDrag({ from: at, to: at })
+                      }}
+                      onPointerMove={(event) => {
+                        const at = pictureAt(event, page)
+                        setHoverWord(page.ocr ? wordAt(page.ocr.words, at.x, at.y) : null)
+                        setDrag((now) => (now ? { ...now, to: at } : now))
+                      }}
+                      onPointerUp={(event) => {
+                        const shown = event.currentTarget.getBoundingClientRect()
+                        const scale = page.width / shown.width // picture pixels per screen pixel
+                        const moved = drag ? Math.hypot(drag.to.x - drag.from.x, drag.to.y - drag.from.y) / scale : 0
+                        if (drag && moved >= 6) {
+                          const box = boxFromCorners(drag.from, drag.to, page, 2)
+                          if (box) addManualBox(box)
+                        } else if (page.ocr) {
+                          const at = pictureAt(event, page)
+                          const hit = wordAt(page.ocr.words, at.x, at.y)
+                          const word = hit === null ? null : page.ocr.words[hit]
+                          if (word) {
+                            const box = boxFromCorners({ x: word.x, y: word.y }, { x: word.x + word.w, y: word.y + word.h }, page, 4, 1)
+                            if (box) addManualBox(box)
+                          }
+                        }
+                        setDrag(null)
+                      }}
+                      onPointerCancel={() => setDrag(null)}
+                      onPointerLeave={() => setHoverWord(null)}
+                    >
+                      {page.ocr?.words.map((word, index) => (
+                        <span
+                          key={`${word.x}-${word.y}-${index}`}
+                          className={`scan-edit-word${hoverWord === index ? ' is-hover' : ''}`}
+                          style={boxPercent({ x: word.x, y: word.y, width: word.w, height: word.h }, page.width, page.height)}
+                          aria-hidden="true"
+                        />
+                      ))}
+                      {drag && (
+                        <span
+                          className="scan-edit-drag"
+                          style={boxPercent(
+                            {
+                              x: Math.min(drag.from.x, drag.to.x),
+                              y: Math.min(drag.from.y, drag.to.y),
+                              width: Math.abs(drag.to.x - drag.from.x),
+                              height: Math.abs(drag.to.y - drag.from.y),
+                            },
+                            page.width,
+                            page.height,
+                          )}
+                          aria-hidden="true"
+                        />
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -1405,6 +1606,11 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
 
           <aside className="scan-ledger" aria-labelledby="scan-ledger-title">
             <h3 id="scan-ledger-title">What’s hidden{isPdf ? ` on page ${current + 1}` : ''}</h3>
+            {page.rechecked && (
+              <p className={`scan-recheck${page.rechecked.fixed > 0 ? ' is-fixed' : ''}`} role="status">
+                {recheckLine(page.rechecked.fixed)}
+              </p>
+            )}
             {rows.length > 0 ? (
               <ul className="scan-ledger-rows">
                 {rows.map((row) => (
@@ -1449,6 +1655,32 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
               </p>
             )}
 
+            {page.redacted && (
+              <div className="scan-hide-more">
+                {editing ? (
+                  <>
+                    <p className="scan-ledger-note">
+                      <strong>Hide more is on.</strong> Click a word, or drag a box over anything else. It’s blacked out right away.
+                    </p>
+                    <div className="scan-hide-more-actions">
+                      <button type="button" className="mini-btn" onClick={undoManualBox} disabled={manualBoxes(current).length === 0}>
+                        Undo
+                      </button>
+                      <button type="button" className="btn btn-primary" onClick={stopEditing}>
+                        Done
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" className="btn btn-outline" onClick={startEditing}>
+                      Hide more
+                    </button>
+                    <p className="scan-ledger-note">Missed something? Black out any word or area yourself.</p>
+                  </>
+                )}
+              </div>
+            )}
           </aside>
         </div>
 

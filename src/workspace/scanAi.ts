@@ -39,10 +39,21 @@ export type ScanPageResult =
       needsReview: boolean
       /** More than 15% of the words were read badly: details may have been missed, so this copy is risky to use. */
       unclear: boolean
+      /** The copy was read again after blackout: how many missed details that covered (0 = it was already clean). */
+      rechecked: { fixed: number }
     }
   | { status: 'blocked'; reason: ScanBlockReason }
 
 // Tesseract.js and the redaction code are large, so they load on first use, not with the first screen.
+
+// People found on earlier pages of this scan, so page 3's "Signed: Hernandez" is hidden even when only page 1 says
+// "Luis Hernandez". In this tab's memory only, never stored; cleared by startScan().
+const caseNames = new Set<string>()
+
+/** Starts a new scan: forgets the names found on the last one. Call before reading the first page. */
+export function startScan(): void {
+  caseNames.clear()
+}
 
 /** Reads one page on this device: the text and every word with its box, in the image's own pixels. */
 export async function readText(image: HTMLCanvasElement, options?: { onProgress?: (progress: OcrProgress) => void }): Promise<OcrResult> {
@@ -50,11 +61,23 @@ export async function readText(image: HTMLCanvasElement, options?: { onProgress?
   return ocr.readText(image, options)
 }
 
-/** Finds the private details in `ocr` on this device and paints each one solid black on a COPY of `image`. */
-export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promise<ScanPageResult> {
+/**
+ * Finds the private details in `ocr` on this device and paints each one solid black on a COPY of `image`, then reads
+ * that copy again and covers any hidden detail that still shows (src/camera/recheck.ts). Still showing after 2 rounds
+ * of fixes: blocked. `onRecheck` is called when the second read starts.
+ */
+export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult, onRecheck?: () => void): Promise<ScanPageResult> {
   const { blackOut: run } = await import('../camera/blackout.ts')
   const result = await run(image, ocr, {
-    redact: (text) => redactNotes(text, undefined, { basicOnly: loadCheckMode() === 'basic' }),
+    redact: async (text) => {
+      const result = await redactNotes(text, undefined, { basicOnly: loadCheckMode() === 'basic', knownNames: [...caseNames] })
+      for (const [placeholder, original] of Object.entries(result.map.originals)) {
+        if (placeholder.startsWith('[EMPLOYEE_')) caseNames.add(original)
+      }
+      return result
+    },
+    reread: (canvas) => readText(canvas as HTMLCanvasElement),
+    onRecheck,
   })
   if (result.status !== 'ok') {
     // Counts only, never text: enough to tell which safety check stopped the page.
@@ -69,6 +92,7 @@ export async function blackOut(image: HTMLCanvasElement, ocr: OcrResult): Promis
     review: result.review,
     needsReview: result.needsReview,
     unclear: result.unclear,
+    rechecked: { fixed: result.recheck?.fixed ?? 0 },
   }
 }
 

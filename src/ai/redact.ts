@@ -20,7 +20,6 @@ import { getPolicy, whenPolicyReady } from '../policy.ts'
 import {
   applyEntities,
   countByPrefix,
-  emptyMap,
   sensitiveStrings,
   type Entity,
   type PlaceholderMap,
@@ -28,6 +27,12 @@ import {
 import { buildPrompt, ENTITY_SCHEMA, parseEntities } from './redactPrompt.ts'
 import { medicalTerms, ruleEntities } from './ruleEntities.ts'
 import { extendNameSpans, safetyNet } from './safetyNet.ts'
+import { hideNameParts } from './nameParts.ts'
+
+/** Names already known for this case (listed by hand, or found on an earlier page), hidden as people up front. */
+function knownNameEntities(knownNames: readonly string[]): Entity[] {
+  return knownNames.filter((name) => name.trim().length >= 2).map((name) => ({ text: name.trim(), category: 'PERSON' as const }))
+}
 
 // How many retries Nano gets is the Remote Config setting max_retries (see src/policy.ts).
 
@@ -110,8 +115,7 @@ export async function nanoSupported(): Promise<boolean> {
 }
 
 async function redactWithNano(text: string, maxRetries: number, knownNames: string[]): Promise<RedactionResult> {
-  let map = emptyMap()
-  let current = text
+  let { text: current, map } = applyEntities(text, knownNameEntities(knownNames))
   let missed: string[] = []
   let leaks: Leak[] = []
   let attempts = 0
@@ -138,6 +142,8 @@ async function redactWithNano(text: string, maxRetries: number, knownNames: stri
 
     // Safety net: whatever a rule or keyword list can find is hidden by code, not left to Nano (safetyNet.ts).
     ;({ text: current, map } = safetyNet(current, map, allowedByPolicy))
+    // Every part of every found name, everywhere, OCR misspellings included, as the same person (nameParts.ts).
+    ;({ text: current, map } = hideNameParts(current, map))
 
     leaks = findLeaks(current, [...sensitiveStrings(map), ...knownNames])
     if (leaks.length === 0) break
@@ -192,10 +198,11 @@ async function redactWithoutNano(
   engine: 'browser-model' | 'rules-only',
   knownNames: string[],
 ): Promise<RedactionResult> {
-  const entities = [...ruleEntities(text), ...medicalTerms(text)]
+  const entities = [...knownNameEntities(knownNames), ...ruleEntities(text), ...medicalTerms(text)]
   if (engine === 'browser-model') entities.push(...(await findNamesAndPlaces(text)))
 
-  const { text: redactedText, map } = applyEntities(text, entities)
+  const applied = applyEntities(text, entities)
+  const { text: redactedText, map } = hideNameParts(applied.text, applied.map)
   const leaks = findLeaks(redactedText, [...sensitiveStrings(map), ...knownNames])
   return {
     status: leaks.length ? 'blocked' : 'ok',

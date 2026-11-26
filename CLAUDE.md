@@ -66,6 +66,10 @@ price (`PRICES`, dated `PRICE_VERSION`; on-device = $0). No text, no user id, so
 Best effort, never awaited. The hidden `/usage` page (`src/usage/`) is a live dashboard over them (Firestore `onSnapshot`).
 `firestore.rules` must match `usage.ts` (`usage.test.ts` checks); the /eval page marks its calls `origin: 'eval'`.
 
+**OCR-tolerant rules** (added after the camera tests): phones may miss a bracket or be glued to a word ("phone805) 555-0163"); IDs include 2–4 capitals + "-" + 4–6 digits (BSL-5560, #SR-11407); `medicalTerms()` also matches a term's start (5+ letters: "diabet") or 1 typo (2 for 8+ letters, terms of 6+ letters, same first letter), with a `NOT_MEDICAL` list (cancel, strike, surge, alcohol…) and common medications. `wholeWordRegex()` lets a value that starts/ends with a digit touch a letter on that side.
+
+**Name parts** (`nameParts.ts`, pure): after the first pass (both engines), `hideNameParts()` hides every other spelling of a found name's parts (3+ letters, not in `NAME_TITLES`: Dr, Mrs, RN, van…) with the SAME placeholder: exact, or an OCR typo (`fuzzy.ts` budget, same first letter, capitalised unless the part is 7+ letters, not a `COMMON_WORDS` word). Spellings go into `map.lookup`, so the leak check and photo boxes use them. `redact()`'s `knownNames` are now HIDDEN as PERSON entities up front (they used to only block); the scan passes the names found on earlier pages of the same scan (`caseNames` in scanAi.ts, memory only, cleared by `startScan()`).
+
 **Placeholders** (`placeholders.ts`): the model only *finds* entities; code does the replacing so the same
 thing always gets the same placeholder. Category name ≠ placeholder prefix (`PREFIX` table: `PERSON`→
 `EMPLOYEE`, `MEDICAL`→`MEDICAL_DETAIL`, `DEPARTMENT`→`DEPT`, `DATE_OF_BIRTH`→`DOB`, `EMPLOYEE_ID` and
@@ -147,7 +151,7 @@ there's no copy). While the camera is live, one frosted pane covers the text on 
 → `textRegion()`; OCR only, no redaction, so nothing private can show or be missed). `useFrostPane` glides it every frame
 with `stepRegion()`: edges grow fast (~0.1 s) and shrink slowly (~0.45 s). Only real words count (`isRealWord()`: confidence
 ≥ 60, two+ letters/digits, at least 3 words), so junk "words" OCR finds in faces don't pull the blur onto a person. It rests over
-the middle until the first look, holds 1.2 s when text drops out, then fades out (no page in view, no blur). The photo gets the full check, then only private details stay hidden. The capture screen warns
+the middle until the first look, holds 1.2 s when text drops out, then fades out (no page in view, no blur). The photo gets the full check, then only private details stay hidden. **Photo recheck** (`src/camera/recheck.ts`, pure): after painting, the blacked-out copy is read again (OCR, on device); every hidden string (map originals + lookup + each 3+ letter part of a name) is searched among the words with OCR typos allowed (`fuzzy.ts`: 1 typo for 4–6 letters, 2 for 7+, first letter must match), hits are boxed (whole line if a box can't be used), up to 2 rounds, then `recheck-failed` blocks the page. The result screen shows `recheckLine()` ("Rechecked the photo: 0 private details left."). The line fallback matches a text line to the word line by content (`findInLines`), not by number: in tables they drift. The capture screen warns
 when the setup is less safe than Chrome with the private AI (`browserAdvice()`: other browser, phone, or no Nano), offers a
 Camera chooser when there are 2+ cameras (`cameraChoices()`, choice kept in localStorage `cloak.cameraId`), and a "Use your
 phone as the camera" pop-up (`<dialog>`) with two ways: a QR code that opens Cloak on the phone (drawn by `qr.ts`, our own
@@ -155,7 +159,11 @@ encoder: byte mode, level M, versions 1–10, so no outside QR service or librar
 the safer "use it as this laptop's camera" (Continuity Camera / Phone Link + Find my phone camera, which waits up to 10 s
 for the phone and picks a phone-named camera or one that wasn't there before, `pickPhoneCamera()`; on a miss it lists the
 cameras it can see). Never the phone's camera
-app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. "Draft a report" opens a review-first pop-up (what stays vs what is sent), then hands the page text
+app. The QR only opens the site: no pairing or streaming between devices (that would need a relay). The result screen is one picture with a wipe handle (copy left, original right) plus a "What's hidden" list. **Hide more** on the result screen lets the person black out what Cloak skipped: click a word (`wordAt()` on the stored OCR words)
+or drag a box (`boxFromCorners()`); boxes are painted onto the copy at once (so downloads have them), listed as "Hidden by you",
+undoable (the copy before hand-made boxes is kept in `baseRef`), and the words under them become `[HIDDEN]` in the text sent for
+drafting (`draftTextWithout()`). The live preview takes the camera's own shape (`--ratio`), as tall as the space left (the safety
+note sits below it), with an upright Letter outline (`paperGuide()`). When a phone's camera appears (a nearby iPhone via Continuity Camera, Phone Link…), a small prompt over the preview asks "Use phone camera instead?" (`phoneCameraToOffer()`: not on a phone, not already in use, once per camera per page visit after "Not now"). "Draft a report" opens a review-first pop-up (what stays vs what is sent), then hands the page text
 (cleaned of OCR noise by `draftTextFromOcr()`; memory only) to the normal note pipeline: hidden on this laptop → check-details screen → report type → send guard. `blackout.ts` adds the real redaction (`redactNotes()`, so the Basic-checks choice applies) and canvas. Only
 `redactedText` may ever be sent; never the image. Uploading a PDF draws each page (up to 30, ~150 dpi) with pdf.js in `src/camera/pdf.ts` (`pdfjs-dist`,
 Apache-2.0; its worker, standard fonts and JBIG2/JPEG 2000/colour wasm are served from our own `/pdf/` files by
