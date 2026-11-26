@@ -1050,6 +1050,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
   const [litCategory, setLitCategory] = useState<Category | 'MANUAL' | null>(null)
   // "Hide more": the person blacks out words or areas Cloak skipped. `drag` is the box being drawn, in picture pixels.
   const [editing, setEditing] = useState(false)
+  const [drawBox, setDrawBox] = useState(false) // touch screens: when on, a finger drags a box instead of scrolling
   const [drag, setDrag] = useState<{ from: { x: number; y: number }; to: { x: number; y: number } } | null>(null)
   const [hoverWord, setHoverWord] = useState<number | null>(null)
   const manualRef = useRef(new Map<number, ScanBox[]>()) // boxes added by hand, per page
@@ -1317,6 +1318,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
   }
   function stopEditing() {
     setEditing(false)
+    setDrawBox(false)
     setDrag(null)
     setHoverWord(null)
     setSplit(RESTING_SPLIT)
@@ -1477,6 +1479,22 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
           </ol>
         )}
 
+        {editing && page.redacted && (
+          // Pinned to the top so "Done" is always in reach, even on a small phone screen.
+          <div className="scan-edit-bar" role="region" aria-label="Hide more">
+            <p className="scan-edit-bar-text">Tap a word or drag a box to black it out.</p>
+            <button type="button" className="mini-btn scan-draw-toggle" aria-pressed={drawBox} onClick={() => setDrawBox((on) => !on)}>
+              {drawBox ? 'Drawing a box' : 'Draw a box'}
+            </button>
+            <button type="button" className="mini-btn" onClick={undoManualBox} disabled={manualBoxes(current).length === 0}>
+              Undo
+            </button>
+            <button type="button" className="btn btn-primary" onClick={stopEditing}>
+              Done blacking out
+            </button>
+          </div>
+        )}
+
         <div className="scan-check">
           <figure className="scan-wipe">
             {/* One picture: the blacked-out copy on the left of the handle, the original on the right, so every box
@@ -1538,7 +1556,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
                   {editing && (
                     // Hide more: click a word, or drag a box over anything else (handwriting, a logo, a signature).
                     <div
-                      className="scan-edit"
+                      className={`scan-edit${drawBox ? ' is-drawing' : ''}`}
                       onPointerDown={(event) => {
                         event.currentTarget.setPointerCapture(event.pointerId)
                         const at = pictureAt(event, page)
