@@ -84,13 +84,16 @@ export async function warmUpPreview(): Promise<void> {
   await Promise.all([ocr.prepareOcr(), redact.prepareRedaction(undefined, 'browser-model')])
 }
 
-/** Where to blur one video frame: a padded box over each line of text. */
+/** Where to blur one video frame: a padded box over each line of real text, or "no-text" when there is none. */
 export async function previewLines(frame: HTMLCanvasElement, ocr: OcrResult): Promise<LiveView> {
   if (ocr.words.length === 0) return { kind: 'no-text' }
   const { textLines, unclearWords, DEFAULT_MAX_UNCLEAR_SHARE } = await import('../camera/blackoutPlan.ts')
+  const lines = textLines(ocr, frame)
+  // Only junk "words" (a face, a wall): no page in view, so nothing to blur.
+  if (lines.length === 0) return { kind: 'no-text' }
   return {
     kind: 'text',
-    lines: textLines(ocr, frame),
+    lines,
     width: frame.width,
     height: frame.height,
     unclear: unclearWords(ocr.words).share > DEFAULT_MAX_UNCLEAR_SHARE,

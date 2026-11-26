@@ -350,11 +350,24 @@ export async function runBlackout<Image, Canvas>(
 /** Extra padding around the live blur, because the camera moves between looks. */
 export const LIVE_PADDING = 10
 
+/** Fewer real-looking words than this, and the live preview treats the frame as having no text. */
+export const LIVE_MIN_WORDS = 3
+
 /**
- * For the live preview: one padded box per line of text, covering every word. Nothing is redacted while aiming, so
- * nothing private can show and there is nothing to miss; the photo then gets the full check and only the private
- * details stay hidden.
+ * A word the live preview believes is text: read with confidence, with at least two letters or digits. OCR finds
+ * junk "words" in faces, hair and backgrounds, always at low confidence; they must not pull the blur onto a person.
+ */
+export function isRealWord(word: OcrWord, minConfidence = DEFAULT_MIN_CONFIDENCE): boolean {
+  return word.confidence >= minConfidence && /[\p{L}\p{N}].*[\p{L}\p{N}]/u.test(word.text)
+}
+
+/**
+ * For the live preview: one padded box per line of real text (see isRealWord), or none when fewer than
+ * LIVE_MIN_WORDS real words were found. Nothing is redacted while aiming, so nothing private can show and there is
+ * nothing to miss; the photo then gets the full check and only the private details stay hidden.
  */
 export function textLines(ocr: OcrResult, size: { width: number; height: number }, padding = LIVE_PADDING): Rect[] {
-  return boxesAround(ocr.words, padding, size).filter((rect) => rect.width > 0 && rect.height > 0)
+  const words = ocr.words.filter((word) => isRealWord(word))
+  if (words.length < LIVE_MIN_WORDS) return []
+  return boxesAround(words, padding, size).filter((rect) => rect.width > 0 && rect.height > 0)
 }

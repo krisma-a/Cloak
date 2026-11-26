@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { test } from 'node:test'
 import { applyEntities } from '../ai/placeholders.ts'
 import type { Entity } from '../ai/placeholders.ts'
-import { categoryOf, matchKey, ocrText, planBlackout, runBlackout, textLines, unclearWords } from './blackoutPlan.ts'
+import { categoryOf, isRealWord, matchKey, ocrText, planBlackout, runBlackout, textLines, unclearWords } from './blackoutPlan.ts'
 import type { BlackoutParts, RedactionLike, Rect } from './blackoutPlan.ts'
 import type { OcrResult, OcrWord } from './ocr.ts'
 
@@ -291,4 +291,19 @@ test('textLines covers every word, one padded box per line, kept inside the fram
   for (const word of ocr.words) assert.ok(lines.some((line) => covers(line, word)), word.text)
   assert.deepEqual(lines[0], { x: 0, y: 0, width: 10 + 30 + 10 + 40 + 10 + 60 + 10 + 70 + 10, height: 40 })
   assert.deepEqual(textLines({ text: '', words: [] }, SIZE), [])
+})
+
+test('textLines ignores junk words OCR finds in faces and backgrounds', () => {
+  // A person in front of the camera: a few low-confidence scraps, nothing real.
+  const face = page([['~', 'Il', 'aa'], ['rn', 'oO']], () => 30)
+  assert.deepEqual(textLines(face, SIZE), [])
+  // A page held up next to the person: the real lines count, the scraps beside them don't widen the blur.
+  const mixed = page([['Met', 'with', 'Jordan'], ['xx', 'qq']], (t) => (t.length <= 2 ? 25 : 90))
+  const lines = textLines(mixed, SIZE)
+  assert.equal(lines.length, 1)
+  assert.ok(!lines.some((line) => covers(line, mixed.words[3] as OcrWord)))
+  // Too few real words (under 3) is treated as no text.
+  assert.deepEqual(textLines(page([['Hello', 'there']]), SIZE), [])
+  assert.equal(isRealWord({ text: 'A1', x: 0, y: 0, w: 1, h: 1, line: 0, confidence: 80 }), true)
+  assert.equal(isRealWord({ text: '|', x: 0, y: 0, w: 1, h: 1, line: 0, confidence: 99 }), false)
 })

@@ -1775,7 +1775,7 @@
 }
 
 /* The frosted pane over the text on the live preview: one sheet of frosted glass, like a privacy screen held over
-   the page. Its position is moved by script every frame (useFrostPane), so it has no transition of its own. Where
+   the page. Its position is moved by script every frame (useFrostPane); only its fade in and out is a transition. Where
    backdrop blur isn't supported, a near-opaque paper fill covers the text instead. */
 .cloak-app .scan-frost {
   position: absolute;
@@ -1788,7 +1788,8 @@
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.45),
     0 0 28px 6px rgba(250, 248, 245, 0.16);
-  will-change: left, top, width, height;
+  transition: opacity 80ms ease;
+  will-change: left, top, width, height, opacity;
 }
 
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

@@ -210,32 +210,51 @@ const FROST_HOLD_MS = 1200
 /**
  * Moves the frosted pane smoothly toward the text the live view last found, every animation frame: edges that must
  * grow to cover more text move fast, edges that shrink move slowly, so new text is covered at once and the pane never
- * flickers open. With no text for a moment it holds still, then returns to rest over the middle. Positions are
- * written straight to the element, so React doesn't re-render 60 times a second.
+ * flickers open. Until the first look finishes it rests over the middle, so nothing is readable yet. With no text in
+ * view (a face, a wall) it holds for a moment, then fades out, and comes back straight onto the next text it finds.
+ * Positions are written straight to the element, so React doesn't re-render 60 times a second.
  */
 function useFrostPane(view: LiveView, pane: RefObject<HTMLDivElement | null>) {
-  const target = useRef<Region>(RESTING_REGION)
+  const latest = useRef<Region | null>(null)
   const seenAt = useRef(0)
+  const looked = useRef(false)
 
   useEffect(() => {
-    if (view.kind !== 'text') return
-    const region = textRegion(view.lines, view)
-    if (!region) return
-    target.current = region
+    if (view.kind === 'starting') return
+    looked.current = true
+    const region = view.kind === 'text' ? textRegion(view.lines, view) : null
+    if (!region) return // keep the last text for the hold, then fade
+    latest.current = region
     seenAt.current = performance.now()
   }, [view])
 
   useEffect(() => {
     const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
     let current: Region = { ...RESTING_REGION }
+    let shown = true
     let last = performance.now()
     let frame = 0
     const pct = (n: number) => `${(n * 100).toFixed(2)}%`
     const tick = (now: number) => {
-      const goal = seenAt.current > 0 && now - seenAt.current > FROST_HOLD_MS ? RESTING_REGION : target.current
-      current = still ? goal : stepRegion(current, goal, now - last)
-      last = now
+      const fresh = latest.current && now - seenAt.current <= FROST_HOLD_MS ? latest.current : null
+      const goal = looked.current ? fresh : RESTING_REGION
       const el = pane.current
+      if (goal) {
+        // Coming back after a fade: appear on the text at once, not slide in from where it faded.
+        current = still || !shown ? goal : stepRegion(current, goal, now - last)
+        if (el && !shown) {
+          el.style.transitionDuration = '80ms' // cover new text quickly
+          el.style.opacity = '1'
+        }
+        shown = true
+      } else if (shown) {
+        if (el) {
+          el.style.transitionDuration = '320ms' // uncover gently
+          el.style.opacity = '0'
+        }
+        shown = false
+      }
+      last = now
       if (el) {
         el.style.left = pct(current.x)
         el.style.top = pct(current.y)
