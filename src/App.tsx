@@ -34,6 +34,8 @@ import { ModeDialog } from './workspace/ModeDialog.tsx'
 import { UsageDialog } from './workspace/UsageDialog.tsx'
 import { draftErrorMessage } from './workspace/draftError.ts'
 import { addDraftRecord, estimateDraftCost, formatUsd } from './workspace/draftCost.ts'
+import { checkLanguage, NOT_ENGLISH_NOTICE } from './workspace/language.ts'
+import { getLanguageDetector } from './workspace/languageDetector.ts'
 import { SpecsNotice } from './workspace/SpecsNotice.tsx'
 import { markSpecsSeen, shouldShowSpecs, specsSeen } from './workspace/specs.ts'
 import type { DeviceInfo } from './workspace/specs.ts'
@@ -79,6 +81,8 @@ export default function App() {
 
   const [pasteError, setPasteError] = useState<string | null>(null)
   const [writeError, setWriteError] = useState<string | null>(null)
+  // True when this note didn't look like English, so it was checked with the basic engine (see workspace/language.ts).
+  const [notEnglish, setNotEnglish] = useState(false)
   const [blockedMessage, setBlockedMessage] = useState<string | null>(null)
   // Full Cloak (recommended) or basic checks for a slow laptop, remembered in this browser only.
   const [checkMode, setCheckMode] = useState<CheckMode>(() => loadCheckMode())
@@ -218,6 +222,10 @@ export default function App() {
     const skip = new AbortController()
     skipRef.current = skip
     try {
+      // On this device, with Chrome's built-in detector if it is there. No detector or too little text: nothing changes.
+      const language = await checkLanguage(text, await getLanguageDetector())
+      const useBasic = language?.notEnglish === true
+      setNotEnglish(useBasic)
       const result = await redactNotes(
         text,
         (fraction) => {
@@ -233,7 +241,7 @@ export default function App() {
           onEngine: (engine) => reportAi({ type: 'engine', engine }),
           skipDownload: skip.signal,
           onBackgroundDone: (engine) => reportAi({ type: 'background-done', engine }),
-          basicOnly: checkMode === 'basic' && nanoPossible !== false,
+          basicOnly: useBasic || (checkMode === 'basic' && nanoPossible !== false),
         },
       )
       reportAi({ type: 'engine', engine: result.engine }) // the engine that really ran, in case Nano failed on the way
@@ -364,6 +372,7 @@ export default function App() {
     setWriteError(null)
     setBlockedMessage(null)
     setAboutOpen(false)
+    setNotEnglish(false)
     idleRef.current = 'active'
     setIdle({ status: 'active', secondsLeft: 0 })
     setStep('start')
@@ -519,6 +528,11 @@ export default function App() {
             />
           )}
 
+          {busy === null && !aboutOpen && step === 'review' && base && notEnglish && (
+            <p className="notice warn lang-notice" role="status">
+              {NOT_ENGLISH_NOTICE}
+            </p>
+          )}
           {busy === null && !aboutOpen && step === 'review' && base && (
             <StepReview
               base={base}

@@ -4443,3 +4443,9 @@
 .cloak-app[data-contrast='high'] main[tabindex]:focus-visible {
   outline: none;
 }
+
+/* "This note looks like it isn't in English" sits above the review card. */
+.cloak-app .lang-notice {
+  flex: none;
+  margin: 0 0 16px;
+}
