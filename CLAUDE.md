@@ -188,6 +188,19 @@ before sending (`estimateDraftCost()`), the cost after, and the header's **Usage
 localStorage `cloak.draftCosts` (demo drafts are listed but never counted as spend). First real draft (2026-11-25): 250 in,
 119 out, **622 thinking** tokens = $0.0059 on the paid tier, 80% of it thinking: thinking is the main cost lever.
 
+**Accessibility, Back, Save, Clear, confirm pop-ups, About, privacy timer** (all in `src/workspace/`). `AccessibilityButton.tsx`: the round
+button (fixed bottom right, `bottom: 96px` to clear the sticky action bar) opens a panel with Read aloud, text size (100–150%, done with CSS `zoom` on
+`.shell` and every `<dialog>` via `--ui-zoom`, so viewport units are divided by it), high contrast, roomy spacing, reduce motion and the idle time.
+Settings live in `a11y.ts` (pure; localStorage `cloak.a11y`, preferences only) and reach the CSS as `data-text-size/contrast/spacing/motion` on
+`.cloak-app`. Read aloud (`speech.ts`, pure) uses ONLY voices with `localService === true`, because screens can show real names and some Chrome voices
+send text to a server; with none it is switched off, never faked. `controls.ts` (pure, tested): `previousStep()` for the header **Back** (hidden on start/scan, which have their own;
+from the draft it asks first because going back drops it), `idleStatus()` for the **privacy timer** (15/30/60 min of no activity, then a 60 s "Still there?"
+pop-up, then `startOver()`; waiting on a model counts as activity; Escape keeps working), `saveFileName()` and `writeSummary()`. `ConfirmDialog.tsx` is the one
+"are you sure?" pop-up (focus goes to the safe button for `tone="danger"`): used for **Write the draft** (shows what goes to the cloud and what stays),
+**Clear all** (header; icon only on phones), Back from the draft, Save (PDF or text, made on this laptop, file name has no names), clearing the draft, and the timer.
+**Clear** beside the notes (with Undo, memory only) and the restrictions. `AboutPage.tsx` (header "About", state not a route, so work is kept) states what is stored and
+is deliberately honest about HIPAA/FERPA: Cloak lists safeguards, it does NOT claim certification. If you change what is stored, update the About lists.
+
 **Test data.** `scripts/generate-cases.ts` writes 120 deterministic fake notes (seeded; Set A/B use disjoint
 name pools) with a planted-item answer key whose `type` values are the app's `Category` names. Output must
 stay byte-identical for the same seed. The generated sets are not yet scored against redaction, and the

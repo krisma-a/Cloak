@@ -18,6 +18,11 @@ import {
   draftTextWithout,
   wordAt,
   containRect,
+  letterCrop,
+  nextTurn,
+  turnedSize,
+  type Turn,
+  LETTER_RATIO,
   loadAutoCapture,
   saveAutoCapture,
   stepAutoCapture,
@@ -218,7 +223,7 @@ interface CaptureViewProps {
  * text reader only, no redaction). One look at a time; paused while the tab is hidden; stops when the preview goes
  * away. A preview only: the photo gets its own full check, and then only the private details stay hidden.
  */
-function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boolean): LiveView {
+function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boolean, turnRef: RefObject<Turn>): LiveView {
   const [view, setView] = useState<LiveView>({ kind: 'starting' })
 
   // Load the text reader (and the name model, for the photo) as soon as the camera view opens, before the video is ready.
@@ -239,9 +244,7 @@ function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boole
           continue
         }
         try {
-          const size = fitWithin(video.videoWidth, video.videoHeight, LIVE_SIDE)
-          const frame = canvasOf(size.width, size.height)
-          frame.getContext('2d')?.drawImage(video, 0, 0, size.width, size.height)
+          const frame = letterFrame(video, turnRef.current, LIVE_SIDE)
           const ocr = await readText(frame)
           if (stopped) return
           const seen = await previewLines(frame, ocr)
@@ -256,7 +259,7 @@ function useLiveView(videoRef: RefObject<HTMLVideoElement | null>, active: boole
     return () => {
       stopped = true
     }
-  }, [active, videoRef])
+  }, [active, videoRef, turnRef])
 
   return view
 }
@@ -708,12 +711,28 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
 
   const problem = state.status === 'problem' ? CAMERA_MESSAGES[state.problem] : null
   const canShoot = state.status === 'live' && videoReady
-  const live = useLiveView(videoRef, canShoot)
+  // Turn the picture a quarter at a time (a phone used as the laptop's camera often sends it sideways). Kept per camera.
+  const [turns, setTurns] = useState<Record<string, Turn>>({})
+  const turnKey = cameraId ?? 'default'
+  const turn: Turn = turns[turnKey] ?? loadTurn(cameraId)
+  const turnRef = useRef<Turn>(turn)
+  useEffect(() => {
+    turnRef.current = turn
+  }, [turn])
+  function rotate() {
+    const next = nextTurn(turn)
+    saveTurn(cameraId, next)
+    setTurns((now) => ({ ...now, [turnKey]: next }))
+  }
+  const live = useLiveView(videoRef, canShoot, turnRef)
   const [autoOn, setAutoOn] = useState(() => loadAutoCapture())
   const ringRef = useRef<HTMLDivElement>(null)
   const [videoSize, setVideoSize] = useState<{ width: number; height: number } | null>(null)
   const paneRef = useRef<HTMLDivElement>(null)
   useFrostPane(live, paneRef)
+  // What the preview shows: the camera picture cropped to a Letter page (see letterCrop).
+  const turnedVideo = videoSize ? turnedSize(videoSize.width, videoSize.height, turn) : null
+  const shown = turnedVideo ? { width: letterCrop(turnedVideo.width, turnedVideo.height).sw, height: letterCrop(turnedVideo.width, turnedVideo.height).sh } : null
   const [frameBox, setFrameBox] = useState<{ width: number; height: number } | null>(null)
   // The preview frame's size, kept current, so the outlines line up with the picture at any window size.
   const watchFrame = useCallback((element: HTMLDivElement | null) => {
@@ -728,7 +747,8 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
   function takePhoto() {
     const video = videoRef.current
     if (!video || !video.videoWidth) return
-    onPhoto(drawScaled(video, video.videoWidth, video.videoHeight))
+    // Keeps exactly what the preview shows: the camera picture cropped to a Letter page.
+    onPhoto(letterFrame(video, turn, MAX_SIDE))
   }
 
   // Auto-capture waits while the phone pop-up is open, so a photo isn't taken behind it.
@@ -763,7 +783,7 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
           className="scan-camera"
           ref={watchFrame}
           // The frame takes the camera's own shape, so the preview is exactly what the photo will show, with no dark bars.
-          style={{ '--ratio': videoSize ? videoSize.width / videoSize.height : 16 / 9 } as CSSProperties}
+          style={{ '--ratio': shown ? shown.width / shown.height : LETTER_RATIO } as CSSProperties}
         >
           <video
             ref={attachVideo}
@@ -771,6 +791,7 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
             playsInline
             autoPlay
             aria-label="Camera preview"
+            style={turnStyle(turn, frameBox)}
             onLoadedData={(event) => {
               setVideoReady(true)
               setVideoSize({ width: event.currentTarget.videoWidth, height: event.currentTarget.videoHeight })
@@ -778,10 +799,10 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
             onResize={(event) => setVideoSize({ width: event.currentTarget.videoWidth, height: event.currentTarget.videoHeight })}
             onEmptied={() => setVideoReady(false)}
           />
-          {canShoot && frameBox && videoSize && (
+          {canShoot && frameBox && shown && (
             // One frosted pane over the text, on the picture itself (not the letterbox bars). It is there from the
             // first frame, resting over the middle, and glides onto the text once it is found.
-            <div className="scan-live" style={containRect(frameBox, videoSize)} aria-hidden="true">
+            <div className="scan-live" style={containRect(frameBox, shown)} aria-hidden="true">
               <div ref={paneRef} className="scan-frost" />
             </div>
           )}
@@ -805,6 +826,11 @@ function CaptureView({ onBack, onPhoto, onFile, fileError }: CaptureViewProps) {
               <span className="scan-hold-ring" aria-hidden="true" />
               Hold still… {holdSeconds}
             </div>
+          )}
+          {canShoot && (
+            <button type="button" className="mini-btn scan-rotate" onClick={rotate} aria-label="Turn the picture a quarter turn">
+              Rotate
+            </button>
           )}
           {canShoot ? (
             <span className="scan-guide" aria-hidden="true" style={frameBox ? paperGuide(frameBox) : undefined} />
@@ -936,6 +962,60 @@ function toBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) =>
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not save the picture.'))), 'image/png'),
   )
+}
+
+const TURN_KEY = 'cloak.turn.'
+
+function loadTurn(cameraId: string | null): Turn {
+  try {
+    const value = Number(localStorage.getItem(TURN_KEY + (cameraId ?? 'default')))
+    return value === 90 || value === 180 || value === 270 ? value : 0
+  } catch {
+    return 0
+  }
+}
+
+function saveTurn(cameraId: string | null, turn: Turn) {
+  try {
+    localStorage.setItem(TURN_KEY + (cameraId ?? 'default'), String(turn))
+  } catch {
+    // Not remembered; the picture is still turned for now.
+  }
+}
+
+/** Places the <video> so that, once turned, it fills the preview frame (a quarter turn swaps the box's width and height). */
+function turnStyle(turn: Turn, frame: { width: number; height: number } | null): CSSProperties | undefined {
+  if (turn === 0 || !frame) return undefined
+  const swapped = turn === 90 || turn === 270
+  return {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    width: swapped ? frame.height : frame.width,
+    height: swapped ? frame.width : frame.height,
+    transform: `translate(-50%, -50%) rotate(${turn}deg)`,
+  }
+}
+
+/**
+ * One frame of the camera as the preview shows it: turned by `turn`, then cropped to a Letter page, scaled down so its
+ * long side is at most `max`. The live text check and the photo both use this, so they match the preview.
+ */
+function letterFrame(video: HTMLVideoElement, turn: Turn, max: number): HTMLCanvasElement {
+  const turned = turnedSize(video.videoWidth, video.videoHeight, turn)
+  const crop = letterCrop(turned.width, turned.height)
+  const size = fitWithin(crop.sw, crop.sh, max)
+  const scale = size.width / crop.sw
+  // Draw the whole turned picture at this scale, shifted so the crop lands on the canvas.
+  const canvas = canvasOf(size.width, size.height)
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas 2D is not available.')
+  ctx.translate(-crop.sx * scale, -crop.sy * scale)
+  ctx.scale(scale, scale)
+  ctx.translate(turned.width / 2, turned.height / 2)
+  ctx.rotate((turn * Math.PI) / 180)
+  ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2)
+  return canvas
 }
 
 /** Draws any picture onto a new canvas, scaled down to MAX_SIDE. */

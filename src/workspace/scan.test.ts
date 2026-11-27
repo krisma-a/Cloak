@@ -34,6 +34,7 @@ import {
   coveredWords,
   draftTextWithout,
   paperGuide,
+  letterCrop,
   wordAt,
   containRect,
   HEIC_MESSAGE,
@@ -577,5 +578,19 @@ describe('photo recheck line', () => {
     assert.equal(recheckLine(1), 'Rechecked the photo: fixed 1 missed detail, 0 left.')
     assert.equal(recheckLine(3), 'Rechecked the photo: fixed 3 missed details, 0 left.')
     assert.equal(blockedMessage('recheck-failed'), 'Some private details may still show. Retake the photo flat and closer.')
+  })
+})
+
+describe('letterCrop', () => {
+  it('crops a wide laptop camera to a centred upright Letter shape', () => {
+    const crop = letterCrop(1280, 720)
+    assert.equal(crop.sh, 720)
+    assert.equal(crop.sw, Math.round(720 * (8.5 / 11)))
+    assert.equal(crop.sx, Math.round((1280 - crop.sw) / 2))
+    assert.equal(crop.sy, 0)
+  })
+
+  it('keeps a camera that is already narrower than Letter whole', () => {
+    assert.deepEqual(letterCrop(720, 1280), { sx: 0, sy: 0, sw: 720, sh: 1280 })
   })
 })

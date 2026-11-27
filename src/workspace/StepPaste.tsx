@@ -1,6 +1,7 @@
+import { useRef, useState } from 'react'
 import { TEMPLATES } from '../ai/templates.ts'
 import type { CheckMode } from './checkMode.ts'
-import { WhereChip } from './icons.tsx'
+import { TrashIcon, WhereChip } from './icons.tsx'
 import { SAMPLE_NOTE } from './sampleNote.ts'
 import type { TemplateId } from './types.ts'
 
@@ -82,6 +83,22 @@ export function StepPaste({
   checkMode,
   onCheckModeChange,
 }: StepPasteProps) {
+  // What "Clear" removed, kept in this tab's memory only so "Undo" can put it back. Gone when you type or leave.
+  const [cleared, setCleared] = useState<string | null>(null)
+  const box = useRef<HTMLTextAreaElement>(null)
+
+  function clearNotes() {
+    setCleared(notes)
+    onNotesChange('')
+    box.current?.focus()
+  }
+
+  function undoClear() {
+    if (cleared !== null) onNotesChange(cleared)
+    setCleared(null)
+    box.current?.focus()
+  }
+
   return (
     <section className="card">
       <h2>Paste your case notes</h2>
@@ -113,22 +130,51 @@ export function StepPaste({
         <label className="field-label" htmlFor="case-notes">
           Case notes
         </label>
-        <WhereChip where="laptop">Stays on this laptop</WhereChip>
+        <div className="field-tools">
+          <button type="button" className="clear-btn" onClick={clearNotes} disabled={notes === ''}>
+            <TrashIcon size={15} />
+            Clear
+          </button>
+          <WhereChip where="laptop">Stays on this laptop</WhereChip>
+        </div>
       </div>
       {/* spellCheck is off on purpose: Chrome's "enhanced spell check" can send typed text to Google. */}
       <textarea
         id="case-notes"
+        ref={box}
         className="notes-input"
         value={notes}
-        onChange={(event) => onNotesChange(event.target.value)}
+        onChange={(event) => {
+          setCleared(null)
+          onNotesChange(event.target.value)
+        }}
         placeholder="Paste or type your notes here…"
         rows={12}
         spellCheck={false}
         autoComplete="off"
       />
 
+      <p className="sr-only" role="status">
+        {cleared !== null && notes === '' ? 'Notes cleared.' : ''}
+      </p>
+      {cleared !== null && notes === '' && cleared.trim() !== '' && (
+        <p className="hint">
+          Notes cleared.{' '}
+          <button type="button" className="link-btn" onClick={undoClear}>
+            Undo
+          </button>
+        </p>
+      )}
+
       {notes.trim() === '' && (
-        <button type="button" className="link-button" onClick={() => onNotesChange(SAMPLE_NOTE)}>
+        <button
+          type="button"
+          className="link-button"
+          onClick={() => {
+            setCleared(null)
+            onNotesChange(SAMPLE_NOTE)
+          }}
+        >
           Try a sample case
         </button>
       )}

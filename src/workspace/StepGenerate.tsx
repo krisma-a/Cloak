@@ -3,7 +3,7 @@ import { formatUsd } from './draftCost.ts'
 import type { DraftCost } from './draftCost.ts'
 import { accommodationBlockReason } from '../ai/restrictionPrompt.ts'
 import { TEMPLATES } from '../ai/templates.ts'
-import { WhereChip } from './icons.tsx'
+import { TrashIcon, WhereChip } from './icons.tsx'
 import { buildSegments, employeeOptions } from './review.ts'
 import type { RedactionResult, TemplateId } from './types.ts'
 
@@ -142,6 +142,15 @@ export function StepGenerate({
           <div className="row">
             <button type="button" className="btn btn-quiet" onClick={onSuggest} disabled={suggesting}>
               {suggesting ? 'Looking…' : 'Suggest from the notes'}
+            </button>
+            <button
+              type="button"
+              className="clear-btn"
+              onClick={() => onRestrictionsChange('')}
+              disabled={restrictionsText === ''}
+            >
+              <TrashIcon size={15} />
+              Clear restrictions
             </button>
             {suggestNote && <span className="hint">{suggestNote}</span>}
           </div>

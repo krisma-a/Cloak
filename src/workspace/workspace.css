@@ -1746,7 +1746,7 @@
 .cloak-app .scan-camera {
   /* As tall as the screen allows, in the camera's own shape (--ratio is width / height), so a sheet of paper fills as
      much of the picture as possible and there are no dark bars. */
-  --cam-max: clamp(240px, calc(100dvh - 340px), 780px);
+  --cam-max: clamp(240px, calc((100dvh - 340px) / var(--ui-zoom, 1)), 780px);
   position: relative;
   flex: none;
   width: min(100%, calc(var(--cam-max) * var(--ratio, 1.78)));
@@ -1762,7 +1762,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover; /* the frame is Letter-shaped, so this is the centred Letter crop that takePhoto keeps */
 }
 
 /* The "fit the page here" outline: an upright Letter page, centred (its size is set from the frame's size). */
@@ -1946,7 +1946,7 @@
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: min(58vh, 620px);
+  max-height: min(calc(58vh / var(--ui-zoom, 1)), 620px);
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(31, 42, 46, 0.12);
 }
@@ -2374,7 +2374,7 @@
 }
 
 .cloak-app .scan-frame img {
-  max-height: min(62vh, 640px);
+  max-height: min(calc(62vh / var(--ui-zoom, 1)), 640px);
   border-radius: 10px;
 }
 
@@ -2638,7 +2638,7 @@
   }
 
   .cloak-app .scan-camera {
-    --cam-max: clamp(260px, calc(100dvh - 385px), 720px);
+    --cam-max: clamp(260px, calc((100dvh - 385px) / var(--ui-zoom, 1)), 720px);
   }
 
   .cloak-app .actions .scan-capture-hint {
@@ -3698,4 +3698,748 @@
   font-size: 15px;
   font-weight: 600;
   text-align: center;
+}
+
+/* Turns the live picture a quarter turn: for a phone camera that sends its picture sideways. */
+.cloak-app .scan-camera .scan-rotate {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+}
+
+/* ============================================================
+   Accessibility button, Back, Clear, pop-ups, About page
+   ============================================================ */
+
+/* ---------- Text size: the whole page scales like browser zoom ---------- */
+.cloak-app[data-text-size='115'] { --ui-zoom: 1.15; }
+.cloak-app[data-text-size='130'] { --ui-zoom: 1.3; }
+.cloak-app[data-text-size='150'] { --ui-zoom: 1.5; }
+
+/* Pop-ups sit outside .shell, so they scale too. The width cap is divided by the zoom, because viewport units are zoomed as well. */
+.cloak-app .shell,
+.cloak-app dialog {
+  zoom: var(--ui-zoom, 1);
+}
+
+/* [class] raises the specificity just enough to win over each pop-up's own max-height. */
+.cloak-app dialog[class] {
+  max-width: calc((100vw - 32px) / var(--ui-zoom, 1));
+  max-height: calc((100dvh - 32px) / var(--ui-zoom, 1));
+}
+
+/* ---------- High contrast ---------- */
+.cloak-app[data-contrast='high'] {
+  --bg: #ffffff;
+  --card: #ffffff;
+  --border: #1f2a2e;
+  --text: #000000;
+  --text-2: #14191b;
+  --teal: #064e48;
+  --teal-dark: #03332f;
+  --teal-soft: #d4ede9;
+  --amber-bg: #fff1bf;
+  --amber-text: #2e1c00;
+}
+
+.cloak-app[data-contrast='high'] button:focus-visible,
+.cloak-app[data-contrast='high'] summary:focus-visible,
+.cloak-app[data-contrast='high'] input:focus-visible,
+.cloak-app[data-contrast='high'] select:focus-visible,
+.cloak-app[data-contrast='high'] textarea:focus-visible,
+.cloak-app[data-contrast='high'] [tabindex]:focus-visible {
+  outline: 4px solid #000;
+  outline-offset: 3px;
+}
+
+.cloak-app[data-contrast='high'] .btn,
+.cloak-app[data-contrast='high'] .card,
+.cloak-app[data-contrast='high'] .notice {
+  border-width: 2px;
+  border-style: solid;
+  border-color: var(--text);
+}
+
+.cloak-app[data-contrast='high'] .link-btn,
+.cloak-app[data-contrast='high'] .link-button,
+.cloak-app[data-contrast='high'] .top-link {
+  text-decoration-thickness: 2px;
+}
+
+/* ---------- Roomy spacing ---------- */
+.cloak-app[data-spacing='roomy'] :where(p, li, label, span, dd, dt, summary, legend, h1, h2, h3, h4, textarea, button) {
+  letter-spacing: 0.04em;
+  word-spacing: 0.14em;
+}
+
+.cloak-app[data-spacing='roomy'] :where(p, li, dd, dt, textarea, .hint, .muted) {
+  line-height: 1.95;
+}
+
+/* ---------- Reduce motion: on request here, and always when the system asks for it ---------- */
+.cloak-app[data-motion='reduced'] *,
+.cloak-app[data-motion='reduced'] *::before,
+.cloak-app[data-motion='reduced'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ---------- Buttons with an icon ---------- */
+.cloak-app .btn:has(svg) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cloak-app .btn-danger {
+  background: #9f2d1d;
+  color: #fff;
+}
+
+.cloak-app .btn-danger:hover:not(:disabled) {
+  background: #7f2215;
+}
+
+/* ---------- Header: Back, About, Clear all ---------- */
+.cloak-app .back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px 0 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  align-self: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.cloak-app .back-btn:hover:not(:disabled) {
+  border-color: var(--teal);
+  color: var(--teal-dark);
+}
+
+.cloak-app .back-btn:disabled,
+.cloak-app .top-link:disabled,
+.cloak-app .top-clear:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cloak-app .top-link[aria-current='page'] {
+  color: var(--text);
+  text-decoration-style: double;
+}
+
+.cloak-app .top-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: #8a2a1c;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  align-self: center;
+}
+
+.cloak-app .top-clear:hover:not(:disabled) {
+  border-color: #8a2a1c;
+  background: #fbefec;
+}
+
+@media (max-width: 520px) {
+  .cloak-app .back-btn {
+    padding: 0 12px 0 8px;
+  }
+}
+
+/* ---------- Clear buttons beside a text box ---------- */
+.cloak-app .field-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.cloak-app .clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.cloak-app .clear-btn:hover:not(:disabled) {
+  border-color: #8a2a1c;
+  background: #fbefec;
+  color: #8a2a1c;
+}
+
+.cloak-app .clear-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cloak-app .auto-cleared {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 0 0 16px;
+}
+
+/* ---------- Confirmation pop-up ---------- */
+.cloak-app .confirm-dialog {
+  width: min(500px, calc(100vw - 32px));
+}
+
+.cloak-app .confirm-text > p {
+  margin: 0 0 10px;
+}
+
+.cloak-app .confirm-text .pills {
+  margin: 12px 0 0;
+}
+
+.cloak-app .confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* What leaves, and what stays: the same two chips used on every screen. */
+.cloak-app .send-summary {
+  display: grid;
+  gap: 14px;
+}
+
+.cloak-app .send-group {
+  padding: 14px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: #fffefb;
+}
+
+.cloak-app .send-group ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
+.cloak-app .send-group li {
+  margin: 3px 0;
+  font-size: 15px;
+}
+
+/* ---------- The round accessibility button ---------- */
+.cloak-app .a11y-dock {
+  position: fixed;
+  right: 16px;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cloak-app .a11y-fab {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--label-bg);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(31, 42, 46, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.cloak-app .a11y-fab:hover {
+  background: var(--teal);
+  transform: scale(1.05);
+}
+
+.cloak-app .a11y-fab:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 3px;
+}
+
+.cloak-app .a11y-fab .a11y-bars {
+  position: absolute;
+  display: none;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+}
+
+.cloak-app .a11y-fab .a11y-bars i {
+  display: block;
+  width: 4px;
+  height: 100%;
+  border-radius: 2px;
+  background: #fff;
+  transform-origin: center;
+  animation: a11y-bar 0.9s ease-in-out infinite;
+}
+
+.cloak-app .a11y-fab .a11y-bars i:nth-child(2) { animation-delay: 0.15s; }
+.cloak-app .a11y-fab .a11y-bars i:nth-child(3) { animation-delay: 0.3s; }
+.cloak-app .a11y-fab .a11y-bars i:nth-child(4) { animation-delay: 0.45s; }
+
+/* While reading aloud, the person icon gives way to moving bars, so it's clear something is speaking. */
+.cloak-app .a11y-fab.is-speaking {
+  background: var(--teal);
+}
+
+.cloak-app .a11y-fab.is-speaking .a11y-fab-icon {
+  display: none;
+}
+
+.cloak-app .a11y-fab.is-speaking .a11y-bars {
+  display: flex;
+}
+
+@keyframes a11y-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloak-app .a11y-fab .a11y-bars i { animation: none; transform: scaleY(0.7); }
+}
+
+.cloak-app[data-motion='reduced'] .a11y-fab .a11y-bars i {
+  animation: none !important;
+  transform: scaleY(0.7);
+}
+
+.cloak-app .a11y-stop-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--teal);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--teal-dark);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(31, 42, 46, 0.2);
+  cursor: pointer;
+}
+
+/* ---------- The accessibility panel ---------- */
+.cloak-app .a11y-dialog {
+  width: min(440px, calc(100vw - 32px));
+  margin: auto 16px 16px auto;
+}
+
+.cloak-app .a11y-section {
+  padding: 14px 0 4px;
+  border-top: 1px solid var(--border);
+}
+
+.cloak-app .a11y-section h4 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.cloak-app .a11y-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cloak-app .a11y-btn {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.cloak-app .a11y-range {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cloak-app .a11y-range input {
+  width: 100%;
+  accent-color: var(--teal);
+}
+
+.cloak-app .a11y-range output {
+  min-width: 3ch;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+
+.cloak-app .a11y-size {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0 10px;
+  font-weight: 600;
+}
+
+.cloak-app .a11y-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+}
+
+.cloak-app .a11y-step {
+  width: 44px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cloak-app .a11y-step.is-big {
+  font-size: 19px;
+}
+
+.cloak-app .a11y-step:hover:not(:disabled) {
+  background: var(--teal);
+  color: #fff;
+}
+
+.cloak-app .a11y-step:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cloak-app .a11y-size-value {
+  min-width: 4.2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* A switch is a checkbox with role="switch": the real input stays on top, invisible, so touch and keyboard just work. */
+.cloak-app .a11y-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.cloak-app .a11y-switch-text {
+  display: grid;
+  gap: 1px;
+}
+
+.cloak-app .a11y-switch-label {
+  font-weight: 600;
+}
+
+.cloak-app .a11y-switch-detail {
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.cloak-app .a11y-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.cloak-app .a11y-track {
+  position: relative;
+  flex: none;
+  width: 50px;
+  height: 30px;
+  border: 2px solid var(--text-2);
+  border-radius: 999px;
+  background: var(--card);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cloak-app .a11y-track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-2);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.cloak-app .a11y-switch input:checked + .a11y-track {
+  border-color: var(--teal);
+  background: var(--teal);
+}
+
+.cloak-app .a11y-switch input:checked + .a11y-track::after {
+  background: #fff;
+  transform: translateX(20px);
+}
+
+.cloak-app .a11y-switch input:focus-visible + .a11y-track {
+  outline: 3px solid var(--teal);
+  outline-offset: 3px;
+}
+
+.cloak-app .a11y-time {
+  margin-top: 0;
+}
+
+@media (max-width: 520px) {
+  .cloak-app .a11y-dialog {
+    margin: auto 8px 8px;
+  }
+
+  .cloak-app .a11y-dock {
+    right: 12px;
+  }
+}
+
+/* ---------- About page ---------- */
+.cloak-app .about h3 {
+  margin: 28px 0 10px;
+  color: var(--text);
+  font-size: 19px;
+  letter-spacing: -0.01em;
+}
+
+.cloak-app .about p {
+  max-width: 68ch;
+}
+
+.cloak-app .about-lead {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.cloak-app .about-demo {
+  max-width: 68ch;
+}
+
+.cloak-app .journey {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: journey;
+}
+
+/* A line down the left joins the four steps, so the order reads as one trip out and back. */
+.cloak-app .journey li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 4px 18px;
+  padding: 0 0 20px 24px;
+  border-left: 2px solid var(--border);
+}
+
+.cloak-app .journey li:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+
+.cloak-app .journey li::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 0 3px var(--card);
+}
+
+.cloak-app .journey .where {
+  align-self: start;
+  justify-self: start;
+}
+
+.cloak-app .journey strong {
+  display: block;
+}
+
+.cloak-app .journey p {
+  margin: 2px 0 0;
+  color: var(--text-2);
+}
+
+.cloak-app .about-list {
+  margin: 0;
+}
+
+.cloak-app .about-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 4px 24px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.cloak-app .about-row:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.cloak-app .about-row dt {
+  font-weight: 700;
+}
+
+.cloak-app .about-row dd {
+  margin: 0;
+  color: var(--text-2);
+  max-width: 62ch;
+}
+
+.cloak-app .about-honest p {
+  margin: 0 0 8px;
+}
+
+.cloak-app .about-honest p:last-child {
+  margin-bottom: 0;
+}
+
+.cloak-app .about-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 640px) {
+  .cloak-app .journey li,
+  .cloak-app .about-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Header on phones: Back, name and Clear on the first row; the rest on the second ---------- */
+.cloak-app .top-break {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .cloak-app .top {
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 6px;
+  }
+
+  .cloak-app .top > * {
+    order: 4;
+  }
+
+  .cloak-app .top > .back-btn { order: 0; }
+  .cloak-app .top > .brand { order: 1; }
+  .cloak-app .top > .top-clear { order: 2; }
+
+  .cloak-app .top > .top-break {
+    display: block;
+    flex-basis: 100%;
+    height: 0;
+    order: 3;
+  }
+
+  /* The trash icon alone is enough on a phone; the name stays for screen readers and for the tooltip. */
+  .cloak-app .top-clear {
+    flex: none;
+    margin-left: auto;
+    width: 40px;
+    min-height: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .cloak-app .top-clear-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .cloak-app .mode-chip {
+    white-space: nowrap;
+  }
+
+  /* Phones: the second row spreads its three items evenly. */
+  .cloak-app .top > .mode-chip { margin-right: auto; }
+}
+
+/* Three buttons in the bottom bar (Start over, Save draft, Copy draft) must fit one row on a phone. */
+.cloak-app .actions .btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .cloak-app .actions .btn {
+    padding: 0 16px;
+  }
+}
+
+/* Larger text: the screen is narrower in "layout" terms, so the bottom bar may use a second row. */
+.cloak-app[data-text-size] .actions {
+  flex-wrap: wrap;
+}
+
+/* The page area takes focus when the screen changes (for screen readers); never draw a ring around all of it. */
+.cloak-app[data-contrast='high'] main[tabindex]:focus-visible {
+  outline: none;
 }

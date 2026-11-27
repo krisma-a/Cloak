@@ -67,6 +67,56 @@ export function ScanIcon({ size = 18 }: IconProps) {
   )
 }
 
+export function AccessIcon({ size = 18 }: IconProps) {
+  return (
+    <svg {...SVG} width={size} height={size}>
+      <circle cx="12" cy="4.5" r="1.6" />
+      <path d="M5 8.5c4.5 1.4 9.5 1.4 14 0M12 9.5v4.5M9 21l3-7 3 7" />
+    </svg>
+  )
+}
+
+export function ArrowLeftIcon({ size = 18 }: IconProps) {
+  return (
+    <svg {...SVG} width={size} height={size}>
+      <path d="M19 12H5m6-6-6 6 6 6" />
+    </svg>
+  )
+}
+
+export function TrashIcon({ size = 18 }: IconProps) {
+  return (
+    <svg {...SVG} width={size} height={size}>
+      <path d="M4 7h16M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7m3 0-.8 12a2 2 0 0 1-2 1.9H8.8a2 2 0 0 1-2-1.9L6 7" />
+    </svg>
+  )
+}
+
+export function DownloadIcon({ size = 18 }: IconProps) {
+  return (
+    <svg {...SVG} width={size} height={size}>
+      <path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" />
+    </svg>
+  )
+}
+
+export function SpeakerIcon({ size = 18 }: IconProps) {
+  return (
+    <svg {...SVG} width={size} height={size}>
+      <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4Z" />
+      <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
+    </svg>
+  )
+}
+
+export function StopIcon({ size = 18 }: IconProps) {
+  return (
+    <svg {...SVG} width={size} height={size}>
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+    </svg>
+  )
+}
+
 export function WhereChip({ where, children }: { where: 'laptop' | 'cloud'; children: ReactNode }) {
   return (
     <span className={where === 'cloud' ? 'where is-cloud' : 'where'}>
