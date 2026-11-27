@@ -201,6 +201,13 @@ pop-up, then `startOver()`; waiting on a model counts as activity; Escape keeps 
 **Clear** beside the notes (with Undo, memory only) and the restrictions. `AboutPage.tsx` (header "About", state not a route, so work is kept) states what is stored and
 is deliberately honest about HIPAA/FERPA: Cloak lists safeguards, it does NOT claim certification. If you change what is stored, update the About lists.
 
+**Language check and analytics.** `language.ts` (pure, tested with a fake detector) + `languageDetector.ts` (Chrome's `LanguageDetector`, used only if its
+availability is already `available`, so it never starts a download or uses up the click Nano needs): before redaction `App.tsx` checks the note; if no English reading reaches
+0.7 (or under 20 letters: skipped) the note goes through the basic engine (`basicOnly`) and the review screen shows `NOT_ENGLISH_NOTICE`. `analytics.ts` (thin, lazy, off in
+`npm run dev`) + `analyticsEvents.ts` (pure, tested): FIVE count-only events (`redact_done`, `draft_done` (real drafts only), `send_blocked`, `scan_done`, `language_fallback`);
+every field is rebuilt from a number, a fixed word, a Gemini model name or a language code, so no note text, name, file name or message can get in. `send_blocked` logs
+`blockReasonCode(message)`, never the message (some quote a private detail). No page_view, Google Signals or ad personalisation. To add an event or field, change `SPEC` and the test.
+
 **Test data.** `scripts/generate-cases.ts` writes 120 deterministic fake notes (seeded; Set A/B use disjoint
 name pools) with a planted-item answer key whose `type` values are the app's `Category` names. Output must
 stay byte-identical for the same seed. The generated sets are not yet scored against redaction, and the

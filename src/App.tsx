@@ -34,6 +34,8 @@ import { ModeDialog } from './workspace/ModeDialog.tsx'
 import { UsageDialog } from './workspace/UsageDialog.tsx'
 import { draftErrorMessage } from './workspace/draftError.ts'
 import { addDraftRecord, estimateDraftCost, formatUsd } from './workspace/draftCost.ts'
+import { track } from './analytics.ts'
+import { blockReasonCode } from './analyticsEvents.ts'
 import { checkLanguage, NOT_ENGLISH_NOTICE } from './workspace/language.ts'
 import { getLanguageDetector } from './workspace/languageDetector.ts'
 import { SpecsNotice } from './workspace/SpecsNotice.tsx'
@@ -226,6 +228,7 @@ export default function App() {
       const language = await checkLanguage(text, await getLanguageDetector())
       const useBasic = language?.notEnglish === true
       setNotEnglish(useBasic)
+      if (useBasic && language) track('language_fallback', { lang: language.lang })
       const result = await redactNotes(
         text,
         (fraction) => {
@@ -245,6 +248,7 @@ export default function App() {
         },
       )
       reportAi({ type: 'engine', engine: result.engine }) // the engine that really ran, in case Nano failed on the way
+      track('redact_done', { engine: result.engine, details_hidden: Object.keys(result.map.originals).length })
       setBase(result)
       setKept([])
       setEmployee('')
@@ -313,6 +317,7 @@ export default function App() {
         accommodation: TEMPLATES[templateId].input === 'restrictions' ? { employee, restrictions } : undefined,
       })
       setDraftResult(result)
+      if (realAi) track('draft_done', { template: templateId, model: result.usage?.model }) // real drafts only: a demo draft sends nothing
       if (result.usage) {
         // The cost is kept on this laptop (numbers only), so the Usage pop-up can show the history.
         const demo = !realAi
@@ -324,6 +329,7 @@ export default function App() {
     } catch (error) {
       if (error instanceof SendBlockedError) {
         setBlockedMessage(error.message)
+        track('send_blocked', { reason: blockReasonCode(error.message) }) // a fixed word; the message itself is never logged
       } else {
         // 429 (the shared free allowance), a busy service, no connection, or anything else: each says what to do next.
         setWriteError(draftErrorMessage(error, navigator.onLine))
@@ -503,6 +509,7 @@ export default function App() {
           {busy === null && !aboutOpen && step === 'scan' && (
             <StepScan
               onBack={() => goTo('start')}
+              onScanDone={(pages, fixed) => track('scan_done', { pages, rechecked_fixed: fixed })}
               basicChecks={checkMode === 'basic' || nanoPossible === false}
               onDraft={(text) => {
                 // The scanned text becomes the notes (in memory only) and goes through the same steps as pasted

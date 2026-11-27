@@ -1116,11 +1116,13 @@ interface StepScanProps {
   onBack: () => void
   /** "Draft a report": hand the page text to the note pipeline (hide details on this laptop, check them, then send). */
   onDraft?: (text: string) => void
+  /** Called once a scan has finished, with counts only: pages read, and details the photo recheck still had to cover. */
+  onScanDone?: (pages: number, rechecked: number) => void
   /** The notes will get basic checks (chosen, or no private AI here): the review pop-up warns about it. */
   basicChecks?: boolean
 }
 
-export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps) {
+export function StepScan({ onBack, onDraft, onScanDone, basicChecks = false }: StepScanProps) {
   const [draftAsk, setDraftAsk] = useState(false)
   const [phase, setPhase] = useState<Phase>({ kind: 'capture' })
   const [fileError, setFileError] = useState<string | null>(null)
@@ -1276,6 +1278,7 @@ export function StepScan({ onBack, onDraft, basicChecks = false }: StepScanProps
     setLitCategory(null)
     setSplit(RESTING_SPLIT)
     setPhase({ kind: 'result', source, fileName, pages: scanned })
+    onScanDone?.(scanned.length, scanned.reduce((sum, page) => sum + (page.rechecked?.fixed ?? 0), 0))
   }
 
   async function openFile(file: File) {

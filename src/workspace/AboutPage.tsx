@@ -51,6 +51,10 @@ const KEPT: { what: string; detail: string }[] = [
     detail: 'Counts only: how many details of each kind were hidden, whether the send was blocked, and which model ran. Never any text.',
   },
   {
+    what: 'Usage counts',
+    detail: 'Firebase Analytics counts events, such as “a draft was written” or “a scan finished”, with numbers and fixed words only. It never gets note text, names, file names or any hidden detail.',
+  },
+  {
     what: 'Your settings',
     detail: 'Choices like text size and check mode, in this browser. Nothing from a case.',
   },
