@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { buildDraftPrompt, buildManagerPrompt, TEMPLATES } from './ai/templates.ts'
 import type { UsageEvent } from './ai/usage.ts'
-import { applyAiParam, privateAiSupported, realAiEnabled, redactNotes, SendBlockedError, setRealAi, suggestRestrictions, writeDraft } from './workspace/ai.ts'
+import { getPolicySnapshot, subscribePolicy } from './policy.ts'
+import { applyAiParam, CloudPausedError, privateAiSupported, realAiEnabled, redactNotes, SendBlockedError, setRealAi, suggestRestrictions, writeDraft } from './workspace/ai.ts'
 import {
   downloadLabel,
   INITIAL_AI_STATE,
@@ -13,7 +14,15 @@ import {
 } from './workspace/aiStatus.ts'
 import type { AiEvent, AiState } from './workspace/aiStatus.ts'
 import { loadCheckMode, saveCheckMode, type CheckMode } from './workspace/checkMode.ts'
+import { AboutPage } from './workspace/AboutPage.tsx'
+import { AccessibilityButton } from './workspace/AccessibilityButton.tsx'
+import { a11yAttributes, loadA11y, saveA11y } from './workspace/a11y.ts'
+import type { A11ySettings } from './workspace/a11y.ts'
+import { ConfirmDialog } from './workspace/ConfirmDialog.tsx'
+import { idleStatus, writeSummary } from './workspace/controls.ts'
+import type { IdleState } from './workspace/controls.ts'
 import { LoadingCard, Stepper } from './workspace/components.tsx'
+import { TrashIcon, WhereChip } from './workspace/icons.tsx'
 import type { StepInfo } from './workspace/components.tsx'
 import { hasWorkToLose, makeLabeler, outgoing } from './workspace/review.ts'
 import { StepGenerate } from './workspace/StepGenerate.tsx'
@@ -25,7 +34,11 @@ import { StepStart } from './workspace/StepStart.tsx'
 import { ModeDialog } from './workspace/ModeDialog.tsx'
 import { UsageDialog } from './workspace/UsageDialog.tsx'
 import { draftErrorMessage } from './workspace/draftError.ts'
-import { addDraftRecord, estimateDraftCost } from './workspace/draftCost.ts'
+import { addDraftRecord, estimateDraftCost, formatUsd } from './workspace/draftCost.ts'
+import { track } from './analytics.ts'
+import { blockReasonCode } from './analyticsEvents.ts'
+import { checkLanguage, NOT_ENGLISH_NOTICE } from './workspace/language.ts'
+import { getLanguageDetector } from './workspace/languageDetector.ts'
 import { SpecsNotice } from './workspace/SpecsNotice.tsx'
 import { markSpecsSeen, shouldShowSpecs, specsSeen } from './workspace/specs.ts'
 import type { DeviceInfo } from './workspace/specs.ts'
@@ -71,6 +84,8 @@ export default function App() {
 
   const [pasteError, setPasteError] = useState<string | null>(null)
   const [writeError, setWriteError] = useState<string | null>(null)
+  // True when this note didn't look like English, so it was checked with the basic engine (see workspace/language.ts).
+  const [notEnglish, setNotEnglish] = useState(false)
   const [blockedMessage, setBlockedMessage] = useState<string | null>(null)
   // Full Cloak (recommended) or basic checks for a slow laptop, remembered in this browser only.
   const [checkMode, setCheckMode] = useState<CheckMode>(() => loadCheckMode())
@@ -81,6 +96,20 @@ export default function App() {
     applyAiParam()
     return realAiEnabled()
   })
+  // Accessibility settings (the round button), the About page, and the pop-ups for writing, clearing and going back.
+  const [a11y, setA11y] = useState<A11ySettings>(() => loadA11y())
+  const [aboutOpen, setAboutOpen] = useState(false)
+  const [writeOpen, setWriteOpen] = useState(false)
+  const [clearAllOpen, setClearAllOpen] = useState(false)
+  const [backTarget, setBackTarget] = useState<StepId | null>(null) // set when leaving the draft needs a yes first
+  const [autoCleared, setAutoCleared] = useState<number | null>(null) // minutes, when the privacy timer cleared the work
+  function changeA11y(next: A11ySettings) {
+    setA11y(next)
+    saveA11y(next)
+  }
+  // The cloud-drafting kill switch (Remote Config cloud_drafts_enabled), live. It only matters for Real AI: Demo sends nothing.
+  const draftsOn = useSyncExternalStore(subscribePolicy, () => getPolicySnapshot().policy.cloud_drafts_enabled)
+  const paused = realAi && !draftsOn
   const [usageOpen, setUsageOpen] = useState(false)
   const [modeOpen, setModeOpen] = useState(false)
   const [lastCost, setLastCost] = useState<{ usage: UsageEvent; demo: boolean } | null>(null)
@@ -114,7 +143,7 @@ export default function App() {
       return
     }
     mainRef.current?.focus()
-  }, [step, busy])
+  }, [step, busy, aboutOpen])
 
   // Everything above is lost when the tab closes. Warn only while there is something to lose; the
   // handler is removed again on the start screen, with empty notes, and after "Start over".
@@ -128,6 +157,57 @@ export default function App() {
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
   }, [workToLose])
+
+  // One count (no text, no names) when someone reaches "Write the draft" while drafting is paused.
+  useEffect(() => {
+    if (step === 'generate' && paused) track('cloud_paused')
+  }, [step, paused])
+
+  // Privacy timer: with no activity for a while, warn for a minute, then clear everything (like an automatic
+  // log-off). Waiting on the laptop or the cloud counts as activity. "Keep working" resets the clock.
+  const lastActive = useRef(0)
+  const [idle, setIdle] = useState<IdleState>({ status: 'active', secondsLeft: 0 })
+  const idleRef = useRef<IdleState['status']>('active')
+  const busyRef = useRef(busy)
+  const startOverRef = useRef<() => void>(() => undefined)
+  const armed = step !== 'start' || workToLose
+  useEffect(() => {
+    busyRef.current = busy
+    startOverRef.current = startOver
+  })
+  useEffect(() => {
+    idleRef.current = 'active'
+    if (!armed) return
+    lastActive.current = Date.now()
+    const touch = () => {
+      if (idleRef.current === 'active') lastActive.current = Date.now()
+    }
+    const events = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'] as const
+    for (const name of events) window.addEventListener(name, touch, { capture: true, passive: true })
+    const timer = setInterval(() => {
+      if (busyRef.current) lastActive.current = Date.now()
+      const next = idleStatus(Date.now(), lastActive.current, a11y.idleMinutes)
+      idleRef.current = next.status === 'expired' ? 'active' : next.status
+      if (next.status === 'expired') {
+        startOverRef.current()
+        setAutoCleared(a11y.idleMinutes)
+        setIdle({ status: 'active', secondsLeft: 0 })
+        return
+      }
+      const shown = next.status === 'warning' ? next : { status: 'active' as const, secondsLeft: 0 }
+      setIdle((now) => (now.status === shown.status && now.secondsLeft === shown.secondsLeft ? now : shown))
+    }, 1000)
+    return () => {
+      for (const name of events) window.removeEventListener(name, touch, { capture: true })
+      clearInterval(timer)
+    }
+  }, [armed, a11y.idleMinutes])
+
+  function keepWorking() {
+    lastActive.current = Date.now()
+    idleRef.current = 'active'
+    setIdle({ status: 'active', secondsLeft: 0 })
+  }
 
   // Without downloading anything, find out if this browser can run the private AI (Gemini Nano). If it can't,
   // the pill says "Basic checks" from the start. If it can, it says nothing until we know more.
@@ -153,6 +233,11 @@ export default function App() {
     const skip = new AbortController()
     skipRef.current = skip
     try {
+      // On this device, with Chrome's built-in detector if it is there. No detector or too little text: nothing changes.
+      const language = await checkLanguage(text, await getLanguageDetector())
+      const useBasic = language?.notEnglish === true
+      setNotEnglish(useBasic)
+      if (useBasic && language) track('language_fallback', { lang: language.lang })
       const result = await redactNotes(
         text,
         (fraction) => {
@@ -168,10 +253,11 @@ export default function App() {
           onEngine: (engine) => reportAi({ type: 'engine', engine }),
           skipDownload: skip.signal,
           onBackgroundDone: (engine) => reportAi({ type: 'background-done', engine }),
-          basicOnly: checkMode === 'basic' && nanoPossible !== false,
+          basicOnly: useBasic || (checkMode === 'basic' && nanoPossible !== false),
         },
       )
       reportAi({ type: 'engine', engine: result.engine }) // the engine that really ran, in case Nano failed on the way
+      track('redact_done', { engine: result.engine, details_hidden: Object.keys(result.map.originals).length })
       setBase(result)
       setKept([])
       setEmployee('')
@@ -240,6 +326,7 @@ export default function App() {
         accommodation: TEMPLATES[templateId].input === 'restrictions' ? { employee, restrictions } : undefined,
       })
       setDraftResult(result)
+      if (realAi) track('draft_done', { template: templateId, model: result.usage?.model }) // real drafts only: a demo draft sends nothing
       if (result.usage) {
         // The cost is kept on this laptop (numbers only), so the Usage pop-up can show the history.
         const demo = !realAi
@@ -251,6 +338,9 @@ export default function App() {
     } catch (error) {
       if (error instanceof SendBlockedError) {
         setBlockedMessage(error.message)
+        track('send_blocked', { reason: blockReasonCode(error.message) }) // a fixed word; the message itself is never logged
+      } else if (error instanceof CloudPausedError) {
+        // The switch was flipped just now. Nothing was sent, and the paused notice is already showing.
       } else {
         // 429 (the shared free allowance), a busy service, no connection, or anything else: each says what to do next.
         setWriteError(draftErrorMessage(error, navigator.onLine))
@@ -266,7 +356,16 @@ export default function App() {
     setBlockedMessage(null)
     setWriteError(null)
     setDraftResult(null)
+    setAboutOpen(false)
+    setAutoCleared(null)
     setStep(target)
+  }
+
+  // The progress bar's finished steps are the way back. Going back from the draft drops it, so that asks first.
+  function leaveTo(target: StepId) {
+    if (busy) return
+    if (step === 'result' && draftResult && target !== 'result') setBackTarget(target)
+    else goTo(target)
   }
 
   function startOver() {
@@ -282,6 +381,10 @@ export default function App() {
     setPasteError(null)
     setWriteError(null)
     setBlockedMessage(null)
+    setAboutOpen(false)
+    setNotEnglish(false)
+    idleRef.current = 'active'
+    setIdle({ status: 'active', secondsLeft: 0 })
     setStep('start')
   }
 
@@ -289,9 +392,20 @@ export default function App() {
   // About what the draft will cost: the length of the prompt that would be sent (placeholders only).
   const estimate = result ? estimateDraftCost(promptLength(result.redactedText, templateId, employee, restrictionsText)) : null
   const onStartScreens = step === 'start' || step === 'scan'
+  const hasAnything = step !== 'start' || notes.trim() !== ''
+  const writeFacts = result
+    ? {
+        hidden: Object.keys(result.map.originals).length,
+        kept: kept.length,
+        characters: result.redactedText.length,
+        restrictionsOnly: TEMPLATES[templateId].input === 'restrictions',
+        realAi,
+      }
+    : null
+  const summary = writeFacts ? writeSummary(writeFacts) : null
 
   return (
-    <div className="cloak-app">
+    <div className="cloak-app" {...a11yAttributes(a11y)}>
       <div className="shell">
         <header className="top">
           <h1 className="brand">
@@ -314,6 +428,16 @@ export default function App() {
           <button type="button" className="top-link" onClick={() => setUsageOpen(true)} aria-haspopup="dialog">
             Usage
           </button>
+          <button
+            type="button"
+            className="top-link"
+            onClick={() => setAboutOpen(true)}
+            aria-current={aboutOpen ? 'page' : undefined}
+            disabled={busy !== null}
+          >
+            About
+          </button>
+          <span className="top-break" aria-hidden="true" />
           {/* Always in the page, so a change of mode is announced. Shows the real mode of the AI that checks notes. */}
           <span className="ai-slot" role="status">
             {!onStartScreens && ai.mode !== null && (
@@ -325,11 +449,35 @@ export default function App() {
               </span>
             )}
           </span>
+          {hasAnything && (
+            <>
+              <span className="top-sep" aria-hidden="true" />
+              <button
+                type="button"
+                className="top-clear"
+                onClick={() => setClearAllOpen(true)}
+                disabled={busy !== null}
+                title="Clear all"
+              >
+                <TrashIcon size={16} />
+                <span className="top-clear-text">Clear all</span>
+              </button>
+            </>
+          )}
         </header>
 
-        {!onStartScreens && <Stepper steps={STEPS} current={step} onGo={goTo} locked={busy !== null} />}
+        {!onStartScreens && !aboutOpen && <Stepper steps={STEPS} current={step} onGo={leaveTo} locked={busy !== null} />}
 
         <main ref={mainRef} tabIndex={-1}>
+          {autoCleared !== null && step === 'start' && !aboutOpen && busy === null && (
+            <p className="notice info auto-cleared" role="status">
+              For your privacy, Cloak cleared your work after {autoCleared} minutes with no activity.
+              <button type="button" className="link-btn" onClick={() => setAutoCleared(null)}>
+                Dismiss
+              </button>
+            </p>
+          )}
+          {busy === null && aboutOpen && <AboutPage onBack={() => setAboutOpen(false)} />}
           {busy === 'hiding' && (
             <LoadingCard
               title="Hiding details on this laptop…"
@@ -350,16 +498,17 @@ export default function App() {
             />
           )}
 
-          {busy === null && step === 'start' && (
+          {busy === null && !aboutOpen && step === 'start' && (
             <StepStart
               onPaste={() => goTo('paste')}
               onScan={() => goTo('scan')}
             />
           )}
 
-          {busy === null && step === 'scan' && (
+          {busy === null && !aboutOpen && step === 'scan' && (
             <StepScan
               onBack={() => goTo('start')}
+              onScanDone={(pages, fixed) => track('scan_done', { pages, rechecked_fixed: fixed })}
               basicChecks={checkMode === 'basic' || nanoPossible === false}
               onDraft={(text) => {
                 // The scanned text becomes the notes (in memory only) and goes through the same steps as pasted
@@ -371,7 +520,7 @@ export default function App() {
             />
           )}
 
-          {busy === null && step === 'paste' && (
+          {busy === null && !aboutOpen && step === 'paste' && (
             <StepPaste
               notes={notes}
               onNotesChange={setNotes}
@@ -385,7 +534,12 @@ export default function App() {
             />
           )}
 
-          {busy === null && step === 'review' && base && (
+          {busy === null && !aboutOpen && step === 'review' && base && notEnglish && (
+            <p className="notice warn lang-notice" role="status">
+              {NOT_ENGLISH_NOTICE}
+            </p>
+          )}
+          {busy === null && !aboutOpen && step === 'review' && base && (
             <StepReview
               base={base}
               kept={kept}
@@ -398,7 +552,7 @@ export default function App() {
             />
           )}
 
-          {busy === null && step === 'generate' && base && result && (
+          {busy === null && !aboutOpen && step === 'generate' && base && result && (
             <StepGenerate
               result={result}
               label={makeLabeler(base.map)}
@@ -416,7 +570,10 @@ export default function App() {
               blockedMessage={blockedMessage}
               error={writeError}
               onBack={() => goTo('review')}
-              onWrite={writeTheDraft}
+              onWrite={() => {
+                if (!paused) setWriteOpen(true)
+              }}
+              paused={paused}
               estimate={estimate}
               realAi={realAi}
               onRealAiChange={chooseRealAi}
@@ -424,7 +581,7 @@ export default function App() {
             />
           )}
 
-          {busy === null && step === 'result' && draftResult && base && (
+          {busy === null && !aboutOpen && step === 'result' && draftResult && base && (
             <StepResult
               result={draftResult}
               notes={notes}
@@ -441,6 +598,104 @@ export default function App() {
       </div>
       <UsageDialog open={usageOpen} onClose={() => setUsageOpen(false)} last={lastCost} version={costVersion} />
       <ModeDialog open={modeOpen} onClose={() => setModeOpen(false)} realAi={realAi} onRealAiChange={chooseRealAi} />
+      <ConfirmDialog
+        open={writeOpen && summary !== null && !paused}
+        title={realAi ? 'Write the draft?' : 'Write the demo draft?'}
+        confirmLabel={realAi ? 'Yes, write the draft' : 'Write the demo draft'}
+        cancelLabel="Not yet"
+        onConfirm={() => {
+          setWriteOpen(false)
+          void writeTheDraft()
+        }}
+        onCancel={() => setWriteOpen(false)}
+      >
+        {summary && (
+          <div className="send-summary">
+            <div className="send-group">
+              <WhereChip where={realAi ? 'cloud' : 'laptop'}>{realAi ? 'Goes to the cloud' : 'Nothing is sent'}</WhereChip>
+              <ul>
+                {summary.sent.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="send-group">
+              <WhereChip where="laptop">Stays on this laptop</WhereChip>
+              <ul>
+                {summary.stays.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </div>
+            {estimate && (
+              <p className="hint">
+                {realAi ? 'About ' : 'A real draft would cost about '}
+                {formatUsd(estimate.costUsd)} on a paid plan ($0.00 on the free tier).
+                {realAi && ' Once it’s sent, it can’t be taken back.'}
+              </p>
+            )}
+          </div>
+        )}
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={clearAllOpen}
+        title="Clear everything?"
+        confirmLabel="Clear everything"
+        tone="danger"
+        onConfirm={() => {
+          setClearAllOpen(false)
+          startOver()
+        }}
+        onCancel={() => setClearAllOpen(false)}
+      >
+        <p>
+          This removes your notes, the hidden labels and any draft from this tab. Cloak keeps nothing, so it can’t be
+          undone.
+        </p>
+        {draftResult && <p className="hint">Save your draft first if you want to keep it.</p>}
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={backTarget !== null}
+        title="Go back and clear this draft?"
+        confirmLabel="Go back"
+        cancelLabel="Stay here"
+        tone="danger"
+        onConfirm={() => {
+          const target = backTarget
+          setBackTarget(null)
+          if (target) goTo(target)
+        }}
+        onCancel={() => setBackTarget(null)}
+      >
+        <p>
+          The draft is based on the details you checked, so going back clears it. Use “Save draft” first if you want
+          to keep it.
+        </p>
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={armed && idle.status === 'warning'}
+        title="Still there?"
+        confirmLabel="Clear now"
+        cancelLabel="Keep working"
+        tone="danger"
+        onConfirm={() => {
+          keepWorking()
+          startOver()
+          setAutoCleared(null)
+        }}
+        onCancel={keepWorking}
+      >
+        <p>
+          For your privacy, Cloak clears your notes and draft in <strong>{idle.secondsLeft} seconds</strong> because
+          there has been no activity.
+        </p>
+      </ConfirmDialog>
+      <AccessibilityButton
+        settings={a11y}
+        onChange={changeA11y}
+        getReadRoot={() => mainRef.current}
+        readKey={`${step}:${aboutOpen}`}
+      />
       <SpecsNotice
         open={specsOpen}
         device={device}

@@ -458,6 +458,34 @@ export function containRect(
   return { left: pct((1 - w) / 2), top: pct((1 - h) / 2), width: pct(w), height: pct(h) }
 }
 
+/** US Letter, upright: width / height. */
+export const LETTER_RATIO = 8.5 / 11
+
+/**
+ * The part of the camera picture the live preview shows and the photo keeps. A laptop camera is wider than a page, so it
+ * is cropped (centred) to an upright US Letter shape: the preview then looks like the page, and a sheet held up fills it.
+ * A camera already narrower than Letter (a phone held upright) is kept whole. Pixels of the camera picture.
+ */
+export function letterCrop(width: number, height: number): { sx: number; sy: number; sw: number; sh: number } {
+  const w = Math.max(width, 1)
+  const h = Math.max(height, 1)
+  if (w / h <= LETTER_RATIO) return { sx: 0, sy: 0, sw: w, sh: h }
+  const sw = Math.round(h * LETTER_RATIO)
+  return { sx: Math.round((w - sw) / 2), sy: 0, sw, sh: h }
+}
+
+/** How far the camera picture is turned, clockwise, in degrees. A phone used as the laptop's camera often sends its picture sideways. */
+export type Turn = 0 | 90 | 180 | 270
+
+export function nextTurn(turn: Turn): Turn {
+  return ((turn + 90) % 360) as Turn
+}
+
+/** The size of a picture after it is turned: a quarter turn swaps width and height. */
+export function turnedSize(width: number, height: number, turn: Turn): { width: number; height: number } {
+  return turn === 90 || turn === 270 ? { width: height, height: width } : { width, height }
+}
+
 /** What the live preview last saw. Boxes are in the frame's own pixels: one per line of text, never the text itself. */
 export type LiveView =
   | { kind: 'starting' }

@@ -13,7 +13,8 @@
 //      send is logged too (as blocked). Saving the log never delays or blocks the draft.
 
 import { cloudModel, ensureSignedIn, getDraftingModel } from '../firebase'
-import { whenPolicyReady } from '../policy.ts'
+import { getPolicy, whenPolicyReady } from '../policy.ts'
+import { assertCloudDraftsEnabled, whenCloudDraftsEnabled } from './cloudPause.ts'
 import { SendBlockedError } from './errors.ts'
 import type { UsageEvent } from './usage.ts'
 import { sendBlockReason } from './guard.ts'
@@ -116,6 +117,9 @@ export async function draft(
 async function sendDraft(redaction: RedactionResult, templateId: TemplateId, options: DraftOptions): Promise<DraftResult> {
   await whenPolicyReady() // the first Remote Config fetch (a few seconds at most, usually already done)
 
+  // Kill switch (cloud_drafts_enabled). Paused: stop before anything else. Nothing is sent, and it is not logged as a blocked send.
+  assertCloudDraftsEnabled(getPolicy())
+
   // 1. Guard. "Approve & send" is the only way past this point.
   const blocked = sendBlockReason(redaction, options.approved)
   if (blocked) throw new SendBlockedError(blocked)
@@ -133,13 +137,16 @@ async function sendDraft(redaction: RedactionResult, templateId: TemplateId, opt
   }
 
   // 2. Cloud draft from redacted text (or restrictions) only. The local receipt is saved first.
-  await ensureSignedIn()
   const model = cloudModel() // read once: the call and the receipts must name the same model
-  const { text: cloudText, source, usage } = await recordedCall(
-    options.store ?? indexedReceiptStore,
-    { name: 'draft', model, sentText: prompt },
-    () => generateLogged('draft', getDraftingModel(model), prompt),
-  )
+  // Asked again right at the call, in case the switch was flipped while the guard ran.
+  const { text: cloudText, source, usage } = await whenCloudDraftsEnabled(getPolicy(), async () => {
+    await ensureSignedIn()
+    return recordedCall(
+      options.store ?? indexedReceiptStore,
+      { name: 'draft', model, sentText: prompt },
+      () => generateLogged('draft', getDraftingModel(model), prompt),
+    )
+  })
 
   // 3. Check and restore on this device.
   const checked = checkDraft(cloudText, redaction.map, templateId)

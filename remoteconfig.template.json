@@ -19,6 +19,11 @@
       "defaultValue": { "value": "gemini-3.6-flash" },
       "valueType": "STRING",
       "description": "Cloud Gemini model used for drafting. Keep it on a 3.x model."
+    },
+    "cloud_drafts_enabled": {
+      "defaultValue": { "value": "true" },
+      "valueType": "BOOLEAN",
+      "description": "Kill switch. false: no cloud drafting; the app shows 'Drafting is paused' and sends nothing. Hiding, review and scanning still work on the device."
     }
   }
 }

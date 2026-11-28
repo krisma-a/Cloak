@@ -29,7 +29,7 @@ end in `.ts`. `tsconfig.app.json` excludes `*.test.ts`, so `tsc -b` does **not**
 
 Cloud and on-device calls need `.env.local` (git-ignored; ask a teammate). Variables read in
 `src/firebase.ts`: `VITE_FIREBASE_*`, `VITE_RECAPTCHA_SITE_KEY`, optional `VITE_APPCHECK_DEBUG_TOKEN`
-and `VITE_CLOUD_MODEL` (only the built-in default for `cloud_model`; Remote Config overrides it). `npm test` needs none of it.
+and `VITE_CLOUD_MODEL` (only the built-in default for `cloud_model`; Remote Config overrides it) and `VITE_AI_BACKEND` (`agent-platform` = Agent Platform/Vertex Gemini API, paid by Google Cloud credits, needs Blaze + billing; empty = Gemini Developer API free tier). `npm test` needs none of it.
 
 ## Architecture
 
@@ -78,15 +78,21 @@ look-alikes that aren't in the map alone. Replacing, the note-spelling lookup an
 placeholders (`maskPlaceholders()`), and a bare placeholder name a model echoes back ("PHONE_1") is never an entity: otherwise
 a form label like "Employee" turned `[EMPLOYEE_1]` into `[[ROLE_1]_1]` and dropped the name from the map. Role+team phrases are split into `[ROLE_n] in the [DEPT_n]`.
 
-**Runtime settings (Firebase Remote Config).** `src/policy.ts` (pure) defines four settings: `redact_salary`,
-`medical_mode` (`generalize` | `block`), `max_retries` (0–5), `cloud_model`. Code reads them with `getPolicy()` at
+**Runtime settings (Firebase Remote Config).** `src/policy.ts` (pure) defines five settings: `redact_salary`,
+`medical_mode` (`generalize` | `block`), `max_retries` (0–5), `cloud_model`, `cloud_drafts_enabled` (boolean kill switch, see below). Code reads them with `getPolicy()` at
 the moment it runs; never cache the result. `src/remoteConfig.ts` fetches on load (started from `main.tsx` via a
 lazy import, so failure leaves the built-in defaults) and keeps them live with `onConfigUpdate`. Unreadable values
 fail toward more privacy. `redact_salary=false` is honoured in `findLeaks()` and for Nano's SALARY answers only;
 work restrictions always reject money (`findLeaks(..., { ignorePolicy: true })`). `medical_mode=block` is
 enforced in `redactionBlockReason()` (guard.ts), so it covers drafting, tagging and tone. Template:
 `remoteconfig.template.json`; demo steps: `docs/DEMO-REMOTE-CONFIG.md`. Tests that change a setting must
-`resetPolicy()` afterwards.
+`resetPolicy()` afterwards. **Never `firebase deploy --only remoteconfig`**: it can overwrite values set in the console; the template file is a record, and
+parameters are added by hand in the console.
+
+**Cloud kill switch** (`cloud_drafts_enabled`, default true; missing = true; an unreadable value pauses). `ai/cloudPause.ts` (pure, tested in `cloudPause.test.ts`):
+`draft()` calls `assertCloudDraftsEnabled(getPolicy())` first and wraps the cloud call in `whenCloudDraftsEnabled()`, so no cloud call starts while paused; `tag.ts` checks it too. It throws
+`CloudPausedError` (not a `SendBlockedError`, so no "blocked" send log). The "Write the draft" screen shows `PAUSED_NOTICE`, disables the button, and logs one `cloud_paused`
+event; it only applies to Real AI (Demo sends nothing). Hiding, review and scan are untouched. 429/quota errors were already friendly (`draftError.ts`); the cloud path has no retries.
 
 **Local receipts.** `receiptLog.ts` (pure) wraps every model call (`draft()`, `tagCaseType()`, `rewriteTone()`)
 in `recordedCall()`: a `pending` receipt (exact sent text, SHA-256, model, settings fingerprint, time) is written
@@ -187,6 +193,25 @@ call's `usage` (token counts + paid-tier price), `draft()` puts it on `DraftResu
 before sending (`estimateDraftCost()`), the cost after, and the header's **Usage** pop-up (last draft's itemised receipt, drafts, tokens and cost on this laptop, monthly planner). A numbers-only history of drafts stays in
 localStorage `cloak.draftCosts` (demo drafts are listed but never counted as spend). First real draft (2026-11-25): 250 in,
 119 out, **622 thinking** tokens = $0.0059 on the paid tier, 80% of it thinking: thinking is the main cost lever.
+
+**Accessibility, Back, Save, Clear, confirm pop-ups, About, privacy timer** (all in `src/workspace/`). `AccessibilityButton.tsx`: the round
+button (fixed bottom right, `bottom: 96px` to clear the sticky action bar) opens a panel with Read aloud, text size (100–150%, done with CSS `zoom` on
+`.shell` and every `<dialog>` via `--ui-zoom`, so viewport units are divided by it), high contrast, roomy spacing, reduce motion and the idle time.
+Settings live in `a11y.ts` (pure; localStorage `cloak.a11y`, preferences only) and reach the CSS as `data-text-size/contrast/spacing/motion` on
+`.cloak-app`. Read aloud (`speech.ts`, pure) uses ONLY voices with `localService === true`, because screens can show real names and some Chrome voices
+send text to a server; with none it is switched off, never faked. `controls.ts` (pure, tested): there is no header Back (each screen has its own Back; the progress bar's finished steps go back, and leaving the draft that way asks first because it drops the draft), `idleStatus()` for the **privacy timer** (15/30/60 min of no activity, then a 60 s "Still there?"
+pop-up, then `startOver()`; waiting on a model counts as activity; Escape keeps working), `saveFileName()` and `writeSummary()`. `ConfirmDialog.tsx` is the one
+"are you sure?" pop-up (focus goes to the safe button for `tone="danger"`): used for **Write the draft** (shows what goes to the cloud and what stays),
+**Clear all** (header, far right after a hairline; icon only on phones), leaving the draft, Save (PDF or text, made on this laptop, file name has no names), clearing the draft, and the timer.
+**Clear** beside the notes (with Undo, memory only) and the restrictions. `AboutPage.tsx` (header "About", state not a route, so work is kept) states what is stored and
+is deliberately honest about HIPAA/FERPA: Cloak lists safeguards, it does NOT claim certification. If you change what is stored, update the About lists.
+
+**Language check and analytics.** `language.ts` (pure, tested with a fake detector) + `languageDetector.ts` (Chrome's `LanguageDetector`, used only if its
+availability is already `available`, so it never starts a download or uses up the click Nano needs): before redaction `App.tsx` checks the note; if no English reading reaches
+0.7 (or under 20 letters: skipped) the note goes through the basic engine (`basicOnly`) and the review screen shows `NOT_ENGLISH_NOTICE`. `analytics.ts` (thin, lazy, off in
+`npm run dev`) + `analyticsEvents.ts` (pure, tested): SIX count-only events (`redact_done`, `draft_done` (real drafts only), `send_blocked`, `scan_done`, `language_fallback`, `cloud_paused` (no fields));
+every field is rebuilt from a number, a fixed word, a Gemini model name or a language code, so no note text, name, file name or message can get in. `send_blocked` logs
+`blockReasonCode(message)`, never the message (some quote a private detail). No page_view, Google Signals or ad personalisation. To add an event or field, change `SPEC` and the test.
 
 **Test data.** `scripts/generate-cases.ts` writes 120 deterministic fake notes (seeded; Set A/B use disjoint
 name pools) with a planted-item answer key whose `type` values are the app's `Category` names. Output must

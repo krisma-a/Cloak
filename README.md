@@ -63,6 +63,10 @@ The cloud draft took 53 s on average (5 calls, free tier). The 99.0% is optimist
 - **The free tier is slow and shared.** The cloud draft can take up to a minute, and a busy day can hit the quota (429).
 - **In the app, drafting and scanning are still demos** (`DEMO_MODE` in `src/workspace/ai.ts`, `SCAN_DEMO` in `src/workspace/scanAi.ts`). The real cloud draft runs on `/eval`.
 
+## Privacy
+
+Cloak keeps nothing between visits, and the cloud only ever sees hidden text. Analytics counts events only, never content.
+
 ## Fake data only
 
 Every note, name and number in this repo is made up (`data/cases/`, tests, fixtures). Never add real case notes.
