@@ -29,7 +29,7 @@ end in `.ts`. `tsconfig.app.json` excludes `*.test.ts`, so `tsc -b` does **not**
 
 Cloud and on-device calls need `.env.local` (git-ignored; ask a teammate). Variables read in
 `src/firebase.ts`: `VITE_FIREBASE_*`, `VITE_RECAPTCHA_SITE_KEY`, optional `VITE_APPCHECK_DEBUG_TOKEN`
-and `VITE_CLOUD_MODEL` (only the built-in default for `cloud_model`; Remote Config overrides it). `npm test` needs none of it.
+and `VITE_CLOUD_MODEL` (only the built-in default for `cloud_model`; Remote Config overrides it) and `VITE_AI_BACKEND` (`agent-platform` = Agent Platform/Vertex Gemini API, paid by Google Cloud credits, needs Blaze + billing; empty = Gemini Developer API free tier). `npm test` needs none of it.
 
 ## Architecture
 

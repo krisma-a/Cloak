@@ -6,6 +6,7 @@ import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-ch
 import { getAuth, signInAnonymously, type User } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import {
+  AgentPlatformBackend,
   getAI,
   getGenerativeModel,
   GoogleAIBackend,
@@ -67,7 +68,11 @@ export async function ensureSignedIn(): Promise<User> {
 export const db = getFirestore(app)
 
 // --- AI Logic (hybrid inference) -------------------------------------------
-const ai = getAI(app, { backend: new GoogleAIBackend() })
+// Two backends. The Gemini Developer API has a shared free tier (and Google Cloud credits can't pay for it).
+// The Agent Platform Gemini API (formerly Vertex AI) has no free tier, needs the Blaze plan with a billing account linked,
+// and IS paid for by Google Cloud credits. Choose it with VITE_AI_BACKEND=agent-platform; unset keeps the Gemini Developer API.
+const backend = import.meta.env.VITE_AI_BACKEND === 'agent-platform' ? new AgentPlatformBackend() : new GoogleAIBackend()
+const ai = getAI(app, { backend })
 
 // The cloud model is the Remote Config setting cloud_model (src/policy.ts), so it can change without
 // a redeploy. Keep it on a 3.x model (Gemini 2.5 requests get rerouted from Dec 1).
