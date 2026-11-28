@@ -1,23 +1,5 @@
-// Small pure helpers for the Back, Save, auto-clear and "write the draft?" controls.
+// Small pure helpers for the Save, auto-clear and "write the draft?" controls.
 // No Firebase and no DOM here, so `npm test` can run them. Fake data only in the tests.
-
-import type { StepId } from './types.ts'
-
-/** Where the Back button in the header goes. The start and scan screens have their own way back, so they say null. */
-export function previousStep(step: StepId): StepId | null {
-  switch (step) {
-    case 'paste':
-      return 'start'
-    case 'review':
-      return 'paste'
-    case 'generate':
-      return 'review'
-    case 'result':
-      return 'generate'
-    default:
-      return null
-  }
-}
 
 // ---------- Auto-clear after no activity ----------
 // Like the automatic log-off in healthcare and school systems: a laptop left open on a desk

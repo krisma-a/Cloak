@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { TEMPLATES } from '../ai/templates.ts'
 import type { CheckMode } from './checkMode.ts'
-import { TrashIcon, WhereChip } from './icons.tsx'
+import { AlertIcon, TrashIcon, WhereChip } from './icons.tsx'
 import { SAMPLE_NOTE } from './sampleNote.ts'
 import type { TemplateId } from './types.ts'
 
@@ -182,9 +182,10 @@ export function StepPaste({
       {checkMode !== null && <CheckModeChoice mode={checkMode} onChange={onCheckModeChange} />}
 
       {error && (
-        <p className="notice warn" role="alert">
-          {error}
-        </p>
+        <div className="notice error" role="alert">
+          <AlertIcon size={20} />
+          <p>{error}</p>
+        </div>
       )}
 
       <div className="actions">

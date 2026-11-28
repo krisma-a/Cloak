@@ -117,6 +117,15 @@ export function StopIcon({ size = 18 }: IconProps) {
   )
 }
 
+export function AlertIcon({ size = 18 }: IconProps) {
+  return (
+    <svg {...SVG} width={size} height={size}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7.5v5.5M12 16.4v.1" />
+    </svg>
+  )
+}
+
 export function WhereChip({ where, children }: { where: 'laptop' | 'cloud'; children: ReactNode }) {
   return (
     <span className={where === 'cloud' ? 'where is-cloud' : 'where'}>

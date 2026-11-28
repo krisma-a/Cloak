@@ -199,11 +199,10 @@ button (fixed bottom right, `bottom: 96px` to clear the sticky action bar) opens
 `.shell` and every `<dialog>` via `--ui-zoom`, so viewport units are divided by it), high contrast, roomy spacing, reduce motion and the idle time.
 Settings live in `a11y.ts` (pure; localStorage `cloak.a11y`, preferences only) and reach the CSS as `data-text-size/contrast/spacing/motion` on
 `.cloak-app`. Read aloud (`speech.ts`, pure) uses ONLY voices with `localService === true`, because screens can show real names and some Chrome voices
-send text to a server; with none it is switched off, never faked. `controls.ts` (pure, tested): `previousStep()` for the header **Back** (hidden on start/scan, which have their own;
-from the draft it asks first because going back drops it), `idleStatus()` for the **privacy timer** (15/30/60 min of no activity, then a 60 s "Still there?"
+send text to a server; with none it is switched off, never faked. `controls.ts` (pure, tested): there is no header Back (each screen has its own Back; the progress bar's finished steps go back, and leaving the draft that way asks first because it drops the draft), `idleStatus()` for the **privacy timer** (15/30/60 min of no activity, then a 60 s "Still there?"
 pop-up, then `startOver()`; waiting on a model counts as activity; Escape keeps working), `saveFileName()` and `writeSummary()`. `ConfirmDialog.tsx` is the one
 "are you sure?" pop-up (focus goes to the safe button for `tone="danger"`): used for **Write the draft** (shows what goes to the cloud and what stays),
-**Clear all** (header; icon only on phones), Back from the draft, Save (PDF or text, made on this laptop, file name has no names), clearing the draft, and the timer.
+**Clear all** (header, far right after a hairline; icon only on phones), leaving the draft, Save (PDF or text, made on this laptop, file name has no names), clearing the draft, and the timer.
 **Clear** beside the notes (with Undo, memory only) and the restrictions. `AboutPage.tsx` (header "About", state not a route, so work is kept) states what is stored and
 is deliberately honest about HIPAA/FERPA: Cloak lists safeguards, it does NOT claim certification. If you change what is stored, update the About lists.
 

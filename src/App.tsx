@@ -19,10 +19,10 @@ import { AccessibilityButton } from './workspace/AccessibilityButton.tsx'
 import { a11yAttributes, loadA11y, saveA11y } from './workspace/a11y.ts'
 import type { A11ySettings } from './workspace/a11y.ts'
 import { ConfirmDialog } from './workspace/ConfirmDialog.tsx'
-import { idleStatus, previousStep, writeSummary } from './workspace/controls.ts'
+import { idleStatus, writeSummary } from './workspace/controls.ts'
 import type { IdleState } from './workspace/controls.ts'
 import { LoadingCard, Stepper } from './workspace/components.tsx'
-import { ArrowLeftIcon, TrashIcon, WhereChip } from './workspace/icons.tsx'
+import { TrashIcon, WhereChip } from './workspace/icons.tsx'
 import type { StepInfo } from './workspace/components.tsx'
 import { hasWorkToLose, makeLabeler, outgoing } from './workspace/review.ts'
 import { StepGenerate } from './workspace/StepGenerate.tsx'
@@ -101,7 +101,7 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false)
   const [writeOpen, setWriteOpen] = useState(false)
   const [clearAllOpen, setClearAllOpen] = useState(false)
-  const [backOpen, setBackOpen] = useState(false)
+  const [backTarget, setBackTarget] = useState<StepId | null>(null) // set when leaving the draft needs a yes first
   const [autoCleared, setAutoCleared] = useState<number | null>(null) // minutes, when the privacy timer cleared the work
   function changeA11y(next: A11ySettings) {
     setA11y(next)
@@ -361,17 +361,10 @@ export default function App() {
     setStep(target)
   }
 
-  // The Back button in the header: one screen back, or out of the About page.
-  function goBack() {
+  // The progress bar's finished steps are the way back. Going back from the draft drops it, so that asks first.
+  function leaveTo(target: StepId) {
     if (busy) return
-    if (aboutOpen) {
-      setAboutOpen(false)
-      return
-    }
-    const target = previousStep(step)
-    if (!target) return
-    // Going back from the draft drops it, so ask first.
-    if (step === 'result' && draftResult) setBackOpen(true)
+    if (step === 'result' && draftResult && target !== 'result') setBackTarget(target)
     else goTo(target)
   }
 
@@ -399,7 +392,6 @@ export default function App() {
   // About what the draft will cost: the length of the prompt that would be sent (placeholders only).
   const estimate = result ? estimateDraftCost(promptLength(result.redactedText, templateId, employee, restrictionsText)) : null
   const onStartScreens = step === 'start' || step === 'scan'
-  const canGoBack = aboutOpen || previousStep(step) !== null
   const hasAnything = step !== 'start' || notes.trim() !== ''
   const writeFacts = result
     ? {
@@ -416,13 +408,6 @@ export default function App() {
     <div className="cloak-app" {...a11yAttributes(a11y)}>
       <div className="shell">
         <header className="top">
-          {canGoBack && (
-            <button type="button" className="back-btn" onClick={goBack} disabled={busy !== null}>
-              <ArrowLeftIcon size={18} />
-              Back
-              <span className="sr-only">{aboutOpen ? ' to your work' : ' one step'}</span>
-            </button>
-          )}
           <h1 className="brand">
             <img src={logo} alt="cloak-logo" className="brand-logo" />
             Cloak
@@ -452,18 +437,6 @@ export default function App() {
           >
             About
           </button>
-          {hasAnything && (
-            <button
-              type="button"
-              className="top-clear"
-              onClick={() => setClearAllOpen(true)}
-              disabled={busy !== null}
-              title="Clear all"
-            >
-              <TrashIcon size={16} />
-              <span className="top-clear-text">Clear all</span>
-            </button>
-          )}
           <span className="top-break" aria-hidden="true" />
           {/* Always in the page, so a change of mode is announced. Shows the real mode of the AI that checks notes. */}
           <span className="ai-slot" role="status">
@@ -476,9 +449,24 @@ export default function App() {
               </span>
             )}
           </span>
+          {hasAnything && (
+            <>
+              <span className="top-sep" aria-hidden="true" />
+              <button
+                type="button"
+                className="top-clear"
+                onClick={() => setClearAllOpen(true)}
+                disabled={busy !== null}
+                title="Clear all"
+              >
+                <TrashIcon size={16} />
+                <span className="top-clear-text">Clear all</span>
+              </button>
+            </>
+          )}
         </header>
 
-        {!onStartScreens && !aboutOpen && <Stepper steps={STEPS} current={step} onGo={goTo} locked={busy !== null} />}
+        {!onStartScreens && !aboutOpen && <Stepper steps={STEPS} current={step} onGo={leaveTo} locked={busy !== null} />}
 
         <main ref={mainRef} tabIndex={-1}>
           {autoCleared !== null && step === 'start' && !aboutOpen && busy === null && (
@@ -667,16 +655,17 @@ export default function App() {
         {draftResult && <p className="hint">Save your draft first if you want to keep it.</p>}
       </ConfirmDialog>
       <ConfirmDialog
-        open={backOpen}
+        open={backTarget !== null}
         title="Go back and clear this draft?"
         confirmLabel="Go back"
         cancelLabel="Stay here"
         tone="danger"
         onConfirm={() => {
-          setBackOpen(false)
-          goTo('generate')
+          const target = backTarget
+          setBackTarget(null)
+          if (target) goTo(target)
         }}
-        onCancel={() => setBackOpen(false)}
+        onCancel={() => setBackTarget(null)}
       >
         <p>
           The draft is based on the details you checked, so going back clears it. Use “Save draft” first if you want

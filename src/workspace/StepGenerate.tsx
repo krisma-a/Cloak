@@ -4,7 +4,7 @@ import type { DraftCost } from './draftCost.ts'
 import { PAUSED_NOTICE } from '../ai/cloudPause.ts'
 import { accommodationBlockReason } from '../ai/restrictionPrompt.ts'
 import { TEMPLATES } from '../ai/templates.ts'
-import { TrashIcon, WhereChip } from './icons.tsx'
+import { AlertIcon, TrashIcon, WhereChip } from './icons.tsx'
 import { buildSegments, employeeOptions } from './review.ts'
 import type { RedactionResult, TemplateId } from './types.ts'
 
@@ -223,9 +223,10 @@ export function StepGenerate({
       )}
 
       {error && (
-        <p className="notice warn" role="alert">
-          {error}
-        </p>
+        <div className="notice error" role="alert">
+          <AlertIcon size={20} />
+          <p>{error}</p>
+        </div>
       )}
 
       {estimate && (

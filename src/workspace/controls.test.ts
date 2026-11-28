@@ -1,22 +1,8 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { A11Y_KEY, DEFAULT_A11Y, a11yAttributes, isDefaultA11y, parseA11y, stepTextSize } from './a11y.ts'
-import { IDLE_WARNING_SECONDS, idleStatus, previousStep, saveFileName, writeSummary } from './controls.ts'
+import { IDLE_WARNING_SECONDS, idleStatus, saveFileName, writeSummary } from './controls.ts'
 import { chunkForSpeech, hasLocalVoice, pickLocalVoice } from './speech.ts'
-
-describe('previousStep', () => {
-  it('walks back one screen at a time', () => {
-    assert.equal(previousStep('result'), 'generate')
-    assert.equal(previousStep('generate'), 'review')
-    assert.equal(previousStep('review'), 'paste')
-    assert.equal(previousStep('paste'), 'start')
-  })
-
-  it('has nowhere to go from the start and scan screens', () => {
-    assert.equal(previousStep('start'), null)
-    assert.equal(previousStep('scan'), null)
-  })
-})
 
 describe('idleStatus', () => {
   const minute = 60_000

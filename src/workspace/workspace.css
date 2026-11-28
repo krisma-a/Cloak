@@ -3806,30 +3806,6 @@
 }
 
 /* ---------- Header: Back, About, Clear all ---------- */
-.cloak-app .back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 14px 0 10px;
-  border: 1.5px solid var(--border);
-  border-radius: 999px;
-  background: var(--card);
-  color: var(--text);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  align-self: center;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.cloak-app .back-btn:hover:not(:disabled) {
-  border-color: var(--teal);
-  color: var(--teal-dark);
-}
-
-.cloak-app .back-btn:disabled,
 .cloak-app .top-link:disabled,
 .cloak-app .top-clear:disabled {
   opacity: 0.45;
@@ -3841,33 +3817,39 @@
   text-decoration-style: double;
 }
 
+/* "Clear all" is the one destructive control in the header, so it sits alone at the far right, after a hairline,
+   and stays quiet (no outline) until it is pointed at. */
+.cloak-app .top-sep {
+  align-self: center;
+  flex: none;
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+}
+
 .cloak-app .top-clear {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 36px;
   padding: 0 12px;
-  border: 1.5px solid var(--border);
+  border: 1.5px solid transparent;
   border-radius: 999px;
-  background: var(--card);
+  background: transparent;
   color: #8a2a1c;
   font: inherit;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   align-self: center;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .cloak-app .top-clear:hover:not(:disabled) {
-  border-color: #8a2a1c;
+  border-color: #e3a89f;
   background: #fbefec;
 }
 
-@media (max-width: 520px) {
-  .cloak-app .back-btn {
-    padding: 0 12px 0 8px;
-  }
-}
 
 /* ---------- Clear buttons beside a text box ---------- */
 .cloak-app .field-tools {
@@ -4385,7 +4367,6 @@
     order: 4;
   }
 
-  .cloak-app .top > .back-btn { order: 0; }
   .cloak-app .top > .brand { order: 1; }
   .cloak-app .top > .top-clear { order: 2; }
 
@@ -4448,4 +4429,41 @@
 .cloak-app .lang-notice {
   flex: none;
   margin: 0 0 16px;
+}
+
+/* ---------- Errors: red, with an icon, so a failure can't be mistaken for guidance ---------- */
+.cloak-app .notice.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1.5px solid #e3a89f;
+  background: #fdecea;
+  color: #7a1c12;
+}
+
+.cloak-app .notice.error > svg {
+  flex: none;
+  margin-top: 3px;
+  color: #b3261e;
+}
+
+.cloak-app .notice.error > p {
+  max-width: none;
+  margin: 0;
+}
+
+.cloak-app[data-contrast='high'] .notice.error {
+  border-color: #7a1c12;
+  background: #fff;
+}
+
+@media (max-width: 600px) {
+  .cloak-app .top-sep {
+    display: none;
+  }
+}
+
+/* The header holds buttons and a logo, so everything is centred on one line instead of sharing a text baseline. */
+.cloak-app .top {
+  align-items: center;
 }
