@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { buildDraftPrompt, buildManagerPrompt, TEMPLATES } from './ai/templates.ts'
 import type { UsageEvent } from './ai/usage.ts'
-import { applyAiParam, privateAiSupported, realAiEnabled, redactNotes, SendBlockedError, setRealAi, suggestRestrictions, writeDraft } from './workspace/ai.ts'
+import { getPolicySnapshot, subscribePolicy } from './policy.ts'
+import { applyAiParam, CloudPausedError, privateAiSupported, realAiEnabled, redactNotes, SendBlockedError, setRealAi, suggestRestrictions, writeDraft } from './workspace/ai.ts'
 import {
   downloadLabel,
   INITIAL_AI_STATE,
@@ -106,6 +107,9 @@ export default function App() {
     setA11y(next)
     saveA11y(next)
   }
+  // The cloud-drafting kill switch (Remote Config cloud_drafts_enabled), live. It only matters for Real AI: Demo sends nothing.
+  const draftsOn = useSyncExternalStore(subscribePolicy, () => getPolicySnapshot().policy.cloud_drafts_enabled)
+  const paused = realAi && !draftsOn
   const [usageOpen, setUsageOpen] = useState(false)
   const [modeOpen, setModeOpen] = useState(false)
   const [lastCost, setLastCost] = useState<{ usage: UsageEvent; demo: boolean } | null>(null)
@@ -153,6 +157,11 @@ export default function App() {
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
   }, [workToLose])
+
+  // One count (no text, no names) when someone reaches "Write the draft" while drafting is paused.
+  useEffect(() => {
+    if (step === 'generate' && paused) track('cloud_paused')
+  }, [step, paused])
 
   // Privacy timer: with no activity for a while, warn for a minute, then clear everything (like an automatic
   // log-off). Waiting on the laptop or the cloud counts as activity. "Keep working" resets the clock.
@@ -330,6 +339,8 @@ export default function App() {
       if (error instanceof SendBlockedError) {
         setBlockedMessage(error.message)
         track('send_blocked', { reason: blockReasonCode(error.message) }) // a fixed word; the message itself is never logged
+      } else if (error instanceof CloudPausedError) {
+        // The switch was flipped just now. Nothing was sent, and the paused notice is already showing.
       } else {
         // 429 (the shared free allowance), a busy service, no connection, or anything else: each says what to do next.
         setWriteError(draftErrorMessage(error, navigator.onLine))
@@ -571,7 +582,10 @@ export default function App() {
               blockedMessage={blockedMessage}
               error={writeError}
               onBack={() => goTo('review')}
-              onWrite={() => setWriteOpen(true)}
+              onWrite={() => {
+                if (!paused) setWriteOpen(true)
+              }}
+              paused={paused}
               estimate={estimate}
               realAi={realAi}
               onRealAiChange={chooseRealAi}
@@ -597,7 +611,7 @@ export default function App() {
       <UsageDialog open={usageOpen} onClose={() => setUsageOpen(false)} last={lastCost} version={costVersion} />
       <ModeDialog open={modeOpen} onClose={() => setModeOpen(false)} realAi={realAi} onRealAiChange={chooseRealAi} />
       <ConfirmDialog
-        open={writeOpen && summary !== null}
+        open={writeOpen && summary !== null && !paused}
         title={realAi ? 'Write the draft?' : 'Write the demo draft?'}
         confirmLabel={realAi ? 'Yes, write the draft' : 'Write the demo draft'}
         cancelLabel="Not yet"

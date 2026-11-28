@@ -4,6 +4,8 @@
 
 import { cloudModel, getTaggingModel } from '../firebase'
 import { CASE_TYPES, parseCaseType, type CaseType } from './caseType.ts'
+import { getPolicy } from '../policy.ts'
+import { assertCloudDraftsEnabled } from './cloudPause.ts'
 import { SendBlockedError } from './errors.ts'
 import { redactionBlockReason } from './guard.ts'
 import { generateLogged } from './inference.ts'
@@ -16,6 +18,7 @@ export const TONES = ['neutral', 'warmer', 'firmer'] as const
 export type Tone = (typeof TONES)[number]
 
 function assertSafe(redaction: RedactionResult) {
+  assertCloudDraftsEnabled(getPolicy()) // these can fall back to the cloud, so the kill switch covers them too
   const blocked = redactionBlockReason(redaction)
   if (blocked) throw new SendBlockedError(blocked)
 }

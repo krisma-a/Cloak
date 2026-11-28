@@ -1,5 +1,5 @@
-// Firebase Remote Config: the four runtime settings (redact_salary, medical_mode, max_retries,
-// cloud_model). The meaning, defaults and validation live in src/policy.ts; this file only fetches.
+// Firebase Remote Config: the five runtime settings (redact_salary, medical_mode, max_retries,
+// cloud_model, cloud_drafts_enabled). The meaning, defaults and validation live in src/policy.ts; this file only fetches.
 //
 //   1. On load: the built-in defaults apply at once, then the values are fetched and activated.
 //   2. Live: when someone publishes a change in the Firebase console, the server pushes it
@@ -114,6 +114,7 @@ export function startRemoteConfig(): Promise<void> {
         medical_mode: d.medical_mode,
         max_retries: String(d.max_retries),
         cloud_model: d.cloud_model,
+        cloud_drafts_enabled: String(d.cloud_drafts_enabled),
       }
       remote = rc
       apply(rc) // defaults first, so something sensible is in force while the fetch runs

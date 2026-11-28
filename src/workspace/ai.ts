@@ -35,11 +35,11 @@ export interface RedactHooks {
 // The choice is kept in this browser (localStorage cloak.realAi). A link ending ?ai=real or ?ai=demo sets it too.
 // To make Real AI the default for everyone, change DEFAULT_REAL_AI below to true.
 
-import { SendBlockedError } from '../ai/errors.ts'
+import { CloudPausedError, SendBlockedError } from '../ai/errors.ts'
 import * as demo from './fakeAi.ts'
 import type { AccommodationPlan, DraftResult, RedactionResult, TemplateId } from './types.ts'
 
-export { SendBlockedError }
+export { CloudPausedError, SendBlockedError }
 
 const DEFAULT_REAL_AI = false
 const REAL_AI_KEY = 'cloak.realAi'

@@ -6,7 +6,7 @@
 // A value that is missing keeps its default. A value that is present but unreadable fails toward
 // MORE privacy (salary stays hidden, medical mode becomes "block"), never less.
 
-export const POLICY_KEYS = ['redact_salary', 'medical_mode', 'max_retries', 'cloud_model'] as const
+export const POLICY_KEYS = ['redact_salary', 'medical_mode', 'max_retries', 'cloud_model', 'cloud_drafts_enabled'] as const
 export type PolicyKey = (typeof POLICY_KEYS)[number]
 
 export const MEDICAL_MODES = ['generalize', 'block'] as const
@@ -21,6 +21,11 @@ export interface Policy {
   max_retries: number
   /** Cloud Gemini model used for drafting and (as the fallback) tagging. */
   cloud_model: string
+  /**
+   * The kill switch for cloud drafting. false: no cloud call is made and "Write the draft" is paused. Hiding, review and
+   * scanning still work, because they run on this laptop. A missing value means true (the default).
+   */
+  cloud_drafts_enabled: boolean
 }
 
 export const DEFAULT_POLICY: Policy = {
@@ -28,6 +33,7 @@ export const DEFAULT_POLICY: Policy = {
   medical_mode: 'generalize',
   max_retries: 2,
   cloud_model: 'gemini-3.6-flash',
+  cloud_drafts_enabled: true,
 }
 
 /** Upper bound for max_retries: every retry is another on-device model call. */
@@ -87,6 +93,19 @@ export function parsePolicy(raw: RawPolicy, defaults: Policy = DEFAULT_POLICY): 
   if (model !== null) {
     if (MODEL_NAME.test(model)) policy.cloud_model = model
     else warnings.push(`cloud_model "${model}" is not a valid model name, so ${defaults.cloud_model} is used`)
+  }
+
+  // The kill switch. Missing keeps the default (true). A value that can't be read pauses drafting: like the other
+  // settings, the doubt goes toward more privacy, and a typo is easy to spot and fix in the console.
+  const drafts = given('cloud_drafts_enabled')
+  if (drafts !== null) {
+    const word = drafts.toLowerCase()
+    if (TRUE_WORDS.has(word)) policy.cloud_drafts_enabled = true
+    else if (FALSE_WORDS.has(word)) policy.cloud_drafts_enabled = false
+    else {
+      policy.cloud_drafts_enabled = false
+      warnings.push(`cloud_drafts_enabled "${drafts}" is not true or false, so cloud drafting is paused`)
+    }
   }
 
   return { policy, warnings }

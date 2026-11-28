@@ -1,6 +1,6 @@
 // What Cloak tells Firebase Analytics. Pure: no Firebase here, so `npm test` can check it.
 //
-// COUNTS ONLY. Five events, each with a fixed list of fields. Every value is rebuilt from a number, a fixed
+// COUNTS ONLY. Six events, each with a fixed list of fields. Every value is rebuilt from a number, a fixed
 // word or a strictly shaped code, so nothing a caller hands in (note text, names, file names, a redacted value,
 // an error message) can end up in an event. Unknown events and unknown fields are dropped.
 
@@ -45,6 +45,8 @@ const SPEC = {
   language_fallback: {
     lang: { kind: 'lang' },
   },
+  // The kill switch was on when someone reached "Write the draft". No fields: just that it happened.
+  cloud_paused: {},
 } as const satisfies Record<string, Record<string, FieldKind>>
 
 export type AnalyticsEventName = keyof typeof SPEC
@@ -73,7 +75,7 @@ function clean(field: FieldKind, value: unknown): string | number {
   }
 }
 
-/** Builds an event from fixed fields only. Returns null for a name that isn't one of the five. */
+/** Builds an event from fixed fields only. Returns null for a name that isn't one of the six. */
 export function buildAnalyticsEvent(name: string, params: Record<string, unknown> = {}): AnalyticsEvent | null {
   if (!Object.hasOwn(SPEC, name)) return null
   const spec: Record<string, FieldKind> = SPEC[name as AnalyticsEventName]

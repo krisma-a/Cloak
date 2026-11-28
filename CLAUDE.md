@@ -78,15 +78,21 @@ look-alikes that aren't in the map alone. Replacing, the note-spelling lookup an
 placeholders (`maskPlaceholders()`), and a bare placeholder name a model echoes back ("PHONE_1") is never an entity: otherwise
 a form label like "Employee" turned `[EMPLOYEE_1]` into `[[ROLE_1]_1]` and dropped the name from the map. Role+team phrases are split into `[ROLE_n] in the [DEPT_n]`.
 
-**Runtime settings (Firebase Remote Config).** `src/policy.ts` (pure) defines four settings: `redact_salary`,
-`medical_mode` (`generalize` | `block`), `max_retries` (0–5), `cloud_model`. Code reads them with `getPolicy()` at
+**Runtime settings (Firebase Remote Config).** `src/policy.ts` (pure) defines five settings: `redact_salary`,
+`medical_mode` (`generalize` | `block`), `max_retries` (0–5), `cloud_model`, `cloud_drafts_enabled` (boolean kill switch, see below). Code reads them with `getPolicy()` at
 the moment it runs; never cache the result. `src/remoteConfig.ts` fetches on load (started from `main.tsx` via a
 lazy import, so failure leaves the built-in defaults) and keeps them live with `onConfigUpdate`. Unreadable values
 fail toward more privacy. `redact_salary=false` is honoured in `findLeaks()` and for Nano's SALARY answers only;
 work restrictions always reject money (`findLeaks(..., { ignorePolicy: true })`). `medical_mode=block` is
 enforced in `redactionBlockReason()` (guard.ts), so it covers drafting, tagging and tone. Template:
 `remoteconfig.template.json`; demo steps: `docs/DEMO-REMOTE-CONFIG.md`. Tests that change a setting must
-`resetPolicy()` afterwards.
+`resetPolicy()` afterwards. **Never `firebase deploy --only remoteconfig`**: it can overwrite values set in the console; the template file is a record, and
+parameters are added by hand in the console.
+
+**Cloud kill switch** (`cloud_drafts_enabled`, default true; missing = true; an unreadable value pauses). `ai/cloudPause.ts` (pure, tested in `cloudPause.test.ts`):
+`draft()` calls `assertCloudDraftsEnabled(getPolicy())` first and wraps the cloud call in `whenCloudDraftsEnabled()`, so no cloud call starts while paused; `tag.ts` checks it too. It throws
+`CloudPausedError` (not a `SendBlockedError`, so no "blocked" send log). The "Write the draft" screen shows `PAUSED_NOTICE`, disables the button, and logs one `cloud_paused`
+event; it only applies to Real AI (Demo sends nothing). Hiding, review and scan are untouched. 429/quota errors were already friendly (`draftError.ts`); the cloud path has no retries.
 
 **Local receipts.** `receiptLog.ts` (pure) wraps every model call (`draft()`, `tagCaseType()`, `rewriteTone()`)
 in `recordedCall()`: a `pending` receipt (exact sent text, SHA-256, model, settings fingerprint, time) is written
@@ -204,7 +210,7 @@ is deliberately honest about HIPAA/FERPA: Cloak lists safeguards, it does NOT cl
 **Language check and analytics.** `language.ts` (pure, tested with a fake detector) + `languageDetector.ts` (Chrome's `LanguageDetector`, used only if its
 availability is already `available`, so it never starts a download or uses up the click Nano needs): before redaction `App.tsx` checks the note; if no English reading reaches
 0.7 (or under 20 letters: skipped) the note goes through the basic engine (`basicOnly`) and the review screen shows `NOT_ENGLISH_NOTICE`. `analytics.ts` (thin, lazy, off in
-`npm run dev`) + `analyticsEvents.ts` (pure, tested): FIVE count-only events (`redact_done`, `draft_done` (real drafts only), `send_blocked`, `scan_done`, `language_fallback`);
+`npm run dev`) + `analyticsEvents.ts` (pure, tested): SIX count-only events (`redact_done`, `draft_done` (real drafts only), `send_blocked`, `scan_done`, `language_fallback`, `cloud_paused` (no fields));
 every field is rebuilt from a number, a fixed word, a Gemini model name or a language code, so no note text, name, file name or message can get in. `send_blocked` logs
 `blockReasonCode(message)`, never the message (some quote a private detail). No page_view, Google Signals or ad personalisation. To add an event or field, change `SPEC` and the test.
 

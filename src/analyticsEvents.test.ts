@@ -12,11 +12,12 @@ const EVENTS: Record<AnalyticsEventName, string[]> = {
   send_blocked: ['reason'],
   scan_done: ['pages', 'rechecked_fixed'],
   language_fallback: ['lang'],
+  cloud_paused: [],
 }
 
 describe('analytics events', () => {
-  it('has exactly the five events that were asked for', () => {
-    assert.deepEqual(Object.keys(EVENTS).sort(), ['draft_done', 'language_fallback', 'redact_done', 'scan_done', 'send_blocked'])
+  it('has exactly the six events that were asked for', () => {
+    assert.deepEqual(Object.keys(EVENTS).sort(), ['cloud_paused', 'draft_done', 'language_fallback', 'redact_done', 'scan_done', 'send_blocked'])
   })
 
   for (const [name, keys] of Object.entries(EVENTS) as Array<[AnalyticsEventName, string[]]>) {
@@ -33,7 +34,7 @@ describe('analytics events', () => {
     })
   }
 
-  it('drops events that are not one of the five', () => {
+  it('drops events that are not one of the six', () => {
     assert.equal(buildAnalyticsEvent('page_view', { page: 'x' }), null)
     assert.equal(buildAnalyticsEvent('note_text', { text: SECRETS[0] }), null)
     assert.equal(buildAnalyticsEvent('constructor'), null)

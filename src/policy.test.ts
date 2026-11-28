@@ -43,7 +43,7 @@ test('good values are read', () => {
   const { policy, warnings } = parsePolicy({
     redact_salary: ' FALSE ', medical_mode: 'Block', max_retries: '4', cloud_model: 'gemini-3.6-pro',
   })
-  assert.deepEqual(policy, { redact_salary: false, medical_mode: 'block', max_retries: 4, cloud_model: 'gemini-3.6-pro' })
+  assert.deepEqual(policy, { redact_salary: false, medical_mode: 'block', max_retries: 4, cloud_model: 'gemini-3.6-pro', cloud_drafts_enabled: true })
   assert.deepEqual(warnings, [])
   for (const yes of ['true', '1', 'yes', 'on']) assert.equal(parsePolicy({ redact_salary: yes }).policy.redact_salary, true)
   for (const no of ['false', '0', 'no', 'off']) assert.equal(parsePolicy({ redact_salary: no }).policy.redact_salary, false)

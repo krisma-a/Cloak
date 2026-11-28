@@ -59,7 +59,7 @@ export interface CallInfo {
   sentText: string
 }
 
-/** SHA-256 over the four settings, in a fixed order. Same values give the same fingerprint. */
+/** SHA-256 over the settings, in a fixed order. Same values give the same fingerprint. */
 export async function policyFingerprint(policy: Policy): Promise<string> {
   return sha256Hex(JSON.stringify(POLICY_KEYS.map((key) => [key, policy[key]])))
 }

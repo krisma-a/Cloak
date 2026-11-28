@@ -1,6 +1,7 @@
 import { DraftingMode } from './DraftingMode.tsx'
 import { formatUsd } from './draftCost.ts'
 import type { DraftCost } from './draftCost.ts'
+import { PAUSED_NOTICE } from '../ai/cloudPause.ts'
 import { accommodationBlockReason } from '../ai/restrictionPrompt.ts'
 import { TEMPLATES } from '../ai/templates.ts'
 import { TrashIcon, WhereChip } from './icons.tsx'
@@ -34,6 +35,8 @@ interface StepGenerateProps {
   /** Switches between Demo and Real AI drafting (shown here, because this is where the draft is sent). */
   onRealAiChange?: (on: boolean) => void
   onShowCost?: () => void
+  /** The Remote Config kill switch is off: no cloud call can be made, so the button is off and a calm notice says why. */
+  paused?: boolean
 }
 
 export function StepGenerate({
@@ -58,6 +61,7 @@ export function StepGenerate({
   realAi = false,
   onRealAiChange,
   onShowCost,
+  paused = false,
 }: StepGenerateProps) {
   const template = TEMPLATES[templateId]
   const sendsRestrictions = template.input === 'restrictions'
@@ -74,7 +78,7 @@ export function StepGenerate({
   const noEmployees = sendsRestrictions && employees.length === 0
   const planHint = planProblem && !(noEmployees && restrictions.length > 0) ? planProblem : null
   const needsConfirm = result.needsCarefulReview
-  const canWrite = planProblem === null && (!needsConfirm || confirmed)
+  const canWrite = planProblem === null && (!needsConfirm || confirmed) && !paused
 
   return (
     <section className="card">
@@ -85,6 +89,12 @@ export function StepGenerate({
       </p>
 
       {onRealAiChange && <DraftingMode realAi={realAi} onChange={onRealAiChange} />}
+
+      {paused && (
+        <p id="paused-notice" className="notice info" role="status">
+          {PAUSED_NOTICE}
+        </p>
+      )}
 
       {sendsRestrictions ? (
         <>
@@ -237,7 +247,14 @@ export function StepGenerate({
         <button type="button" className="btn btn-quiet" onClick={onBack}>
           Back
         </button>
-        <button type="button" className="btn btn-primary" onClick={onWrite} disabled={!canWrite}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={onWrite}
+          disabled={!canWrite}
+          aria-describedby={paused ? 'paused-notice' : undefined}
+          title={paused ? PAUSED_NOTICE : undefined}
+        >
           Write the draft
         </button>
       </div>
